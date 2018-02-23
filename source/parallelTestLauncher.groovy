@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  parallelTestLauncher.groovy
@@ -219,20 +218,6 @@ class parallelTestLauncher
     }
 
 }  // class parallelTestLauncher
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
