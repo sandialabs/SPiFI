@@ -24,9 +24,24 @@
 //
 class parallelTestLauncher
 {
+    // helper subclass for dynamic parameters on appendTask
+    class _task_parameters
+    {
+        String  label           = "__REQUIRED__"
+        String  job_name        = "__REQUIRED__"
+        List    parameters      = null
+        Integer quiet_period    = 10
+        Integer timeout         = 90
+        String  timeout_unit    = "MINUTES"
+        Boolean propagate_error = false
+        Boolean dry_run         = false
+        String  dry_run_status  = "SUCCESS"
+    }
+
+
     // Member Variables
-    private Map _taskList                  // The tasks + their parameters
-    private Map _lastResultSummary         // Status on the latest results
+    private Map<String,String> _taskList                  // The tasks + their parameters
+    private Map<String,String> _lastResultSummary         // Status on the latest results
 
 
     // ----[ Constructor ]-----------------------------------------------------
@@ -40,43 +55,55 @@ class parallelTestLauncher
 
     // ----[ appendTask ]------------------------------------------------------
     //
-    //  Add a new task/job into the task list.
+    //  Add a new task/job into the task list.  The parameter is a map that can have the
+    //  following key/value pairs:
     //
-    //  param task_label       [String]  - REQUIRED Task label name.
-    //  param jenkins_job_name [String]  - REQUIRED Name of Jenkins job to launch.
-    //  param parameters       [List]    - REQUIRED List of jenkins parameters to the job, example:
-    //                                              [
-    //                                                  (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1"),
-    //                                                  (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2")
-    //                                              ]
-    //                                              If there are no parameters, an empty list [] or null can be used.
-    //  param quiet_period     [Integer] - REQUIRED Quiet period (seconds)
-    //  param timeout          [Integer] - REQUIRED Timeout duration.
-    //  param timeout_unit     [String]  - REQUIRED Timeout Unit {HOURS, MINUTES, SECONDS}
-    //  param propagate_error  [Boolean] - REQUIRED Propagate error to overall pipeline?  { true, false }
-    //  param dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (task will not be launched).
-    //  param dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
-    //                                              Must be one of {SUCCESS, FAILURE, UNSTABLE}
+    //  label            [String]  - REQUIRED Task label name.
+    //  job_name         [String]  - REQUIRED Name of Jenkins job to launch.
+    //  parameters       [List]    - OPTIONAL List of jenkins parameters to the job, example:
+    //                                        [
+    //                                            (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1"),
+    //                                            (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2")
+    //                                        ]
+    //                                        If there are no parameters, an empty list [] or null can be used.
+    //  quiet_period     [Integer] - OPTIONAL Quiet period (seconds).  Default=1
+    //  timeout          [Integer] - OPTIONAL Timeout duration.  Default=90
+    //  timeout_unit     [String]  - OPTIONAL Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
+    //  propagate_error  [Boolean] - OPTIONAL Propagate error to overall pipeline?  { true, false }
+    //  dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (task will not be launched).
+    //  dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
+    //                                        Must be one of {SUCCESS, FAILURE, UNSTABLE}
     //
-    def appendTask(String  task_label,
-                   String  jenkins_job_name,
-                   List    parameters,
-                   Integer quiet_period,
-                   Integer timeout,
-                   String  timeout_unit,
-                   Boolean propagate_error,
-                   Boolean dry_run=false,
-                   String  dry_run_status="SUCCESS")
+    //  Example:
+    //     appendTask(label: "T1", job_name: "Jenkins-Job-To-Launch")
+    //
+    def appendTask(Map params)
     {
-        Script.env.println "Add task ${task_label}"
-        this._taskList[task_label] = [ jenkins_job_name: jenkins_job_name,
-                                       parameters:       parameters,
-                                       quiet_period:     quiet_period,
-                                       timeout:          timeout,
-                                       timeout_unit:     timeout_unit,
-                                       propagate_error:  propagate_error,
-                                       dry_run:          dry_run,
-                                       dry_run_status:   dry_run_status
+        assert params.containsKey("label")
+        assert params.containsKey("job_name")
+
+        def task = new _task_parameters()
+
+        task.label    = params.label
+        task.job_name = params.job_name
+
+        if(params.containsKey("parameters"))      { task.parameters      = params.parameters      }
+        if(params.containsKey("quiet_period"))    { task.quiet_period    = params.quiet_period    }
+        if(params.containsKey("timeout"))         { task.timeout         = params.timeout         }
+        if(params.containsKey("timeout_unit"))    { task.timeout_unit    = params.timeout_unit    }
+        if(params.containsKey("propagate_error")) { task.propagate_error = params.propagate_error }
+        if(params.containsKey("dry_run"))         { task.dry_run         = params.dry_run         }
+        if(params.containsKey("dry_run_status"))  { task.dry_run_status  = params.dry_run_status  }
+
+        Script.env.println "Add task ${task.label}"
+        this._taskList[task.label] = [ jenkins_job_name: task.job_name,
+                                       parameters:       task.parameters,
+                                       quiet_period:     task.quiet_period,
+                                       timeout:          task.timeout,
+                                       timeout_unit:     task.timeout_unit,
+                                       propagate_error:  task.propagate_error,
+                                       dry_run:          task.dry_run,
+                                       dry_run_status:   task.dry_run_status
                                      ]
     }
 
@@ -218,6 +245,5 @@ class parallelTestLauncher
     }
 
 }  // class parallelTestLauncher
-
 
 
