@@ -1,0 +1,638 @@
+// -----------------------------------------------------------------------------
+//
+// Jenkinsfiles that clones multiple repositories into a worksapce.
+//
+// Runs on nodes labeled either 'master' or 'centos7'.
+//
+// -----------------------------------------------------------------------------
+
+
+
+// Set the static reference in the script...
+// This is kind of a hack, but it makes a lot of things work.
+Script.env = this
+public class Script
+{
+  public static env
+}
+
+
+
+// Configure Build Parameters
+// - buildDiscarder: Handles Log Rotations, etc.
+//
+// Some Additional Options:
+// - Add parameter(s) to the jenkins job:
+//
+//     parameters([string(name: 'PARAM_TEST', defaultValue: 'default_value', description: 'Test Parameter')])
+//
+// - Disable concurrent builds:
+//
+//     disableConcurrentBuilds()
+//
+// - Run the job on a CRON setting (midnight in Mountain Timezone):
+//
+//     pipelineTriggers([ cron("""TZ=America/Denver\n0 0 * * *""")])
+//
+properties([
+    buildDiscarder(
+        logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
+    ),
+    disableConcurrentBuilds(),
+    parameters([ booleanParam(name: 'DryRun',
+                              defaultValue: true,
+                              description: '''dry-run mode: echo commands but don't run anything''')
+               ])
+])
+
+
+
+// ----[ class parallelTestLauncher ]------------------------------------------
+//
+// Class to handle organizing and launching Jenkins jobs in parallel.
+//
+class parallelTestLauncher
+{
+    // Member Variables
+    private Map _taskList                  // The tasks + their parameters
+    private Map _lastResultSummary         // Status on the latest results
+
+
+    // ----[ Constructor ]-----------------------------------------------------
+    parallelTestLauncher()
+    {
+        // Set Parameter Default(s)
+        this._taskList = [:]
+        this._lastResultSummary = [:]
+    }
+
+
+    // ----[ appendTask ]------------------------------------------------------
+    //
+    //  Add a new task/job into the task list.
+    //
+    //  param task_label       [String]  - REQUIRED Task label name.
+    //  param jenkins_job_name [String]  - REQUIRED Name of Jenkins job to launch.
+    //  param parameters       [List]    - REQUIRED List of jenkins parameters to the job, example:
+    //                                              [
+    //                                                  (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1"),
+    //                                                  (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2")
+    //                                              ]
+    //                                              If there are no parameters, an empty list [] or null can be used.
+    //  param quiet_period     [Integer] - REQUIRED Quiet period (seconds)
+    //  param timeout          [Integer] - REQUIRED Timeout duration.
+    //  param timeout_unit     [String]  - REQUIRED Timeout Unit {HOURS, MINUTES, SECONDS}
+    //  param propagate_error  [Boolean] - REQUIRED Propagate error to overall pipeline?  { true, false }
+    //  param dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (task will not be launched).
+    //  param dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
+    //                                              Must be one of {SUCCESS, FAILURE, UNSTABLE}
+    //
+    def appendTask(String  task_label,
+                   String  jenkins_job_name,
+                   List    parameters,
+                   Integer quiet_period,
+                   Integer timeout,
+                   String  timeout_unit,
+                   Boolean propagate_error,
+                   Boolean dry_run=false,
+                   String  dry_run_status="SUCCESS")
+    {
+        Script.env.println "Add task ${task_label}"
+        this._taskList[task_label] = [ jenkins_job_name: jenkins_job_name,
+                                       parameters:       parameters,
+                                       quiet_period:     quiet_period,
+                                       timeout:          timeout,
+                                       timeout_unit:     timeout_unit,
+                                       propagate_error:  propagate_error,
+                                       dry_run:          dry_run,
+                                       dry_run_status:   dry_run_status
+                                     ]
+    }
+
+
+    // ----[ clearTasks ]------------------------------------------------------
+    //
+    //  Clear / Reset the task list and result summary.
+    //
+    def clearTasks()
+    {
+        this._taskList.clear()
+        this._resetLastResultSummary()
+    }
+
+
+    // ----[ launchTasksInParallel ]-------------------------------------------
+    //
+    //  Launch the jobs in parallel
+    //
+    def launchTasksInParallel()
+    {
+        def builders = [:]
+        def results  = [:]
+
+        // Construct the execution 'block' that will be executed concurrently for each of the tasks
+        this._taskList.each
+        {   _t ->
+            def task = _t
+            results[task.key] = "UNKNOWN"
+            builders[task.key] =
+            {
+                // Everything within this scope level is executed...
+                Script.env.timeout(time: task.value.timeout, unit: task.value.timeout_unit)
+                {
+                    Script.env.node
+                    {
+                        if(task.value.dry_run)
+                        {
+                            Script.env.println ">>> DRY RUN MODE <<<"
+                            results[task.key] = task.value.dry_run_status
+                        }
+                        else
+                        {
+                            def status = Script.env.build job        : task.value.jenkins_job_name,
+                                                          parameters : task.value.parameters,
+                                                          quietPeriod: task.value.quiet_period,
+                                                          propagate  : task.value.propagate_error
+
+                            // Save the result of the test that was run.
+                            results[task.key] = status.getResult()
+                        }
+                        Script.env.println "${task.value.jenkins_job_name} = ${results[task.key]}"
+                    }
+                }
+            }
+        }
+
+        // Launch the jobs in parallel
+        Script.env.parallel builders
+
+        // Update the result summary
+        this._resetLastResultSummary()
+        results.each
+        { _r ->
+          def r = _r
+            Script.env.println ">>> r = ${r}"
+            this._updateLastResultSummary(r.value)
+        }
+
+        return results
+    }
+
+
+    // ----[ getLastResultSummary ]--------------------------------------------
+    //
+    // Get a summary of the most recent set of tests.
+    //
+    // Returns a Map: ["NUMTESTS"   : <# of tasks run>,
+    //                 "NUMSUCCESS" : <# of SUCCESS tasks>,
+    //                 "NUMFAILURE" : <# of FAILURE tasks>,
+    //                 "NUMUNSTABLE": <# of UNSTABLE tasks>
+    //                ]
+    //
+    def getLastResultSummary()
+    {
+        return this._lastResultSummary
+    }
+
+
+    // ----[ printTaskList ]---------------------------------------------------
+    //
+    //  Pretty print the task list.
+    //
+    def printTaskList()
+    {
+        String strTasks = "----[ TaskList ]----------\n"
+        for(task in this._taskList)
+        {
+            strTasks += "${task.key}:\n"
+            // strTasks += " - ${task.value}\n"
+            strTasks += " - jenkins_job_name: " + task.value["jenkins_job_name"] + "\n"
+            strTasks += " - quiet_period    : " + task.value["quiet_period"] + "\n"
+            strTasks += " - timeout         : " + task.value["timeout"] + "\n"
+            strTasks += " - timeout_unit    : " + task.value.timeout_unit + "\n"
+            strTasks += " - propagate_error : " + task.value["propagate_error"] + "\n"
+            strTasks += " - dry_run         : " + task.value.dry_run + "\n"
+            strTasks += " - dry_run_status  : " + task.value.dry_run_status + "\n"
+            strTasks += " - parameters      : \n"
+            for(param in task.value["parameters"])
+            {
+                strTasks += "     " + param + "\n"
+            }
+        }
+        Script.env.println "${strTasks}"
+    }
+
+
+    // -------------------------------------------------------------------------
+    // ----[ PRIVATE METHODS ]--------------------------------------------------
+    // -------------------------------------------------------------------------
+
+
+    // ----[ _resetLastResultSummary ]------------------------------------------
+    def _resetLastResultSummary()
+    {
+        this._lastResultSummary.clear()
+        this._lastResultSummary["NUMTESTS"]    = this._taskList.size()
+        this._lastResultSummary["NUMSUCCESS"]  = 0
+        this._lastResultSummary["NUMFAILURE"]  = 0
+        this._lastResultSummary["NUMUNSTABLE"] = 0
+    }
+
+
+    // ----[ _updateLastResultSummary ]-----------------------------------------
+    def _updateLastResultSummary(String status)
+    {
+        String statusKey = "NUM" + status
+        this._lastResultSummary[statusKey] += 1
+    }
+
+}  // class parallelTestLauncher
+
+
+
+
+// ----[ class emailMessageBuilder ]-------------------------------------------
+//
+// Helper class to generate formatted emails by consolidating all the STYLE and
+// HEADER information for HTML style emails.  This can be expanded later to include
+// canned emails for the different status messages that we will generate in this
+// pipeline job.
+//
+// Canned email types are set by the emailType parameter.  Currently there are
+// the following types:
+// - SUCCESS : Canned email for SUCCESS status.
+// - FAILURE : Canned email for FAILURE status.
+// - CUSTOM  : Customizable email address.
+//
+class emailMessageBuilder
+{
+    // Member Variables
+    private String _emailBody     // (optional), if emailType is Custom, then use this.
+    private String _recipients    // comma-separated list of email address "person1@foo.com, person2@foo.com"
+    private String _replyTo       // Who should responses go to?
+    private String _emailType     // Notification Type - { "SUCCESS", "FAILURE", "CUSTOM" etc. }
+    private String _emailSubject  // Email Title
+
+
+    // ----[ Constructor ]-----------------------------------------------------
+    //
+    // param emailType  [String] - Email Class.  Canned values are { SUCCESS, FAILURE, CUSTOM }
+    // param recipients [String] - Recipient list.
+    //                             Comma-separated list of email recipients: "one@foo.com, two@foo.com"
+    // param replyTo    [String] - Reply-To email address. Example: "bar@foo.com"
+    //
+    emailMessageBuilder(String emailType, String recipients, String replyTo)
+    {
+        this._emailType    = emailType
+        this._replyTo      = replyTo
+        this._recipients   = recipients
+
+        switch(emailType)
+        {
+            case "FAILURE":
+                this._emailSubject = "[Jenkins] Test Failure!"
+                this._emailBody = "<P>TEST FAILURE</P>"
+                break
+            case "SUCCESS":
+                this._emailSubject = "[Jenkins] Test Success!"
+                this._emailBody = "<P>TEST SUCCESS</P>"
+                break
+            case "CUSTOM":
+            default:
+                this._emailSubject = "Status"
+                this._emailType = "CUSTOM"
+                break
+        }
+    }
+
+
+    // ----[ setCustomEmailBody ]-----------------------------------------------
+    //
+    //  Set up a custom email.
+    //
+    //  param subject [String] : The subject of the email.
+    //  param body    [String] : The email body.  This can be text or HTML
+    //                           If HTML then this is the content that goes
+    //                           inside the <BODY></BODY> section.
+    //
+    def setCustomEmail(String subject, String body)
+    {
+        this._emailSubject = subject
+        this._emailBody = body
+    }
+
+
+    // ----[ sendEmail ]--------------------------------------------------------
+    //
+    //  Send the email.
+    //
+    def send()
+    {
+        String emailBody = this._getTemplate().replace("{{EMAIL_BODY}}", this._emailBody)
+
+        Script.env.emailext(body: "${emailBody}", \
+                                    compressLog: true,         \
+                                    replyTo: this._replyTo,    \
+                                    subject: this._emailSubject, \
+                                    to: this._recipients,      \
+                                    mimeType: 'text/html')
+    }
+
+
+    // -------------------------------------------------------------------------
+    // ----[ PRIVATE METHODS ]--------------------------------------------------
+    // -------------------------------------------------------------------------
+
+
+    // ----[ _getTemplate ]-----------------------------------------------------
+    //
+    // Private method.  Generates a template email HTML header with style
+    // rules,etc.  The body can be customized with the setCustomEmail() method
+    // or specific "canned" emails can be generated.
+    //
+    def _getTemplate()
+    {
+        String template = """
+            <!DOCTYPE html>
+            <HTML>
+            <HEAD>
+                <STYLE>
+                table, th, td {
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 5px;
+                font-family: monospace;
+                font-size: 12px;
+                }
+                table {
+                    border-spacing: 5px;
+                    vertical-align: middle;
+                }
+                th {
+                    background-color: #AFAFAF;
+                    font-weight: bold;
+                    font-size: 14px;
+                    text-align: center;
+                }
+                tr:nth-child(even) {
+                    background-color: #E9E9E8;
+                }
+                tr:nth-child(odd) {
+                    background-color: #FFEFE;
+                }
+                tr.SUCCESS td {
+                    background-color: #80BD73;
+                }
+                tr.FAILURE td {
+                    background-color: #E38E89;
+                }
+                tr.UNSTABLE td {
+                    background-color: #E3D389;
+                }
+                .tc1 td:nth-child(1), .tc1 th:nth-child(1),
+                .tc2 td:nth-child(2), .tc2 th:nth-child(2),
+                .tc3 td:nth-child(3), .tc3 th:nth-child(3),
+                .tc4 td:nth-child(4), .tc4 th:nth-child(4),
+                .tc5 td:nth-child(5), .tc5 th:nth-child(5),
+                .tc6 td:nth-child(6), .tc6 th:nth-child(6),
+                .tc7 td:nth-child(7), .tc7 th:nth-child(7),
+                .tc8 td:nth-child(8), .tc8 th:nth-child(8),
+                .tc9 td:nth-child(9), .tc9 th:nth-child(9)  { text-align:center }
+                .tr1 td:nth-child(1), .tr1 th:nth-child(1),
+                .tr2 td:nth-child(2), .tr2 th:nth-child(2),
+                .tr3 td:nth-child(3), .tr3 th:nth-child(3),
+                .tr4 td:nth-child(4), .tr4 th:nth-child(4),
+                .tr5 td:nth-child(5), .tr5 th:nth-child(5),
+                .tr6 td:nth-child(6), .tr6 th:nth-child(6),
+                .tr7 td:nth-child(7), .tr7 th:nth-child(7),
+                .tr8 td:nth-child(8), .tr8 th:nth-child(8),
+                .tr9 td:nth-child(9), .tr9 th:nth-child(9)  { text-align:right }
+                </STYLE>
+            </HEAD>
+            <BODY>
+            {{EMAIL_BODY}}
+            </BODY>
+            </HTML>
+            """.stripIndent()
+        return template
+    }
+
+} // class emailMessageBuilder
+
+
+
+// ----[ Main Pipeline Entry Point ]-------------------------------------------
+node('master || centos7')
+{
+    // Declare "pipeline-global" vars for passing information down through the pipeline from
+    // stage to stage.
+    def statusStage = 0
+    def devOpsTeamEmail = "wcmclen@sandia.gov"
+    def dry_run = false
+    if(params.DryRun)
+    {
+        dry_run = true
+    }
+
+
+    // ----[ begin stage: Clone BuildScripts ]-----------------------
+    stage('Clone BuildScripts')
+    {
+        timestamps
+        {
+            // Clone gitlab.sandia.gov/EM-Plasma/BuildScripts
+            timeout(time: 90, unit: 'SECONDS')
+            {
+                dir('BuildScripts')
+                {
+                    git url: 'git@gitlab.sandia.gov:wcmclen/BuildScripts.git', branch: 'develop'
+                }
+            }
+        }
+
+        // Since the jenkinsfile drving this job also lives in the buildScripts repository,
+        // let's archive it as an artifact to this job as a convenience to make life a little
+        // easier when looking at jenkins logs to know *exactly* what was being run in the
+        // pipeline.
+        archiveArtifacts(artifacts: 'BuildScripts/jenkins/controller.jenkinsfile', fingerprint: true)
+    }
+    // ----[ end stage: Clone BuildScripts ]-------------------------
+
+
+    // ----[ begin stage: Update Branch: potential-develop ]---------
+    stage('Update Branch: potential-develop')
+    {
+        def status = 0
+
+        timestamps
+        {
+            println ">>> Execute script: BuildScripts/trilinos_sync/checkForUpdate"
+            if(dry_run)
+            {
+                println "status = sh(script: 'BuildScripts/trilinos_sync/checkForUpdate', returnStatus: true)"
+            }
+            else
+            {
+                status = sh(script: 'BuildScripts/trilinos_sync/checkForUpdate', returnStatus: true)
+            }
+            println ">>> Script Completed."
+        }
+
+        // Handle the results of the script and take appropriate action(s) if necessary.
+        def message = new emailMessageBuilder("CUSTOM", devOpsTeamEmail, devOpsTeamEmail)
+        switch(status)
+        {
+            case 0:
+                // Everything is ok, there were updates so we should proceed with the pipeline.
+                println ">>> All is good, updates detected."
+                break
+            case 1:
+                // Everything is ok, but there were no updates so no need to proceed.
+                // Email DevOPs to let them know there was nothing updated.
+                message.setCustomEmail("Empire: No Update", "Trilinos::develop to EM-Plasma::potential-develp had no updates.")
+                message.send()
+                println ">>> All is good, but there's nothing to do."
+                statusStage = 1
+                break
+            case 2:
+                // Something bad happened in the update.  Notify DevOPs to go fix the repo
+                // and pummel the author of the offending checkin.
+                println ">>> People did naughty things, abort and fail the job."
+                message.setCustomEmail("Empire: Bad Update", "Trilinos::develop to EM-Plasma::potential-develop failed due to FF problems.")
+                message.send()
+                statusStage = 2
+                currentBuild.result='FAILURE'
+                break
+            default:
+                // Wat?  Something unexpected happened.  Terminate pipeline and email DevOPs
+                message.setCustomEmail("Empire: Unknown Error", "checkForUpdate returned an unknown status code, attention is required.")
+                message.send()
+                println ">>> An unexpected result came from the script, abort and fail the job."
+                statusStage = 2
+                currentBuild.result='FAILURE'
+                break
+        }
+    }
+    // ----[ end stage: Update Branch: potential-develop ]-----------
+
+
+    // Check status value after stage to exit or continue pipeline
+    if(statusStage != 0)
+    {
+        println ">>> Stage [Update Branch: potential-develop] Terminating Pipeline"
+        return
+    }
+    else
+    {
+        println ">>> Stage [Update Branch: potential-develop] OK"
+    }
+
+
+    // ----[ begin stage: Build and Test: potential-develop ]-----------
+    stage('Build and Test: potential-develop')
+    {
+        // Set up generic parameters
+        Integer quiet_period    = 1
+        Integer timeout         = 6
+        String  timeout_unit    = "HOURS"
+        Boolean propagate_error = false
+        Boolean dryrun          = false
+
+        // Create parallel test launcher object
+        def launcher = new parallelTestLauncher()
+
+        launcher.appendTask("T1", "EMPIRE_EM-Plasma-Trilinos-shiller-gnu-debug-openmp",
+                            null, quiet_period, timeout, timeout_unit, propagate_error,
+                            dry_run, "SUCCESS")
+
+        launcher.appendTask("T2", "EMPIRE_EM-Plasma-Trilinos-shiller-gnu-debug-serial",
+                            null, quiet_period, timeout, timeout_unit, propagate_error,
+                            dry_run, "SUCCESS")
+
+        launcher.appendTask("T3", "EMPIRE_EM-Plasma-Trilinos-shiller-gnu-opt-openmp",
+                            null, quiet_period, timeout, timeout_unit, propagate_error,
+                            dry_run, "SUCCESS")
+
+        launcher.appendTask("T4", "EMPIRE_EM-Plasma-Trilinos-shiller-gnu-opt-serial",
+                            null, quiet_period, timeout, timeout_unit, propagate_error,
+                            dry_run, "SUCCESS")
+
+        // Print out the taskList  (debugging)
+        launcher.printTaskList()
+
+        // Launch the tasks in parallel and capture results into a map [ {label1:status1}, {label2:status2}, ... ]
+        def results = launcher.launchTasksInParallel()
+
+        // Process the results.
+
+        // Reset statusStage flag to 0
+        statusStage = 0
+
+        // launcher.printTaskList()
+        println "Results: ${results}"
+
+        def lrs = launcher.getLastResultSummary()
+        println "Result Summary: ${lrs}"
+
+
+        // If the # of tests and numer of successes don't match, then SOMETHING failed.
+        def message = new emailMessageBuilder("CUSTOM", devOpsTeamEmail, devOpsTeamEmail)
+        if( lrs["NUMSUCCESS"] != lrs["NUMTESTS"] )
+        {
+            println ">>> Testing potential-develop had failures, notifying DevOPS"
+            def String message_body = """
+            EMPIRE Testing of the potential-develop branch failed.<BR>
+            <BR>
+            <table class="tc2">
+              <tr><th>Summary Stat</th><th>Count</th></tr>
+              <tr><td>Num Tests</td><td>${lrs.NUMTESTS}</td></tr>
+              <tr><td>Num Tests Passed</td><td>${lrs.NUMSUCCESS}</td></tr>
+              <tr{{CLASSFAIL}}><td>Num Tests Failed</td><td>${lrs.NUMFAILURE}</td></tr>
+              <tr{{CLASSUNSTABLE}}><td>Num Tests Unstable</td><td>${lrs.NUMUNSTABLE}</td></tr>
+            </table>
+            """.stripIndent()
+
+            // customize the email a little to include numbers.
+            // -- this should probably go into a function later on or have a generic capability pulled
+            //    into class messageBuilder
+            if(lrs["NUMFAILURE"] > 0)
+            {
+                message_body = message_body.replace("{{CLASSFAIL}}", " class='FAILURE'")
+            }
+            else
+            {
+                message_body = message_body.replace("{{CLASSFAIL}}", "")
+            }
+            if(lrs["NUMUNSTABLE"] > 0)
+            {
+                message_body = message_body.replace("{{CLASSUNSTABLE}}", " class='UNSTABLE'")
+            }
+            else
+            {
+                message_body = message_body.replace("{{CLASSFAIL}}", "")
+            }
+            message.setCustomEmail("[Empire]: Testing branch (potential-develop) failed!", message_body)
+            message.send()
+            statusStage = 1
+            currentBuild.result='FAILURE'
+        }
+
+    }
+    // ----[ end stage: Build and Test: potential-develop ]-----------
+
+
+    // Check status value after stage to exit or continue pipeline
+    if(statusStage != 0)
+    {
+        println ">>> Stage [Build and Test: potential-develop] Terminating Pipeline"
+        return
+    }
+    else
+    {
+        println ">>> Stage [Build and Test: potential-develop] OK"
+    }
+
+
+}  // END node()
+
+
