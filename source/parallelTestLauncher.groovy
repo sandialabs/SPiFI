@@ -44,27 +44,27 @@ class parallelTestLauncher
     //
     //  param task_label       [String]  - REQUIRED Task label name.
     //  param jenkins_job_name [String]  - REQUIRED Name of Jenkins job to launch.
-    //  param parameters       [List]    - REQUIRED List of jenkins parameters to the job, example:
+    //  param parameters       [List]    - OPTIONAL List of jenkins parameters to the job, example:
     //                                              [
     //                                                  (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1"),
     //                                                  (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2")
     //                                              ]
     //                                              If there are no parameters, an empty list [] or null can be used.
-    //  param quiet_period     [Integer] - REQUIRED Quiet period (seconds)
-    //  param timeout          [Integer] - REQUIRED Timeout duration.
-    //  param timeout_unit     [String]  - REQUIRED Timeout Unit {HOURS, MINUTES, SECONDS}
-    //  param propagate_error  [Boolean] - REQUIRED Propagate error to overall pipeline?  { true, false }
+    //  param quiet_period     [Integer] - OPTIONAL Quiet period (seconds).  Default=1
+    //  param timeout          [Integer] - OPTIONAL Timeout duration.  Default=90
+    //  param timeout_unit     [String]  - OPTIONAL Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
+    //  param propagate_error  [Boolean] - OPTIONAL Propagate error to overall pipeline?  { true, false }
     //  param dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (task will not be launched).
     //  param dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
     //                                              Must be one of {SUCCESS, FAILURE, UNSTABLE}
     //
     def appendTask(String  task_label,
                    String  jenkins_job_name,
-                   List    parameters,
-                   Integer quiet_period,
-                   Integer timeout,
-                   String  timeout_unit,
-                   Boolean propagate_error,
+                   List    parameters=null,
+                   Integer quiet_period=1,
+                   Integer timeout=90,
+                   String  timeout_unit="MINUTES",
+                   Boolean propagate_error=false,
                    Boolean dry_run=false,
                    String  dry_run_status="SUCCESS")
     {
