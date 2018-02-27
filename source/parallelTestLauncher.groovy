@@ -36,6 +36,8 @@ class parallelTestLauncher
         Boolean propagate_error = false
         Boolean dry_run         = false
         String  dry_run_status  = "SUCCESS"
+        Integer dry_run_delay   = 30
+        String  monitor_node    = "master"
     }
 
 
@@ -73,6 +75,12 @@ class parallelTestLauncher
     //  dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (task will not be launched).
     //  dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
     //                                        Must be one of {SUCCESS, FAILURE, UNSTABLE}
+    //  dry_run_delay    [Integer] - OPTIONAL If dry_run is true, this introduces a delay (in seconds)
+    //                                        for the 'simulated' job.  Default: 30
+    //  monitor_node     [String]  - OPTIONAL Node expression for the Jenkins "node" where the task
+    //                                        monitor will run.  Note: This does not affect where the
+    //                                        job itself will run since that's controlled by the job
+    //                                        itself (or should be).
     //
     //  Example:
     //     appendTask(label: "T1", job_name: "Jenkins-Job-To-Launch")
@@ -94,6 +102,8 @@ class parallelTestLauncher
         if(params.containsKey("propagate_error")) { task.propagate_error = params.propagate_error }
         if(params.containsKey("dry_run"))         { task.dry_run         = params.dry_run         }
         if(params.containsKey("dry_run_status"))  { task.dry_run_status  = params.dry_run_status  }
+        if(params.containsKey("dry_run_delay"))   { task.dry_run_delay   = params.dry_run_delay   }
+        if(params.containsKey("monitor_node"))    { task.monitor_node    = params.monitor_node    }
 
         Script.env.println "Add task ${task.label}"
         this._taskList[task.label] = [ jenkins_job_name: task.job_name,
@@ -103,7 +113,9 @@ class parallelTestLauncher
                                        timeout_unit:     task.timeout_unit,
                                        propagate_error:  task.propagate_error,
                                        dry_run:          task.dry_run,
-                                       dry_run_status:   task.dry_run_status
+                                       dry_run_status:   task.dry_run_status,
+                                       dry_run_delay:    task.dry_run_delay,
+                                       monitor_node:     task.monitor_node
                                      ]
     }
 
@@ -136,14 +148,16 @@ class parallelTestLauncher
             builders[task.key] =
             {
                 // Everything within this scope level is executed...
-                Script.env.timeout(time: task.value.timeout, unit: task.value.timeout_unit)
+
+                Script.env.node(task.value.monitor_node)
                 {
-                    Script.env.node
+                    Script.env.timeout(time: task.value.timeout, unit: task.value.timeout_unit)
                     {
                         if(task.value.dry_run)
                         {
                             Script.env.println ">>> DRY RUN MODE <<<"
                             results[task.key] = task.value.dry_run_status
+                            Script.env.sleep task.value.dry_run_delay
                         }
                         else
                         {
@@ -205,12 +219,14 @@ class parallelTestLauncher
             strTasks += "${task.key}:\n"
             // strTasks += " - ${task.value}\n"
             strTasks += " - jenkins_job_name: " + task.value["jenkins_job_name"] + "\n"
+            strTasks += " - monitor_node    : " + task.value["monitor_node"] + "\n"
             strTasks += " - quiet_period    : " + task.value["quiet_period"] + "\n"
             strTasks += " - timeout         : " + task.value["timeout"] + "\n"
             strTasks += " - timeout_unit    : " + task.value.timeout_unit + "\n"
             strTasks += " - propagate_error : " + task.value["propagate_error"] + "\n"
             strTasks += " - dry_run         : " + task.value.dry_run + "\n"
             strTasks += " - dry_run_status  : " + task.value.dry_run_status + "\n"
+            strTasks += " - dry_run_delay   : " + task.value.dry_run_delay + "\n"
             strTasks += " - parameters      : \n"
             for(param in task.value["parameters"])
             {
@@ -245,5 +261,6 @@ class parallelTestLauncher
     }
 
 }  // class parallelTestLauncher
+
 
 
