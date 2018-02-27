@@ -119,7 +119,7 @@ class emailMessageBuilder
     //
     def _getTemplate()
     {
-        String email_template = """
+        String template = """
             <!DOCTYPE html>
             <HTML>
             <HEAD>
@@ -136,17 +136,48 @@ class emailMessageBuilder
                     vertical-align: middle;
                 }
                 th {
-                    background-color: #AFAFAF;
                     font-weight: bold;
-                    font-size: 14px;
-                    text-align: center;
+                    font-size:   14px;
+                    text-align:  center;
                 }
-                tr:nth-child(even) {
-                    background-color: #E9E9E8;
+
+                /* Light Background Theme */
+                .bgLight th {
+                    background-color: #AFAFAF;
                 }
-                tr:nth-child(odd) {
-                    background-color: #FFEFE;
+                .bgLight tr:nth-child(even) {
+                    background-color: #D9D9D8;
                 }
+                .bgLight tr:nth-child(odd) {
+                    background-color: #FFEFEE;
+                }
+
+                /* Dark Background Theme */
+                .bgDark th {
+                    background-color: #0C1A49;
+                    color: #737785;
+                }
+                .bgDark tr:nth-child(even) {
+                    background-color: #545867;
+                    color: #151A2B;
+                }
+                .bgDark tr:nth-child(odd) {
+                    background-color: #1E212C;
+                    color: #737785;
+                }
+
+                /* Green Background Theme */
+                .bgGreen th {
+                    background-color: #AFAFAF;
+                }
+                .bgGreen tr:nth-child(even) {
+                    background-color: #B1E894;
+                }
+                .bgGreen tr:nth-child(odd) {
+                    background-color: #8CD564;
+                }
+
+                /* Status based themes */
                 tr.SUCCESS td {
                     background-color: #80BD73;
                 }
@@ -156,6 +187,8 @@ class emailMessageBuilder
                 tr.UNSTABLE td {
                     background-color: #E3D389;
                 }
+
+                /* Center columns [1-9] */
                 .tc1 td:nth-child(1), .tc1 th:nth-child(1),
                 .tc2 td:nth-child(2), .tc2 th:nth-child(2),
                 .tc3 td:nth-child(3), .tc3 th:nth-child(3),
@@ -181,7 +214,7 @@ class emailMessageBuilder
             </BODY>
             </HTML>
             """.stripIndent()
-        return email_template
+        return template
     }
 
 } // class emailMessageBuilder
