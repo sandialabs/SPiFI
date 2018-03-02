@@ -12,7 +12,7 @@
 //  - 
 //
 ////////////////////////////////////////////////////////////////////////////////
-
+package gov.sandia.sems.spifi;
 
 
 // ----[ class EmailMessage ]-------------------------------------------
@@ -28,9 +28,10 @@
 // - FAILURE : Canned email for FAILURE status.
 // - CUSTOM  : Customizable email address.
 //
-class EmailMessage
+class EmailMessage implements Serializable
 {
     // Member Variables
+    private static _env           // Requird Jenkins environment.
     private String _emailBody     // (optional), if emailType is Custom, then use this.
     private String _recipients    // comma-separated list of email address "person1@foo.com, person2@foo.com"
     private String _replyTo       // Who should responses go to?
@@ -45,8 +46,9 @@ class EmailMessage
     //                             Comma-separated list of email recipients: "one@foo.com, two@foo.com"
     // param replyTo    [String] - Reply-To email address. Example: "bar@foo.com"
     //
-    EmailMessage(String emailType, String recipients, String replyTo)
+    EmailMessage(env, String emailType, String recipients, String replyTo)
     {
+        this._env          = env
         this._emailType    = emailType
         this._replyTo      = replyTo
         this._recipients   = recipients
@@ -94,12 +96,12 @@ class EmailMessage
     {
         String emailBody = this._getTemplate().replace("{{EMAIL_BODY}}", this._emailBody)
 
-        emailext(body: "${emailBody}",              \
-                       compressLog: true,           \
-                       replyTo: this._replyTo,      \
-                       subject: this._emailSubject, \
-                       to: this._recipients,        \
-                       mimeType: 'text/html')
+        this._env.emailext(body: "${emailBody}",        \
+                           compressLog: true,           \
+                           replyTo: this._replyTo,      \
+                           subject: this._emailSubject, \
+                           to: this._recipients,        \
+                           mimeType: 'text/html')
     }
 
 
@@ -215,5 +217,4 @@ class EmailMessage
     }
 
 } // class EmailMessage
-
 

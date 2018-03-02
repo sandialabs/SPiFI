@@ -1,10 +1,10 @@
-package gov.sandia.sems.simpl;
+package gov.sandia.sems.spifi;
 
 def hello() 
 {
   println "Hello World!"
 }
 
-// return this
+//return this
 
 
