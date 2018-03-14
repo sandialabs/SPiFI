@@ -23,14 +23,14 @@ class ParallelJobLauncher
         String  label           = "__REQUIRED__"
         String  job_name        = "__REQUIRED__"
         List    parameters      = null
-        Integer quiet_period    = 10
+        Integer quiet_period    = 0
         Integer timeout         = 90
         String  timeout_unit    = "MINUTES"
         Boolean propagate_error = false
         Boolean dry_run         = false
         String  dry_run_status  = "SUCCESS"
         Integer dry_run_delay   = 30
-        String  monitor_node    = "master"
+        String  monitor_node    = ""
     }
 
 
@@ -59,11 +59,11 @@ class ParallelJobLauncher
     //  job_name         [String]  - REQUIRED Name of Jenkins job to launch.
     //  parameters       [List]    - OPTIONAL List of jenkins parameters to the job, example:
     //                                        [
-    //                                            (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1"),
-    //                                            (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2")
+    //                                            (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1")),
+    //                                            (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2"))
     //                                        ]
     //                                        If there are no parameters, an empty list [] or null can be used.
-    //  quiet_period     [Integer] - OPTIONAL Quiet period (seconds).  Default=10
+    //  quiet_period     [Integer] - OPTIONAL Quiet period (seconds).  Default=0
     //  timeout          [Integer] - OPTIONAL Timeout duration.  Default=90
     //  timeout_unit     [String]  - OPTIONAL Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
     //  propagate_error  [Boolean] - OPTIONAL Propagate error to overall pipeline?  { true, false }
@@ -75,7 +75,8 @@ class ParallelJobLauncher
     //  monitor_node     [String]  - OPTIONAL Node expression for the Jenkins "node" where the job
     //                                        monitor will run.  Note: This does not affect where the
     //                                        job itself will run since that's controlled by the job
-    //                                        itself (or should be).
+    //                                        itself (or should be).  If omitted then no 'monitor' job
+    //                                        will be created.
     //
     //  Example:
     //     appendJob(label: "T1", job_name: "Jenkins-Job-To-Launch")
@@ -142,30 +143,17 @@ class ParallelJobLauncher
             results[job.key] = "UNKNOWN"
             builders[job.key] =
             {
-                // Everything within this scope level is executed...
-
-                this.env.node(job.value.monitor_node)
+                // TODO: Add in the with/without monitor node stuff (maybe key off whether or not one was provided in args)
+                // TODO: Note that the quiet_period will prevent the -exact-same- job from getting launched multiple times...
+                //       set it to zero and you can kick off the same job and it'll launch concurrently (if allowed)
+                //results << this._jobBodyWithMonitorNode(job)
+                if(job.value.monitor_node == "")
                 {
-                    this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
-                    {
-                        if(job.value.dry_run)
-                        {
-                            this.env.println ">>> DRY RUN MODE <<<"
-                            results[job.key] = job.value.dry_run_status
-                            this.env.sleep job.value.dry_run_delay
-                        }
-                        else
-                        {
-                            def status = this.env.build job        : job.value.jenkins_job_name,
-                                                        parameters : job.value.parameters,
-                                                        quietPeriod: job.value.quiet_period,
-                                                        propagate  : job.value.propagate_error
-
-                            // Save the result of the test that was run.
-                            results[job.key] = status.getResult()
-                        }
-                        this.env.println "${job.value.jenkins_job_name} = ${results[job.key]}"
-                    }
+                        results << this._jobBodyWithoutMonitorNode(job)
+                }
+                else
+                {
+                    results << this._jobBodyWithMonitorNode(job)
                 }
             }
         }
@@ -184,6 +172,7 @@ class ParallelJobLauncher
 
         return results
     }
+
 
 
     // ----[ getLastResultSummary ]--------------------------------------------
@@ -235,6 +224,65 @@ class ParallelJobLauncher
     // -------------------------------------------------------------------------
     // ----[ PRIVATE METHODS ]--------------------------------------------------
     // -------------------------------------------------------------------------
+
+
+    // ----[ _jobBody ]---------------------------------------------------------
+    //
+    // The actual body 'launcher' of the job.
+    //
+    def _jobBody(job)
+    {
+        def results = [:]
+
+        // Everything after this level is executed...
+        this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
+        {
+            if(job.value.dry_run)
+            {
+                this.env.println ">>> DRY RUN MODE <<<"
+                results[job.key] = job.value.dry_run_status
+                this.env.sleep job.value.dry_run_delay
+            }
+        else
+            {
+                // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
+                def status = this.env.build job        : job.value.jenkins_job_name,
+                                            parameters : job.value.parameters,
+                                            quietPeriod: job.value.quiet_period,
+                                            propagate  : job.value.propagate_error
+
+                // Save the result of the test that was run.
+                results[job.key] = status.getResult()
+            }
+            this.env.println "${job.value.jenkins_job_name} = ${results[job.key]}"
+        }
+        return results
+    }
+
+
+    // ----[ _jobBodyWithMonitorNode ]-----------------------------------------
+    //
+    // Launch the job with a monitor node.
+    //
+    def _jobBodyWithMonitorNode(job)
+    {
+        def results = [:]
+        this.env.node(job.value.monitor_node)
+        {
+            results << this._jobBody(job)
+        }
+        return results
+    }
+
+
+    // ----[ _jobBodyWithoutMonitorNode ]--------------------------------------
+    //
+    // Launch the job without a monitor node.
+    //
+    def _jobBodyWithoutMonitorNode(job)
+    {
+        return this._jobBody(job)
+    }
 
 
     // ----[ _resetLastResultSummary ]------------------------------------------
