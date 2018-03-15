@@ -143,13 +143,9 @@ class ParallelJobLauncher
             results[job.key] = "UNKNOWN"
             builders[job.key] =
             {
-                // TODO: Add in the with/without monitor node stuff (maybe key off whether or not one was provided in args)
-                // TODO: Note that the quiet_period will prevent the -exact-same- job from getting launched multiple times...
-                //       set it to zero and you can kick off the same job and it'll launch concurrently (if allowed)
-                //results << this._jobBodyWithMonitorNode(job)
                 if(job.value.monitor_node == "")
                 {
-                        results << this._jobBodyWithoutMonitorNode(job)
+                    results << this._jobBodyWithoutMonitorNode(job)
                 }
                 else
                 {
@@ -164,10 +160,10 @@ class ParallelJobLauncher
         // Update the result summary
         this._resetLastResultSummary()
         results.each
-        { _r ->
-          def r = _r
+        {   _r ->
+            def r = _r
             this.env.println ">>> r = ${r}"
-            this._updateLastResultSummary(r.value)
+            this._updateLastResultSummary(r.value["status"])
         }
 
         return results
@@ -234,13 +230,19 @@ class ParallelJobLauncher
     {
         def results = [:]
 
+        results[job.key] = [:]
+        results[job.key]["job"]    = job.value.jenkins_job_name
+        results[job.key]["status"] = ""
+        results[job.key]["url"]    = ""
+        results[job.key]["id"]     = 0
+
         // Everything after this level is executed...
         this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
         {
             if(job.value.dry_run)
             {
                 this.env.println ">>> DRY RUN MODE <<<"
-                results[job.key] = job.value.dry_run_status
+                results[job.key]["status"] = job.value.dry_run_status
                 this.env.sleep job.value.dry_run_delay
             }
         else
@@ -252,7 +254,9 @@ class ParallelJobLauncher
                                             propagate  : job.value.propagate_error
 
                 // Save the result of the test that was run.
-                results[job.key] = status.getResult()
+                results[job.key]["status"] = status.getResult()
+                results[job.key]["id"]     = status.getId()
+                results[job.key]["url"]    = status.getAbsoluteUrl()
             }
             this.env.println "${job.value.jenkins_job_name} = ${results[job.key]}"
         }
