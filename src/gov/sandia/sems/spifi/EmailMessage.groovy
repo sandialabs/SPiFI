@@ -105,9 +105,234 @@ class EmailMessage implements Serializable
     }
 
 
+
+    // ----[ genResultSummaryTable ]--------------------------------------------------
+    //
+    //  Generate a pretty printable summary table for emails, etc.
+    //
+    //  Allowable Parameters:
+    //
+    //  summary  [Map]    - REQUIRED Output Summary information from a call to
+    //                               ParallelJobLauncher.getLastResultSummary()
+    // 
+    //  format   [String] - OPTIONAL Type of output table to generate.
+    //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
+    //
+    def genResultSummaryTable(Map params)
+    {
+        // If format isn't provided, make it ASCII
+        if(!params.containsKey("format"))
+        {
+            params["format"] = "ASCII"
+        }
+
+        // Check required param: summary
+        assert params.containsKey("summary")
+
+//        this._env.println ">>> EmailMessage.genResultSummaryTable()\n" +
+//                          ">>>    format  = ${params.format}\n"  +
+//                          ">>>    summary = ${params.summary}"
+
+        String output = ""
+
+        switch(params.format)
+        {
+            case "HTML":
+                output += this._genResultSummaryTableHTML(params.summary)
+                break
+            case "MARKDOWN":
+                output += this._genResultSummaryTableMarkdown(params.summary)
+                break
+            case "ASCII":
+                output += this._genResultSummaryTableASCII(params.summary)
+                break
+            default:
+                output += this._genResultSummaryTableASCII(params.summary)
+                break
+        }
+        return output
+    }
+
+
+    // ----[ genResultListTable ]--------------------------------------------------
+    //
+    //  Generate a pretty printable list of results by job from the results output
+    //  of ParallelJobLauncher.launchInParallel()
+    //
+    //  Allowable Parameters:
+    //
+    //  results  [Map]    - REQUIRED Results from a call to 
+    //                               ParallelJobLauncher.launchInParallel()
+    // 
+    //  format   [String] - OPTIONAL Type of output table to generate.
+    //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
+    //
+    def genResultDetailTable(Map params)
+    {
+        // If format isn't provided, make it ASCII
+        if(!params.containsKey("format"))
+        {
+            params["format"] = "ASCII"
+        }
+
+        // Check required param: results
+        assert params.containsKey("results")
+
+//        this._env.println ">>> EmailMessage.genResultDetailTable()\n" +
+//                          ">>>    format  = ${params.format}\n"  +
+//                          ">>>    summary = ${params.results}"
+
+        String output = ""
+
+        switch(params.format)
+        {
+            case "HTML":
+                output += this._genResultDetailTableHTML(params.results)
+                break
+            case "MARKDOWN":
+                output += this._genResultDetailTableMarkdown(params.results)
+                break
+            case "ASCII":
+                output += this._genResultDetailTableASCII(params.results)
+                break
+            default:
+                output += this._genResultDetailTableASCII(params.results)
+                break
+        }
+        return output
+    }
+
+
+    def _genResultDetailTableHTML(results)
+    {
+        String output = """
+                        <table class="bgGreen tc2">
+                            <tr><th>Job Name</th><th>Result</th></tr>
+                        """.stripIndent()
+        results.each
+        {   _r ->
+            def r = _r
+            String msg = """<tr {{CLASS}}>
+                                <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
+                                <td>${r.value.status}</td>
+                            </tr>
+                         """.stripIndent()
+            switch(r.value.status)
+            {
+                case "FAILURE":
+                    msg = msg.replace("{{CLASS}}", "class='FAILURE'")
+                    break
+                case "UNSTABLE":
+                    msg = msg.replace("{{CLASS}}", "class='UNSTABLE'")
+                    break
+                default:
+                    msg = msg.replace("{{CLASS}}", "")
+                    break
+            }
+            output += msg
+        }
+        output += "</table>\n"
+        return output
+    }
+
+
+    def _genResultDetailTableASCII(results)
+    {
+        String output = """
+                           Job Name                                                     |   Result
+                        ----------------------------------------------------------------+--------------
+                        """.stripIndent()
+        results.each
+        {   r ->
+            output += sprintf("   %-60s |   %s\n", [r.value.job, r.value.status])
+        }
+        return output
+    }
+
+
+    def _genResultDetailTableMarkdown(results)
+    {
+        String output = """
+                        | Job Name | Result |
+                        | -------- |:------:|
+                        """.stripIndent()
+        results.each
+        {   r ->
+            output += sprintf("| %s | %s |\n", [r.value.job, r.value.status])
+        }
+        return output
+    }
+
+
+
     // -------------------------------------------------------------------------
     // ----[ PRIVATE METHODS ]--------------------------------------------------
     // -------------------------------------------------------------------------
+
+
+
+    // ----[ _genSummaryTableHTML ]--------------------------------------------
+    def _genResultSummaryTableHTML(summary)
+    {
+        String output = """
+                        <table class="bgGreen tc2">
+                            <tr><th>Summary Stat</th><th>Count</th></tr>
+                            <tr><td>Num Tests</td><td>${summary.NUMTESTS}</td></tr>
+                            <tr {{CLASSFAIL}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
+                            <tr {{CLASSFAIL}}><td>Num Failed</td><td>${summary.NUMFAILURE}</td></tr>
+                            <tr {{CLASSUNSTABLE}}><td>Num Unstable</td><td>${summary.NUMUNSTABLE}</td></tr>
+                        </table>
+                        """.stripIndent()
+
+        if(summary.NUMFAILURE > 0)
+        {
+            output = output.replace("{{CLASSFAIL}}", "class='FAILURE'")
+        }
+        else
+        {
+            output = output.replace("{{CLASSFAIL}}", "")
+        }
+        if(summary.NUMUNSTABLE > 0)
+        {
+            output = output.replace("{{CLASSUNSTABLE}}", "class='UNSTABLE'")
+        }
+        else
+        {
+            output = output.replace("{{CLASSUNSTABLE}}", "")
+        }
+
+        return output
+    }
+
+
+    // ----[ _genSummaryTableASCII ]-------------------------------------------
+    def _genResultSummaryTableASCII(summary)
+    {
+        String output = """
+                           Summary Stat   |   Count   
+                        ------------------+-----------
+                           Num Tests      |   ${summary.NUMTESTS}
+                           Num Passed     |   ${summary.NUMSUCCESS}
+                           Num Failure    |   ${summary.NUMFAILURE}
+                           Num Unstable   |   ${summary.NUMUNSTABLE}
+                        """.stripIndent()
+        return output
+    }
+
+
+    // ----[ _genSummaryTableMarkdown ]----------------------------------------
+    def _genResultSummaryTableMarkdown(summary)
+    {
+        String output = """
+                        | Summary Stat   | Count  |
+                        | -------------- |:------:|
+                        |   Num Tests    | ${summary.NUMTESTS}  |
+                        |   Num Passed   | ${summary.NUMSUCCESS}  |
+                        |   Num Failure  | ${summary.NUMFAILURE}  |
+                        |   Num Unstable | ${summary.NUMUNSTABLE} |
+                        """.stripIndent()
+        return output
+    }
 
 
     // ----[ _getTemplate ]-----------------------------------------------------
@@ -138,6 +363,23 @@ class EmailMessage implements Serializable
                     font-weight: bold;
                     font-size:   14px;
                     text-align:  center;
+                }
+
+                /* Defined <span/> blocks to allow in-line coloring of text */
+                span.gray {
+                    color: gray;
+                }
+                span.red {
+                    color: red;
+                }
+                span.green {
+                    color: green;
+                }
+                span.yellow {
+                    color: yellow;
+                }
+                span.blue {
+                    color: blue;
                 }
 
                 /* Light Background Theme */
@@ -210,6 +452,7 @@ class EmailMessage implements Serializable
             </HEAD>
             <BODY>
             {{EMAIL_BODY}}
+            <P><span class="gray">--<BR/>View output on <A HREF="${this._env.BUILD_URL}">Jenkins</A>.</span></P>
             </BODY>
             </HTML>
             """.stripIndent()
