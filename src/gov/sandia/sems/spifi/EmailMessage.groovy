@@ -206,28 +206,33 @@ class EmailMessage implements Serializable
                         <table class="bgGreen tc2">
                             <tr><th>Summary Stat</th><th>Count</th></tr>
                             <tr><td>Num Tests</td><td>${summary.NUMTESTS}</td></tr>
-                            <tr {{CLASSFAIL}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
+                            <tr {{CLASSNUMSUCCESS}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
                             <tr {{CLASSFAIL}}><td>Num Failed</td><td>${summary.NUMFAILURE}</td></tr>
                             <tr {{CLASSUNSTABLE}}><td>Num Unstable</td><td>${summary.NUMUNSTABLE}</td></tr>
+                            <tr {{CLASSABORT}}><td>Num Aborted</td><td>${summary.NUMABORTED}</td></tr>
                         </table>
                         """.stripIndent()
 
+        if(summary.NUMSUCCESS != summary.NUMTESTS)
+        {
+            output = output.replace("{{CLASSNUMSUCCESS}}", "class='FAILURE'")
+        }
         if(summary.NUMFAILURE > 0)
         {
             output = output.replace("{{CLASSFAIL}}", "class='FAILURE'")
-        }
-        else
-        {
-            output = output.replace("{{CLASSFAIL}}", "")
         }
         if(summary.NUMUNSTABLE > 0)
         {
             output = output.replace("{{CLASSUNSTABLE}}", "class='UNSTABLE'")
         }
-        else
+        if(summary.NUMABORTED > 0)
         {
-            output = output.replace("{{CLASSUNSTABLE}}", "")
+            output = output.replace("{{CLASSABORT}}", "class='FAILURE'")
         }
+        output = output.replace("{{CLASSNUMSUCCESS}}", "")
+        output = output.replace("{{CLASSFAIL}}", "")
+        output = output.replace("{{CLASSUNSTABLE}}", "")
+        output = output.replace("{{CLASSABORT}}", "")
 
         return output
     }
@@ -243,6 +248,7 @@ class EmailMessage implements Serializable
                            Num Passed     |   ${summary.NUMSUCCESS}
                            Num Failure    |   ${summary.NUMFAILURE}
                            Num Unstable   |   ${summary.NUMUNSTABLE}
+                           Num Aborted    |   ${summary.NUMABORTED}
                         """.stripIndent()
         return output
     }
@@ -257,7 +263,8 @@ class EmailMessage implements Serializable
                         |   Num Tests    | ${summary.NUMTESTS}  |
                         |   Num Passed   | ${summary.NUMSUCCESS}  |
                         |   Num Failure  | ${summary.NUMFAILURE}  |
-                        |   Num Unstable | ${summary.NUMUNSTABLE} |
+                        |   Num Unstable | ${summary.NUMUNSTABLE}  |
+                        |   Num Aborted  | ${summary.NUMABORTED}  |
                         """.stripIndent()
         return output
     }
@@ -280,6 +287,7 @@ class EmailMessage implements Serializable
                          """.stripIndent()
             switch(r.value.status)
             {
+                case "ABORTED":
                 case "FAILURE":
                     msg = msg.replace("{{CLASS}}", "class='FAILURE'")
                     break
