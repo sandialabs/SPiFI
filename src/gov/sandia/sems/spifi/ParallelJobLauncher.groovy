@@ -69,7 +69,7 @@ class ParallelJobLauncher
     //  propagate_error  [Boolean] - OPTIONAL Propagate error to overall pipeline?  { true, false }
     //  dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (job will not be launched).
     //  dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
-    //                                        Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED}
+    //                                        Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT}
     //  dry_run_delay    [Integer] - OPTIONAL If dry_run is true, this introduces a delay (in seconds)
     //                                        for the 'simulated' job.  Default: 30
     //  monitor_node     [String]  - OPTIONAL Node expression for the Jenkins "node" where the job
@@ -175,11 +175,12 @@ class ParallelJobLauncher
     //
     // Get a summary of the most recent set of tests.
     //
-    // Returns a Map: ["NUMTESTS"   : <# of jobs run>,
-    //                 "NUMSUCCESS" : <# of SUCCESS jobs>,
-    //                 "NUMFAILURE" : <# of FAILURE jobs>,
-    //                 "NUMUNSTABLE": <# of UNSTABLE jobs>
-    //                 "NUMABORTED" : <# of ABORTED jobs>
+    // Returns a Map: ["NUMTESTS"    : <# of jobs run>,
+    //                 "NUMSUCCESS"  : <# of SUCCESS jobs>,
+    //                 "NUMFAILURE"  : <# of FAILURE jobs>,
+    //                 "NUMUNSTABLE" : <# of UNSTABLE jobs>
+    //                 "NUMABORTED"  : <# of ABORTED jobs>
+    //                 "NUMNOT_BUILT": <# of NOT_BUILT jobs>
     //                ]
     //
     def getLastResultSummary()
@@ -294,11 +295,12 @@ class ParallelJobLauncher
     def _resetLastResultSummary()
     {
         this._lastResultSummary.clear()
-        this._lastResultSummary["NUMTESTS"]    = this._jobList.size()
-        this._lastResultSummary["NUMSUCCESS"]  = 0
-        this._lastResultSummary["NUMFAILURE"]  = 0
-        this._lastResultSummary["NUMUNSTABLE"] = 0
-        this._lastResultSummary["NUMABORTED"]  = 0
+        this._lastResultSummary["NUMTESTS"]     = this._jobList.size()
+        this._lastResultSummary["NUMSUCCESS"]   = 0
+        this._lastResultSummary["NUMFAILURE"]   = 0
+        this._lastResultSummary["NUMUNSTABLE"]  = 0
+        this._lastResultSummary["NUMABORTED"]   = 0
+        this._lastResultSummary["NUMNOT_BUILT"] = 0
     }
 
 

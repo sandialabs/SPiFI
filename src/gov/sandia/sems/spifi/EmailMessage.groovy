@@ -209,9 +209,20 @@ class EmailMessage implements Serializable
                             <tr {{CLASSNUMSUCCESS}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
                             <tr {{CLASSFAIL}}><td>Num Failed</td><td>${summary.NUMFAILURE}</td></tr>
                             <tr {{CLASSUNSTABLE}}><td>Num Unstable</td><td>${summary.NUMUNSTABLE}</td></tr>
-                            <tr {{CLASSABORT}}><td>Num Aborted</td><td>${summary.NUMABORTED}</td></tr>
-                        </table>
                         """.stripIndent()
+
+        // If there were aborted jobs, add the row
+        if(summary.NUMABORTED > 0)
+        {
+            output += "<tr class='FAILURE'><td>Num Aborted</td><td>${summary.NUMABORTED}</td></tr>\n"
+        }
+        // If there were NOT_BUILT jobs, add the row
+        if(summary.NUMNOT_BUILT > 0)
+        {
+            output += "<tr class='FAILURE'><td>Num NOT_Built</td><td>${summary.NUMNOT_BUILT}</td></tr>\n"
+        }
+
+        output += "</table>\n"
 
         if(summary.NUMSUCCESS != summary.NUMTESTS)
         {
@@ -225,14 +236,9 @@ class EmailMessage implements Serializable
         {
             output = output.replace("{{CLASSUNSTABLE}}", "class='UNSTABLE'")
         }
-        if(summary.NUMABORTED > 0)
-        {
-            output = output.replace("{{CLASSABORT}}", "class='FAILURE'")
-        }
         output = output.replace("{{CLASSNUMSUCCESS}}", "")
         output = output.replace("{{CLASSFAIL}}", "")
         output = output.replace("{{CLASSUNSTABLE}}", "")
-        output = output.replace("{{CLASSABORT}}", "")
 
         return output
     }
@@ -248,8 +254,15 @@ class EmailMessage implements Serializable
                            Num Passed     |   ${summary.NUMSUCCESS}
                            Num Failure    |   ${summary.NUMFAILURE}
                            Num Unstable   |   ${summary.NUMUNSTABLE}
-                           Num Aborted    |   ${summary.NUMABORTED}
                         """.stripIndent()
+        if(summmary.NUMABORTED > 0)
+        {
+            output += "   Num Aborted    |   ${summary.NUMABORTED}\n"
+        }
+        if(summary.NUMNOT_BUILT > 0)
+        {
+            output += "   Num NOT_Built  |   ${summary.NUMNOT_BUILT}\n"
+        }
         return output
     }
 
@@ -258,14 +271,21 @@ class EmailMessage implements Serializable
     def _genResultSummaryTableMarkdown(summary)
     {
         String output = """
-                        | Summary Stat   | Count  |
-                        | -------------- |:------:|
-                        |   Num Tests    | ${summary.NUMTESTS}  |
-                        |   Num Passed   | ${summary.NUMSUCCESS}  |
-                        |   Num Failure  | ${summary.NUMFAILURE}  |
-                        |   Num Unstable | ${summary.NUMUNSTABLE}  |
-                        |   Num Aborted  | ${summary.NUMABORTED}  |
+                        | Summary Stat    | Count  |
+                        | --------------- |:------:|
+                        |   Num Tests     | ${summary.NUMTESTS}  |
+                        |   Num Passed    | ${summary.NUMSUCCESS}  |
+                        |   Num Failure   | ${summary.NUMFAILURE}  |
+                        |   Num Unstable  | ${summary.NUMUNSTABLE}  |
                         """.stripIndent()
+        if(summmary.NUMABORTED > 0)
+        {
+            output += "|   Num Aborted   | ${summary.NUMABORTED}  |\n"
+        }
+        if(summary.NUMNOT_BUILT > 0)
+        {
+            output += "|   Num NOT_Built | ${summary.NUMNOT_BUILT}  |\n"
+        }
         return output
     }
 
@@ -288,6 +308,7 @@ class EmailMessage implements Serializable
             switch(r.value.status)
             {
                 case "ABORTED":
+                case "NOT_BUILT":
                 case "FAILURE":
                     msg = msg.replace("{{CLASS}}", "class='FAILURE'")
                     break
