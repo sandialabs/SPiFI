@@ -23,6 +23,12 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 
 node()
 {
-    @Library('SPiFI@master') _
-}
+    timeout(time: 90, unit: "SECONDS")
+    {
+
+        @Library('SPiFI@master') _
+
+    }  // Timeout
+
+}  // Node
 

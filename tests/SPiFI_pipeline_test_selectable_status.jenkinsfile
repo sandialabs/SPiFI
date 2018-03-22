@@ -37,20 +37,26 @@ node()
     int delayTime = 10
     String exitStatus = "SUCCESS"
 
-    if(params.containsKey("SLEEP_TIME"))
+    timeout(time: delayTime*2, unit: "SECONDS")
     {
-        delayTime = params.SLEEP_TIME as Integer
-    }
-    if(params.containsKey("EXIT_STATUS"))
-    {
-        exitStatus = params.EXIT_STATUS
-    }
 
-    println("EXIT_STATUS: ${params.EXIT_STATUS}")
-    println("SLEEP_DELAY: ${params.SLEEP_TIME}")
+        if(params.containsKey("SLEEP_TIME"))
+        {
+            delayTime = params.SLEEP_TIME as Integer
+        }
+        if(params.containsKey("EXIT_STATUS"))
+        {
+            exitStatus = params.EXIT_STATUS
+        }
 
-    sleep delayTime
+        println("EXIT_STATUS: ${params.EXIT_STATUS}")
+        println("SLEEP_DELAY: ${params.SLEEP_TIME}")
 
-    currentBuild.result=exitStatus
-}
+        sleep delayTime
+
+        currentBuild.result=exitStatus
+
+    } // timeout
+
+}  // node
 
