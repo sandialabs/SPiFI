@@ -255,7 +255,8 @@ class EmailMessage implements Serializable
                            Num Failure    |   ${summary.NUMFAILURE}
                            Num Unstable   |   ${summary.NUMUNSTABLE}
                         """.stripIndent()
-        if(summmary.NUMABORTED > 0)
+
+        if(summary.NUMABORTED > 0)
         {
             output += "   Num Aborted    |   ${summary.NUMABORTED}\n"
         }
