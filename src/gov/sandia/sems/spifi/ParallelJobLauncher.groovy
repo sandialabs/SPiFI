@@ -233,10 +233,11 @@ class ParallelJobLauncher
         def results = [:]
 
         results[job.key] = [:]
-        results[job.key]["job"]    = job.value.jenkins_job_name
-        results[job.key]["status"] = ""
-        results[job.key]["url"]    = ""
-        results[job.key]["id"]     = 0
+        results[job.key]["job"]      = job.value.jenkins_job_name
+        results[job.key]["status"]   = ""
+        results[job.key]["id"]       = 0
+        results[job.key]["url"]      = ""
+        results[job.key]["duration"] = 0
 
         // Everything after this level is executed...
         this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
@@ -250,15 +251,18 @@ class ParallelJobLauncher
         else
             {
                 // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
+                //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+                //
                 def status = this.env.build job        : job.value.jenkins_job_name,
                                             parameters : job.value.parameters,
                                             quietPeriod: job.value.quiet_period,
                                             propagate  : job.value.propagate_error
 
-                // Save the result of the test that was run.
-                results[job.key]["status"] = status.getResult()
-                results[job.key]["id"]     = status.getId()
-                results[job.key]["url"]    = status.getAbsoluteUrl()
+                // Save selected parts of the result to the results
+                results[job.key]["status"]   = status.getResult()
+                results[job.key]["id"]       = status.getId()
+                results[job.key]["url"]      = status.getAbsoluteUrl()
+                results[job.key]["duration"] = status.getDuration()
             }
             this.env.println "${job.value.jenkins_job_name} = ${results[job.key]}"
         }
