@@ -18,19 +18,22 @@
  *                    - NOT_BUILT : Job was not built
  *
  */
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                              daysToKeepStr: '90',       numToKeepStr: '30')),
+    parameters([
+        string(defaultValue: '10',
+               description: 'Sleep time (seconds)',
+               name: 'SLEEP_TIME'),
+        choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
+               description: 'Possible exit statuses for the job.',
+               name: 'EXIT_STATUS')
+    ])
+])
+
+
 node()
 {
-    properties([
-        parameters([
-            string(defaultValue: '10',
-                   description: 'Sleep time (seconds)',
-                   name: 'SLEEP_TIME'),
-            choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
-                   description: 'Possible exit statuses for the job.',
-                   name: 'EXIT_STATUS')
-        ])
-    ])
-
     int delayTime = 10
     String exitStatus = "SUCCESS"
 

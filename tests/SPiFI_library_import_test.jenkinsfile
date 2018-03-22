@@ -7,6 +7,20 @@
  * library.  If there's a problem, then Jenkins should fail the
  * job.
  */
+
+/**
+ * Configure job properties
+ *
+ * - Keep up to 30 entries in history for up to 90 days.
+ * - Run every night at 4:00 AM
+ */
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                                      daysToKeepStr: '90',       numToKeepStr: '30')),
+            pipelineTriggers([cron('0 4 * * *')])
+           ])
+
+
+
 node()
 {
     @Library('SPiFI@master') _
