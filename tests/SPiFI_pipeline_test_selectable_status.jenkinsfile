@@ -1,0 +1,53 @@
+/**
+ * SPiFI_pipeline_test_selectable_status.jenkinsfile
+ *
+ * This jenkinsfile defines a pipeline job that is used for testing
+ * and debugging other pipelines.
+ *
+ * This job will pause for a specified number of seconds before returning
+ * with a desired exit status.
+ *
+ * @param SLEEP_TIME The number of seconds that this job will 'sleep' before
+ *                   completing.  Default: 10 seconds.
+ * @param EXIT_STATUS The status this job will report to Jenkins.
+ *                    Allowable status codes currently in Jenkins are:
+ *                    - SUCCESS   : Job completed successfully (Default)
+ *                    - FAILURE   : Job failed
+ *                    - UNSTABLE  : Job reported as unstable
+ *                    - ABORTED   : Job was aborted
+ *                    - NOT_BUILT : Job was not built
+ *
+ */
+node()
+{
+    properties([
+        parameters([
+            string(defaultValue: '10',
+                   description: 'Sleep time (seconds)',
+                   name: 'SLEEP_TIME'),
+            choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
+                   description: 'Possible exit statuses for the job.',
+                   name: 'EXIT_STATUS')
+        ])
+    ])
+
+    int delayTime = 10
+    String exitStatus = "SUCCESS"
+
+    if(params.containsKey("SLEEP_TIME"))
+    {
+        delayTime = params.SLEEP_TIME as Integer
+    }
+    if(params.containsKey("EXIT_STATUS"))
+    {
+        exitStatus = params.EXIT_STATUS
+    }
+
+    println("EXIT_STATUS: ${params.EXIT_STATUS}")
+    println("SLEEP_DELAY: ${params.SLEEP_TIME}")
+
+    sleep delayTime
+
+    currentBuild.result=exitStatus
+}
+
