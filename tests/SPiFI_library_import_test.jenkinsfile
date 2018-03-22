@@ -1,0 +1,14 @@
+/**
+ * SPiFI_library_import_test.jenkinsfile
+ *
+ * Test whether or not we can import the SPiFI library.
+ *
+ * Nothing special here right now, just tries to import the SPiFI
+ * library.  If there's a problem, then Jenkins should fail the
+ * job.
+ */
+node()
+{
+    @Library('SPiFI@master') _
+}
+
