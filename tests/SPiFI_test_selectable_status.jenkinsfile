@@ -1,5 +1,5 @@
 /**
- * SPiFI_pipeline_test_selectable_status.jenkinsfile
+ * SPiFI_test_selectable_status.jenkinsfile
  *
  * This jenkinsfile defines a pipeline job that is used for testing
  * and debugging other pipelines.

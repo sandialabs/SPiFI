@@ -128,6 +128,13 @@ class EmailMessage implements Serializable
         // Check required param: summary
         assert params.containsKey("summary")
 
+        //assert params.summary.containsKey("NUMTESTS")
+        //assert params.summary.containsKey("NUMSUCCESS")
+        //assert params.summary.containsKey("NUMFAILURE")
+        //assert params.summary.containsKey("NUMUNSTABLE")
+        //assert params.summary.containsKey("NUMABORTED")
+        //assert params.summary.containsKey("NUMNOT_BUILT")
+
         String output = ""
 
         switch(params.format)
@@ -279,7 +286,7 @@ class EmailMessage implements Serializable
                         |   Num Failure   | ${summary.NUMFAILURE}  |
                         |   Num Unstable  | ${summary.NUMUNSTABLE}  |
                         """.stripIndent()
-        if(summmary.NUMABORTED > 0)
+        if(summary.NUMABORTED > 0)
         {
             output += "|   Num Aborted   | ${summary.NUMABORTED}  |\n"
         }
@@ -301,11 +308,19 @@ class EmailMessage implements Serializable
         results.each
         {   _r ->
             def r = _r
-            String msg = """<tr {{CLASS}}>
-                                <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
-                                <td>${r.value.status}</td>
-                            </tr>
+
+            assert r.value.containsKey("job")
+            assert r.value.containsKey("id")
+            assert r.value.containsKey("status")
+            assert r.value.containsKey("url")
+
+            String msg = """
+                         <tr {{CLASS}}>
+                             <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
+                             <td>${r.value.status}</td>
+                         </tr>
                          """.stripIndent()
+
             switch(r.value.status)
             {
                 case "ABORTED":
@@ -336,6 +351,8 @@ class EmailMessage implements Serializable
                         """.stripIndent()
         results.each
         {   r ->
+            assert r.value.containsKey("job")
+            assert r.value.containsKey("status")
             output += sprintf("   %-70s |   %s\n", [r.value.job, r.value.status])
         }
         return output
@@ -351,6 +368,8 @@ class EmailMessage implements Serializable
                         """.stripIndent()
         results.each
         {   r ->
+            assert r.value.containsKey("job")
+            assert r.value.containsKey("status")
             output += sprintf("| %s | %s |\n", [r.value.job, r.value.status])
         }
         return output

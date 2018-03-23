@@ -10,25 +10,602 @@ properties([
     pipelineTriggers([cron('1 0 * * *')])
 ])
 
+/*
+String email_message = """
+<HTML>
+<HEAD>
+</HEAD>
+<BODY>
+{{MESSAGE_BODY}}
+</BODY>
+</HTML>
+""".stripIndent()
+*/
+
+String email_body = """
+<H1>SPiFI Test Summary</H1>
+""".stripIndent()
+
+def exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 node()
 {
-    timeout(time: 10, unit: "MINUTES")
+
+    String emailDevOps = "wcmclen@sandia.gov"
+    String emailReplyTo = "wcmclen@sandia.gov"
+
+    timeout(time: 60, unit: "MINUTES")
     {
 
 
-        stage("Final Stage")
+        // Stage 1: Launch SPiFI_test_selectable_status job to make sure it works.
+        stage("1) Test Job Simulator Script")
         {
-            mail to:       'wcmclen@sandia.gov',
-                 replyTo:  'wcmclen@sandia.gov',
-                 mimeType: 'text/html',
-                 subject:  'Vurt Zee Vurk?!', 
-                 body: """Test email...""".stripIndent()
+            boolean stage_passed = true
+
+            email_body += """
+                          <H3>Stage (1): Test Job Simulator Script</H3>
+                          <ol>
+                          """.stripIndent()
+
+            exit_status_list.each
+            {   _desired_exit_status ->
+
+                println ">>> TEST: SPiFI_test_selectable_status [${_desired_exit_status}]"
+
+                status = build job        : "SPiFI_test_selectable_status",
+                               quietPeriod: 0,
+                               propagate  : false,
+                               parameters : [ (string(name:"SLEEP_TIME",  value: "1")),
+                                              (string(name:"EXIT_STATUS", value: "${_desired_exit_status}"))
+                                            ]
+
+                if(status.getResult() != "${_desired_exit_status}")
+                {
+                    stage_passed = false
+                    println ">>> ERROR: SPiFI_test_selectable_status job gave incorrect result.\n" +
+                            ">>>        Expected: ${_desired_exit_status} but got ${status.getResult()}"
+
+                    email_body += "<li>FAILED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
+                } 
+                else
+                {
+                    email_body += "<li>PASSED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
+                }
+            }
+            email_body += "</ol>\n"
+
+            // Test desired result: SUCCESS
+            if(!stage_passed) 
+            { 
+                sendEmailFailureAndQuit(email_body) 
+                return
+            }
+
+        } // end stage (1)
+
+
+        // Stage 2: Try to load SPiFI
+        stage("2) Test Load SPiFI Library")
+        {
+            boolean stage_passed = true
+
+            email_body += "<H3>Stage (2): Test Load SPiFI Library</H3>\n"
+
+            try 
+            {
+                @Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
+                email_body += "<ol><li>PASSED: Load SPiFI Library (branch: master)</li></ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                stage_passed = false
+                println "ERROR: ${ex}"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (branch: master)</li></ol>\n"
+            }
+
+            if(!stage_passed) 
+            {
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
         }
+
+
+        // Stage 3: Parallel Job Launcher (dry-run mode jobs)
+        stage("3) Test Parallel Job Launcher (dry-run mode)")
+        {
+            boolean stage_passed = true
+
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+
+            exit_status_list.each
+            {   _exit_status ->
+
+                println ">>> LAUNCHER: APPEND(T-${_exit_status}-DRYRUN)"
+
+                launcher.appendJob(label: "T-${_exit_status}-DRYRUN",
+                                   job_name: "SPiFI_pipeline_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ],
+                                    dry_run: true,
+                                    dry_run_status: "${_exit_status}",
+                                    dry_run_delay: 1
+                                  )
+            }
+
+            // Print out the list of jobs.
+            try 
+            {
+                launcher.printJobList()
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: launcher.printJobList failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            // Launch the jobs in parallel
+            def results = null
+            try
+            {
+                results = launcher.launchInParallel()
+                println(">>> results: ${results}")
+
+                email_body += "<H3>Stage (3): Test Parallel Job Launcher (dry-run mode)</H3>\n"
+                email_body += "<ol>\n"
+                exit_status_list.each
+                {   _exit_status ->
+
+                    String test_name = "T-${_exit_status}-DRYRUN"
+                
+                    if(results["${test_name}"].status == "${_exit_status}")
+                    {
+                       email_body += "<li>PASSED: ${test_name}</li>\n"
+                    }
+                    else
+                    {
+                       stage_passed = false
+                       email_body += "<li>FAILED: ${test_name}</li>\n"
+                    }
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: launcher.launchInParallel failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            // Check result summary
+            try 
+            {
+                def summary = launcher.getLastResultSummary()
+                println ">>> SUMMARY: ${summary}"
+
+                email_body += "<H4>Launcher Summary</H4>\n"
+                email_body += "<ol>\n"
+                if(summary.NUMTESTS == 5)
+                {
+                    email_body += "<li>PASSED: NUMTESTS == 5</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMTESTS != 5 (got ${summary.NUMTESTS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMSUCCESS == 1)
+                {
+                    email_body += "<li>PASSED: NUMSUCCESS == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMSUCCESS != 1 (got ${summary.NUMSUCCESS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMFAILURE == 1)
+                {
+                    email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMFAILURE != 1 (got ${summary.NUMFAILURE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMUNSTABLE == 1)
+                {
+                    email_body += "<li>PASSED: NUMUNSTABLE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMUNSTABLE != 1 (got ${summary.NUMUNSTABLE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMABORTED == 1)
+                {
+                    email_body += "<li>PASSED: NUMABORTED == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMABORTED != 1 (got ${summary.NUMABORTED})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMNOT_BUILT == 1)
+                {
+                    email_body += "<li>PASSED: NUMNOT_BUILT == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMNOT_BUILT != 1 (got ${summary.NUMNOT_BUILT})</li>\n"
+                    stage_passed = false
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            if(!stage_passed) 
+            {
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+        }   // end stage 3
+
+
+        // Create 2 vars to carry over to the email builder stage if stage 4 passes.
+        def launcher_results = null
+        def launcher_summary = null
+
+        // Stage 4: Parallel Job Launcher (real-run mode jobs)
+        stage("4) Test Parallel Job Launcher (real-run mode)")
+        {
+            boolean stage_passed = true
+
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+
+            exit_status_list.each
+            {   _exit_status ->
+
+                println ">>> LAUNCHER: APPEND(T-${_exit_status}-RUN)"
+
+                launcher.appendJob(label: "T-${_exit_status}-RUN",
+                                   job_name: "SPiFI_pipeline_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+            }
+
+            // Print out the list of jobs.
+            try 
+            {
+                launcher.printJobList()
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- printJobList failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            // Launch the jobs in parallel
+            try 
+            {
+                launcher_results = launcher.launchInParallel()
+
+                println(">>> results: ${launcher_results}")
+
+                email_body += "<H3>Stage (4): Test Parallel Job Launcher (real-run mode)</H3>\n"
+
+                email_body += "<ol>\n"
+                exit_status_list.each
+                {   _exit_status ->
+
+                    String test_name = "T-${_exit_status}-RUN"
+                
+                    if(launcher_results["${test_name}"].status == "${_exit_status}")
+                    {
+                       email_body += "<li>PASSED: ${test_name}</li>\n"
+                    }
+                    else
+                    {
+                       stage_passed = false
+                       email_body += "<li>FAILED: ${test_name}</li>\n"
+                    }
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            // Check result summary
+            try 
+            {
+                launcher_summary = launcher.getLastResultSummary()
+                println ">>> SUMMARY: ${launcher_summary}"
+
+                email_body += "<H4>Launcher Summary</H4>\n"
+                email_body += "<ol>\n"
+                if(launcher_summary.NUMTESTS == 5)
+                {
+                    email_body += "<li>PASSED: NUMTESTS == 5</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMTESTS != 5 (got ${launcher_summary.NUMTESTS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMSUCCESS == 1)
+                {
+                    email_body += "<li>PASSED: NUMSUCCESS == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMSUCCESS != 1 (got ${launcher_summary.NUMSUCCESS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMFAILURE == 1)
+                {
+                    email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMFAILURE != 1 (got ${launcher_summary.NUMFAILURE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMUNSTABLE == 1)
+                {
+                    email_body += "<li>PASSED: NUMUNSTABLE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMUNSTABLE != 1 (got ${launcher_summary.NUMUNSTABLE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMABORTED == 1)
+                {
+                    email_body += "<li>PASSED: NUMABORTED == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMABORTED != 1 (got ${launcher_summary.NUMABORTED})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMNOT_BUILT == 1)
+                {
+                    email_body += "<li>PASSED: NUMNOT_BUILT == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMNOT_BUILT != 1 (got ${launcher_summary.NUMNOT_BUILT})</li>\n"
+                    stage_passed = false
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            if(!stage_passed) 
+            {
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+        }   // End Stage 4
+
+
+
+
+        // Stage 5: Email Builder
+        stage("5) Test Email Builder")
+        {
+            boolean stage_passed = true
+
+            println launcher_results
+            println launcher_summary
+
+            email_body += "<H3>Stage (5): Test Email Builder</H3>\n"
+
+            def message = null
+            
+            // Test if we can instantiate an email message builder
+            email_body += "<ol>\n"
+            try
+            {
+                message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
+                email_body += "<li>PASSED: Instantiate</li>\n"
+            }
+            catch(ex)
+            {
+                println ">>> ERROR: EmailMessage -- failed to instantiate!"
+                email_body += "<li>FAILED: Instantiate</li></ol>\n"
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+            // Test Summary Table Generation (ASCII)
+            println ">>> Test Summary Table Generation (ASCII)"
+            try{
+                def output = message.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
+                email_body += "<li>PASSED: genResultSummaryTable (ASCII)</li>\n"
+                println ">>> summary table ascii:\n${output}"
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (ASCII)</li>\n"
+                stage_passed = false
+            }
+
+            // Test Summary Table Generation (Markdown)
+            println ">>> Test Summary Table Generation (MARKDOWN)"
+            try{
+                def output = message.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
+                email_body += "<li>PASSED: genResultSummaryTable (MARKDOWN)</li>\n"
+                println ">>> summary table ascii:\n${output}"
+            } 
+            catch(ex)
+            {
+                println ">>> ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (MARKDOWN)</li>\n"
+                stage_passed = false
+            }
+
+            // Test Summary Table Generation (HTML)
+            println ">>> Test Summary Table Generation (HTML)"
+            try{
+                def output = message.genResultSummaryTable(summary: launcher_summary, format: "HTML")
+                email_body += "<li>PASSED: genResultSummaryTable (HTML)</li>\n"
+                println ">>> summary table html:\n${output}"
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (HTML)</li>\n"
+                stage_passed = false
+            }
+
+
+            // Test Detail Table Generation (ASCII)
+            println ">>> Test Detail Table Generation (ASCII)"
+            try{
+                def output = message.genResultDetailTable(results: launcher_results, format: "ASCII")
+                email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (ASCII)</li>\n"
+                stage_passed = false
+            }
+
+            // Test Detail Table Generation (MARKDOWN)
+            println ">>> Test Detail Table Generation (MARKDOWN)"
+            try{
+                def output = message.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
+                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN)</li>\n"
+                stage_passed = false
+            }
+
+            // Test Detail Table Generation (HTML)
+            println ">>> Test Detail Table Generation (HTML)"
+            try{
+                def output = message.genResultDetailTable(results: launcher_results, format: "HTML")
+                email_body += "<li>PASSED: genResultDetailTable (HTML)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            } 
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (HTML)</li>\n"
+                stage_passed = false
+            }
+
+            // TODO: Test the *actual* email sending (not sure how without spamming out... leaving that off
+            //       for now.)
+
+            // tie off the list
+            email_body += "</ol>\n"
+
+            if(!stage_passed) 
+            {
+                sendEmailFailureAndQuit(email_body)
+                return
+            }
+
+        }   // End Stage 5
+
+
+        // Stage 6: Summary (is that even necessary?)
+        stage("6) Email Summary")
+        {
+            println email_body
+            sendEmailSummary(to:       emailDevOps, 
+                             reply_to: emailReplyTo,
+                             subject:  "[SPiFI] Testing Summary PASSED",
+                             body:     email_body)
+        }   // End Stage 6
 
 
     }   // timeout
 }   // node
 
 
+def sendEmailFailureAndQuit(String email_body)
+{
+    email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + email_body
+
+    sendEmailSummary(to:       "wcmclen@sandia.gov", 
+                     reply_to: "wcmclen@sandia.gov",
+                     subject:  "[SPiFI] Testing Summary FAILED",
+                     body:     email_body)
+    currentBuild.result='FAILURE'
+}
+
+
+
+def sendEmailSummary(Map params)
+{
+    String email_message = """
+                           <HTML>
+                           <HEAD>
+                           </HEAD>
+                           <BODY>
+                           {{MESSAGE_BODY}}
+                           </BODY>
+                           </HTML>
+                           """.stripIndent()
+
+    String __email_message = email_message.replace("{{MESSAGE_BODY}}", params.body)
+
+    mail to:       params.to,
+         replyTo:  params.reply_to,
+         mimeType: 'text/html',
+         subject:  params.subject, 
+         body:     __email_message
+    }
 
