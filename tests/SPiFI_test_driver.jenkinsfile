@@ -22,7 +22,6 @@ node()
             mail to:       'wcmclen@sandia.gov',
                  replyTo:  'wcmclen@sandia.gov',
                  mimeType: 'text/html'
-                 charset:  'UTF-8',
                  subject:  'Vurt Zee Vurk?!', 
                  body: """Test email...""".stripIndent()
         }
