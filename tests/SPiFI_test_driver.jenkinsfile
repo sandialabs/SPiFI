@@ -1,0 +1,35 @@
+/**
+ * SPiFI_test_driver.jenkinsfile
+ *
+ * Test the SPiFI library
+ */
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                              daysToKeepStr: '90',       numToKeepStr: '30')),
+    disableConcurrentBuilds(),
+    pipelineTriggers([cron('1 0 * * *')])
+])
+
+
+node()
+{
+    timeout(time: 10, unit: "MINUTES")
+    {
+
+
+        stage("Final Stage")
+        {
+            mail to:       'wcmclen@sandia.gov',
+                 replyTo:  'wcmclen@sandia.gov',
+                 mimeType: 'text/html'
+                 charset:  'UTF-8',
+                 subject:  'Vurt Zee Vurk?!', 
+                 body: """Test email...""".stripIndent()
+        }
+
+
+    }   // timeout
+}   // node
+
+
+
