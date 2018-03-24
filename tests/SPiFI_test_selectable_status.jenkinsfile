@@ -34,29 +34,42 @@ properties([
 
 node()
 {
-    int delayTime = 10
-    String exitStatus = "SUCCESS"
+    stage('Clean Workspace')
+    {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Clean Workspace\n" +
+                "\u27A4"
+        cleanWs();
+    }
 
-    timeout(time: delayTime*2, unit: "SECONDS")
+    stage('Execute')
     {
 
-        if(params.containsKey("SLEEP_TIME"))
+        int delayTime = 10
+        String exitStatus = "SUCCESS"
+
+        timeout(time: delayTime*2, unit: "SECONDS")
         {
-            delayTime = params.SLEEP_TIME as Integer
-        }
-        if(params.containsKey("EXIT_STATUS"))
-        {
-            exitStatus = params.EXIT_STATUS
-        }
 
-        println("EXIT_STATUS: ${params.EXIT_STATUS}")
-        println("SLEEP_DELAY: ${params.SLEEP_TIME}")
+            if(params.containsKey("SLEEP_TIME"))
+            {
+                delayTime = params.SLEEP_TIME as Integer
+            }
+            if(params.containsKey("EXIT_STATUS"))
+            {
+                exitStatus = params.EXIT_STATUS
+            }
 
-        sleep delayTime
+            println("EXIT_STATUS: ${params.EXIT_STATUS}")
+            println("SLEEP_DELAY: ${params.SLEEP_TIME}")
 
-        currentBuild.result=exitStatus
+            sleep delayTime
 
-    } // timeout
+            currentBuild.result=exitStatus
+
+        } // timeout
+
+    } // stage execute
 
 }  // node
 
