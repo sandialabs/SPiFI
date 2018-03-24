@@ -7,20 +7,17 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([cron('1 0 * * *')])
+    pipelineTriggers([cron('1 0 * * *')]),
+    parameters([
+        string(defaultValue: 'wcmclen@sandia.gov', description: '', name: 'EMAIL_REPLYTO'), 
+        string(defaultValue: 'wcmclen@sandia.gov', description: '', name: 'EMAIL_DEVOPS')
+    ])
 ])
 
-/*
-String email_message = """
-<HTML>
-<HEAD>
-</HEAD>
-<BODY>
-{{MESSAGE_BODY}}
-</BODY>
-</HTML>
-""".stripIndent()
-*/
+
+
+
+
 
 String email_body = """
 <H1>SPiFI Test Summary</H1>
@@ -30,9 +27,18 @@ def exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"
 
 node()
 {
-
     String emailDevOps = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+
+    if(params.containsKey("EMAIL_REPLYTO"))
+    {
+        emailReplyTo = params.EMAIL_REPLYTO
+    }
+    if(params.containsKey("EMAIL_DEVOPS"))
+    {
+        emailDevOps = params.EMAIL_DEVOPS
+    }
+
 
     timeout(time: 60, unit: "MINUTES")
     {
@@ -78,7 +84,7 @@ node()
             // Test desired result: SUCCESS
             if(!stage_passed) 
             { 
-                sendEmailFailureAndQuit(email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -106,7 +112,7 @@ node()
 
             if(!stage_passed) 
             {
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -147,7 +153,7 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -181,7 +187,7 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -257,13 +263,13 @@ node()
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
             if(!stage_passed) 
             {
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -305,7 +311,7 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -340,7 +346,7 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -417,13 +423,13 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
             if(!stage_passed) 
             {
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -455,7 +461,7 @@ node()
             {
                 println ">>> ERROR: EmailMessage -- failed to instantiate!"
                 email_body += "<li>FAILED: Instantiate</li></ol>\n"
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -552,7 +558,7 @@ node()
 
             if(!stage_passed) 
             {
-                sendEmailFailureAndQuit(email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
                 return
             }
 
@@ -574,12 +580,13 @@ node()
 }   // node
 
 
-def sendEmailFailureAndQuit(String email_body)
-{
-    email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + email_body
 
-    sendEmailSummary(to:       "wcmclen@sandia.gov", 
-                     reply_to: "wcmclen@sandia.gov",
+//def sendEmailFailureAndQuit(String email_body)
+def sendEmailFailureAndQuit(Map params)
+{
+    email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
+    sendEmailSummary(to:       params.to, 
+                     reply_to: params.reply_to,
                      subject:  "[SPiFI] Testing Summary FAILED",
                      body:     email_body)
     currentBuild.result='FAILURE'
