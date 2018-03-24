@@ -128,12 +128,12 @@ class EmailMessage implements Serializable
         // Check required param: summary
         assert params.containsKey("summary")
 
-        //assert params.summary.containsKey("NUMTESTS")
-        //assert params.summary.containsKey("NUMSUCCESS")
-        //assert params.summary.containsKey("NUMFAILURE")
-        //assert params.summary.containsKey("NUMUNSTABLE")
-        //assert params.summary.containsKey("NUMABORTED")
-        //assert params.summary.containsKey("NUMNOT_BUILT")
+        assert params.summary.containsKey("NUMTESTS")
+        assert params.summary.containsKey("NUMSUCCESS")
+        assert params.summary.containsKey("NUMFAILURE")
+        assert params.summary.containsKey("NUMUNSTABLE")
+        assert params.summary.containsKey("NUMABORTED")
+        assert params.summary.containsKey("NUMNOT_BUILT")
 
         String output = ""
 
