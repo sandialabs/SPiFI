@@ -132,7 +132,7 @@ node()
                 println ">>> LAUNCHER: APPEND(T-${_exit_status}-DRYRUN)"
 
                 launcher.appendJob(label: "T-${_exit_status}-DRYRUN",
-                                   job_name: "SPiFI_pipeline_test_selectable_status",
+                                   job_name: "SPiFI_test_selectable_status",
                                    timeout: 90,
                                    timeout_unit: "SECONDS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
@@ -293,7 +293,7 @@ node()
                 println ">>> LAUNCHER: APPEND(T-${_exit_status}-RUN)"
 
                 launcher.appendJob(label: "T-${_exit_status}-RUN",
-                                   job_name: "SPiFI_pipeline_test_selectable_status",
+                                   job_name: "SPiFI_test_selectable_status",
                                    timeout: 90,
                                    timeout_unit: "SECONDS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
