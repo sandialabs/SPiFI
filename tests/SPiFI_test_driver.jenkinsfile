@@ -62,11 +62,11 @@ node()
 
                 if(status.getResult() != "${_desired_exit_status}")
                 {
-                    stage_passed = false
                     println ">>> ERROR: SPiFI_test_selectable_status job gave incorrect result.\n" +
                             ">>>        Expected: ${_desired_exit_status} but got ${status.getResult()}"
 
                     email_body += "<li>FAILED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
+                    stage_passed = false
                 } 
                 else
                 {
@@ -100,9 +100,8 @@ node()
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                stage_passed = false
-                println "ERROR: ${ex}"
                 email_body += "<ol><li>FAILED: Load SPiFI Library (branch: master)</li></ol>\n"
+                stage_passed = false
             }
 
             if(!stage_passed) 
