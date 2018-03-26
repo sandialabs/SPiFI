@@ -36,7 +36,7 @@ class ParallelJobLauncher
 
     // Member Variables
     private static env
-    private Map<String,String> _jobList                  // The jobs + their parameters
+    private Map<String,String> _jobList                   // The jobs + their parameters
     private Map<String,String> _lastResultSummary         // Status on the latest results
 
 
@@ -206,9 +206,12 @@ class ParallelJobLauncher
             strJobs += " - timeout         : " + job.value["timeout"] + "\n"
             strJobs += " - timeout_unit    : " + job.value.timeout_unit + "\n"
             strJobs += " - propagate_error : " + job.value["propagate_error"] + "\n"
-            strJobs += " - dry_run         : " + job.value.dry_run + "\n"
-            strJobs += " - dry_run_status  : " + job.value.dry_run_status + "\n"
-            strJobs += " - dry_run_delay   : " + job.value.dry_run_delay + "\n"
+            if(job.value.dry_run == true)
+            {
+                strJobs += " - dry_run         : " + job.value.dry_run + "\n"
+                strJobs += " - dry_run_status  : " + job.value.dry_run_status + "\n"
+                strJobs += " - dry_run_delay   : " + job.value.dry_run_delay + "\n"
+            }
             strJobs += " - parameters      : \n"
             for(param in job.value["parameters"])
             {
