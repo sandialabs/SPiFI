@@ -46,8 +46,6 @@ node()
     // ----[ begin stage: Clean Workspace ]------------------------------------
     stage('Clean Workspace')
     {
-        message_body += "<H2>Clean Workspace</H2>\n"
-
         boolean doCleanWorkspace = false
         println "\u27A4\n" +
                 "\u27A4 Stage: Clean Workspace\n" +
@@ -63,12 +61,10 @@ node()
         {
             cleanWs();
             println "\u27A4 Workspace cleaned."
-            message_body += "<ul><li>Workspace was cleaned.</li></ul>\n"
         }
         else
         {
             println "\u27A4 Workspace NOT cleaned."
-            message_body += "<ul><li>Workspace was NOT cleaned.</li></ul>\n"
         }
     }
     // ----[ end stage: Clean Workspace ]--------------------------------------
