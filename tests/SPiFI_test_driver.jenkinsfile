@@ -603,7 +603,7 @@ node()
             email_body += "<ul>\n"
             try
             {
-                shell = new gov.sandia.sems.spifi.Shell()
+                def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this, command: "ls -l -tr")
                 println "Shell Output:\n" +
                         "- status: ${output.status}\n" +

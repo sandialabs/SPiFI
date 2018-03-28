@@ -6,7 +6,7 @@
  *
  *  Jenkins Pipeline Usage:
  *
- *     shell = new gov.sandia.sems.spifi.Shell()
+ *     def shell = new gov.sandia.sems.spifi.Shell()
  *     def output = shell.execute(env: this, command: 'ls -l -t -r' [, <optional params>])
  *
  */
