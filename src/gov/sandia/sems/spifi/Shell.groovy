@@ -103,14 +103,18 @@ def execute(Map params)
                 {
                     String temp_filename = "__output_" + randomString(30) + ".txt"
 
-                    // Execute the command
-                    status = env.sh(script: "${command} > ${temp_filename}", returnStatus: true)
+                    env.dir("${path}")
+                    {
 
-                    // Read in the temp file and remove it.
-                    stdout = env.readFile(temp_filename).trim()
+                        // Execute the command
+                        status = env.sh(script: "${command} > ${temp_filename}", returnStatus: true)
 
-                    // Delete the temp file
-                    env.sh(script: "rm ${temp_filename}", returnStatus: true)
+                        // Read in the temp file and remove it.
+                        stdout = env.readFile(temp_filename).trim()
+
+                        // Delete the temp file
+                        env.sh(script: "rm ${temp_filename}", returnStatus: true)
+                    }
                 }
             }
             catch(e)
