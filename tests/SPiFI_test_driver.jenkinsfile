@@ -9,8 +9,10 @@ properties([
     disableConcurrentBuilds(),
     pipelineTriggers([cron('1 0 * * *')]),
     parameters([
-        string(defaultValue: 'wcmclen@sandia.gov', description: '', name: 'EMAIL_REPLYTO'), 
-        string(defaultValue: 'wcmclen@sandia.gov', description: '', name: 'EMAIL_DEVOPS')
+        booleanParam(name: 'CleanWorkspace', defaultValue: false,
+                     description: '''Optionally clean the workspace before entering the pipeline.'''),
+        string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
+        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: '')
     ])
 ])
 
@@ -38,6 +40,38 @@ node()
     {
         emailDevOps = params.EMAIL_DEVOPS
     }
+
+
+
+    // ----[ begin stage: Clean Workspace ]------------------------------------
+    stage('Clean Workspace')
+    {
+        message_body += "<H2>Clean Workspace</H2>\n"
+
+        boolean doCleanWorkspace = false
+        println "\u27A4\n" +
+                "\u27A4 Stage: Clean Workspace\n" +
+                "\u27A4"
+        if(params.containsKey("CleanWorkspace"))
+        {
+            if(params.CleanWorkspace)
+            {
+                doCleanWorkspace = true
+            }
+        }
+        if(doCleanWorkspace)
+        {
+            cleanWs();
+            println "\u27A4 Workspace cleaned."
+            message_body += "<ul><li>Workspace was cleaned.</li></ul>\n"
+        }
+        else
+        {
+            println "\u27A4 Workspace NOT cleaned."
+            message_body += "<ul><li>Workspace was NOT cleaned.</li></ul>\n"
+        }
+    }
+    // ----[ end stage: Clean Workspace ]--------------------------------------
 
 
     timeout(time: 60, unit: "MINUTES")
