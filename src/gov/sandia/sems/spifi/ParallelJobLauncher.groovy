@@ -7,7 +7,7 @@
 //  Class to handle organizing and launching Jenkins jobs in parallel.
 //
 //  See Also:
-//  - 
+//  -
 //
 ////////////////////////////////////////////////////////////////////////////////
 package gov.sandia.sems.spifi;

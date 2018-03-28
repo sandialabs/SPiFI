@@ -8,7 +8,7 @@
  *
  *     shell = new gov.sandia.sems.spifi.Shell()
  *     def output = shell.execute(env: this, command: 'ls -l -t -r' [, <optional params>])
- * 
+ *
  */
 package gov.sandia.sems.spifi;
 
@@ -18,7 +18,7 @@ import org.apache.commons.lang.RandomStringUtils
 
 /**
  * Generate a random alphanumeric string
- * 
+ *
  * @param length Integer Length of string to generate.
  */
 def randomString(Integer length)
@@ -126,7 +126,7 @@ def execute(Map params)
     }
     catch(e)
     {
-        // If the job failed, this should catch it... 
+        // If the job failed, this should catch it...
         throw e
     }
 

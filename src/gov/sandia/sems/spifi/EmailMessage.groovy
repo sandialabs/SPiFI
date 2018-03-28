@@ -9,7 +9,7 @@
 //  generate the appropriate email body.
 //
 //  See Also:
-//  - 
+//  -
 //
 ////////////////////////////////////////////////////////////////////////////////
 package gov.sandia.sems.spifi;
@@ -113,7 +113,7 @@ class EmailMessage implements Serializable
     //
     //  summary  [Map]    - REQUIRED Output Summary information from a call to
     //                               ParallelJobLauncher.getLastResultSummary()
-    // 
+    //
     //  format   [String] - OPTIONAL Type of output table to generate.
     //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
     //
@@ -163,9 +163,9 @@ class EmailMessage implements Serializable
     //
     //  Allowable Parameters:
     //
-    //  results  [Map]    - REQUIRED Results from a call to 
+    //  results  [Map]    - REQUIRED Results from a call to
     //                               ParallelJobLauncher.launchInParallel()
-    // 
+    //
     //  format   [String] - OPTIONAL Type of output table to generate.
     //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
     //
@@ -255,7 +255,7 @@ class EmailMessage implements Serializable
     def _genResultSummaryTableASCII(summary)
     {
         String output = """
-                           Summary Stat   |   Count   
+                           Summary Stat   |   Count
                         ------------------+-----------
                            Num Tests      |   ${summary.NUMTESTS}
                            Num Passed     |   ${summary.NUMSUCCESS}

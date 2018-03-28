@@ -18,14 +18,11 @@ properties([
 
 
 
-
-
-
-String email_body = """
-<H1>SPiFI Test Summary</H1>
-""".stripIndent()
+String email_body = "<H1>SPiFI Test Summary</H1>\n"
 
 def exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
+
+
 
 node()
 {
@@ -103,7 +100,7 @@ node()
 
                     email_body += "<li>FAILED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
                     stage_passed = false
-                } 
+                }
                 else
                 {
                     email_body += "<li>PASSED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
@@ -112,9 +109,9 @@ node()
             email_body += "</ol>\n"
 
             // Test desired result: SUCCESS
-            if(!stage_passed) 
-            { 
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+            if(!stage_passed)
+            {
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -128,7 +125,7 @@ node()
 
             email_body += "<H3>Stage (2): Test Load SPiFI Library</H3>\n"
 
-            try 
+            try
             {
                 @Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: master)</li></ol>\n"
@@ -140,9 +137,9 @@ node()
                 stage_passed = false
             }
 
-            if(!stage_passed) 
+            if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -175,15 +172,15 @@ node()
             }
 
             // Print out the list of jobs.
-            try 
+            try
             {
                 launcher.printJobList()
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -200,7 +197,7 @@ node()
                 {   _exit_status ->
 
                     String test_name = "T-${_exit_status}-DRYRUN"
-                
+
                     if(results["${test_name}"].status == "${_exit_status}")
                     {
                        email_body += "<li>PASSED: ${test_name}</li>\n"
@@ -217,12 +214,12 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             // Check result summary
-            try 
+            try
             {
                 def summary = launcher.getLastResultSummary()
                 println ">>> SUMMARY: ${summary}"
@@ -293,13 +290,13 @@ node()
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
-            if(!stage_passed) 
+            if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -333,20 +330,20 @@ node()
             }
 
             // Print out the list of jobs.
-            try 
+            try
             {
                 launcher.printJobList()
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             // Launch the jobs in parallel
-            try 
+            try
             {
                 launcher_results = launcher.launchInParallel()
 
@@ -359,7 +356,7 @@ node()
                 {   _exit_status ->
 
                     String test_name = "T-${_exit_status}-RUN"
-                
+
                     if(launcher_results["${test_name}"].status == "${_exit_status}")
                     {
                        email_body += "<li>PASSED: ${test_name}</li>\n"
@@ -376,12 +373,12 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             // Check result summary
-            try 
+            try
             {
                 launcher_summary = launcher.getLastResultSummary()
                 println ">>> SUMMARY: ${launcher_summary}"
@@ -453,13 +450,13 @@ node()
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
-            if(!stage_passed) 
+            if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -479,7 +476,7 @@ node()
             email_body += "<H3>Stage (5): Test Email Builder</H3>\n"
 
             def message = null
-            
+
             // Test if we can instantiate an email message builder
             email_body += "<ol>\n"
             try
@@ -491,7 +488,7 @@ node()
             {
                 println ">>> ERROR: EmailMessage -- failed to instantiate!"
                 email_body += "<li>FAILED: Instantiate</li></ol>\n"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -501,7 +498,7 @@ node()
                 def output = message.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
                 email_body += "<li>PASSED: genResultSummaryTable (ASCII)</li>\n"
                 println ">>> summary table ascii:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
@@ -515,7 +512,7 @@ node()
                 def output = message.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultSummaryTable (MARKDOWN)</li>\n"
                 println ">>> summary table ascii:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println ">>> ERROR:\n${ex}"
@@ -529,7 +526,7 @@ node()
                 def output = message.genResultSummaryTable(summary: launcher_summary, format: "HTML")
                 email_body += "<li>PASSED: genResultSummaryTable (HTML)</li>\n"
                 println ">>> summary table html:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
@@ -544,7 +541,7 @@ node()
                 def output = message.genResultDetailTable(results: launcher_results, format: "ASCII")
                 email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
                 println ">>> details table ascii:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
@@ -558,7 +555,7 @@ node()
                 def output = message.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN)</li>\n"
                 println ">>> details table ascii:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
@@ -572,7 +569,7 @@ node()
                 def output = message.genResultDetailTable(results: launcher_results, format: "HTML")
                 email_body += "<li>PASSED: genResultDetailTable (HTML)</li>\n"
                 println ">>> details table ascii:\n${output}"
-            } 
+            }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
@@ -586,9 +583,9 @@ node()
             // tie off the list
             email_body += "</ol>\n"
 
-            if(!stage_passed) 
+            if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body) 
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -634,7 +631,7 @@ node()
         stage("7) Email Summary")
         {
             println email_body
-            sendEmailSummary(to:       emailDevOps, 
+            sendEmailSummary(to:       emailDevOps,
                              reply_to: emailReplyTo,
                              subject:  "[SPiFI] Testing Summary PASSED",
                              body:     email_body)
@@ -650,7 +647,7 @@ node()
 def sendEmailFailureAndQuit(Map params)
 {
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
-    sendEmailSummary(to:       params.to, 
+    sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
                      subject:  "[SPiFI] Testing Summary FAILED",
                      body:     email_body)
@@ -676,7 +673,7 @@ def sendEmailSummary(Map params)
     mail to:       params.to,
          replyTo:  params.reply_to,
          mimeType: 'text/html',
-         subject:  params.subject, 
+         subject:  params.subject,
          body:     __email_message
     }
 
