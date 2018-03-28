@@ -565,15 +565,50 @@ node()
         }   // End Stage 5
 
 
-        // Stage 6: Summary (is that even necessary?)
-        stage("6) Email Summary")
+
+        // Stage 6: Test org.sandia.sems.spifi.Shell
+        stage("6) Shell")
+        {
+            boolean stage_passed = true
+
+            email_body += "<H3>Stage (6): Test Shell</H3>\n"
+
+            email_body += "<ul>\n"
+            try
+            {
+                shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this, command: "ls -l -tr")
+                println "Shell Output:\n" +
+                        "- status: ${output.status}\n" +
+                        "- stdout: ${output.stdout}\n"
+                email_body += "<li>PASSED: Shell.execute()</li>\n"
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+            email_body += "</ul>\n"
+
+            if(!stage_passed)
+            {
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+        } // End Stage 6
+
+
+
+        // Stage 7: Summary (is that even necessary?)
+        stage("7) Email Summary")
         {
             println email_body
             sendEmailSummary(to:       emailDevOps, 
                              reply_to: emailReplyTo,
                              subject:  "[SPiFI] Testing Summary PASSED",
                              body:     email_body)
-        }   // End Stage 6
+        }   // End Stage 7
 
 
     }   // timeout
