@@ -376,18 +376,15 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _getTemplate ]-----------------------------------------------------
-    //
-    // Private method.  Generates a template email HTML header with style
-    // rules,etc.  The body can be customized with the setCustomEmail() method
-    // or specific "canned" emails can be generated.
-    //
-    def _getTemplate()
-    {
-        String template = """
-            <!DOCTYPE html>
-            <HTML>
-            <HEAD>
+    // ----[ _genStyleSheet ]---------------------------------------------------
+    /**
+     *  _genStyleSheet
+     *
+     *  Generate the stylesheet part of a header (everything in <STYLE></STYLE>)
+     */
+     def _genStyleSheet()
+     {
+         String output = """
                 <STYLE>
                 table, th, td {
                 border: 1px solid black;
@@ -422,6 +419,28 @@ class EmailMessage implements Serializable
                 span.blue {
                     color: blue;
                 }
+
+                /* Code Block */
+                /* - use with <pre class="code">...</pre> */
+                pre.code {
+                    background: #f4f4f4;
+                    border: 1px solid #ddd;
+                    border-left: 3px solid #f36d33;
+                    color: #666;
+                    page-break-inside: avoid;
+                    font-family: "Courier New" monospace;
+                    font-size: 90%;
+                    line-height: 1.2em;
+                    margin-bottom: 1.0em;
+                    max-width: 100%;
+                    overflow: auto;
+                    padding: 1em 1.0em;
+                    display: block;
+                    word-wrap: break-word;
+                    margin: auto 20px auto 20px;
+                }
+
+                /* Table Themes */
 
                 /* Light Background Theme */
                 .bgLight th {
@@ -490,6 +509,26 @@ class EmailMessage implements Serializable
                 .tr8 td:nth-child(8), .tr8 th:nth-child(8),
                 .tr9 td:nth-child(9), .tr9 th:nth-child(9)  { text-align:right }
                 </STYLE>
+         """.stripIndent()
+         return output
+     }
+
+
+    // ----[ _getTemplate ]-----------------------------------------------------
+    /**
+     *  _getTemplate
+     *
+     * Private method.  Generates a template email HTML header with style
+     * rules,etc.  The body can be customized with the setCustomEmail() method
+     * or specific "canned" emails can be generated.
+     */
+    def _getTemplate()
+    {
+        String template = """
+            <!DOCTYPE html>
+            <HTML>
+            <HEAD>
+            {{STYLESHEET}}
             </HEAD>
             <BODY>
             {{EMAIL_BODY}}
@@ -497,6 +536,7 @@ class EmailMessage implements Serializable
             </BODY>
             </HTML>
             """.stripIndent()
+        template = template.replace("{{STYLESHEET}}", this._genStyleSheet())
         return template
     }
 
