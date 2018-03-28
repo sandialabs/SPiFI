@@ -108,7 +108,9 @@ def execute(Map params)
 
                     // Read in the temp file and remove it.
                     stdout = env.readFile(temp_filename).trim()
-                    new File(temp_filename).delete()
+
+                    // Delete the temp file
+                    env.sh(script: "rm ${temp_filename}", returnStatus: true)
                 }
             }
             catch(e)
