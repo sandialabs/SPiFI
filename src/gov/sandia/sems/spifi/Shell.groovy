@@ -38,17 +38,18 @@ def randomString(Integer length)
  *   command       [REQUIRED] The command + arguments to run as a single string (i.e., "ls -l -t")
  *   path          [OPTIONAL] Defaults to ${env.WORKSPACE}.  If provided, assumes a path relative to current directory.
  *                            (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
- *   retries       [OPTIONAL] Number of retries.  Default: 1
+ *   retries       [OPTIONAL] Number of retries.  Default: 0
  *   retry_delay   [OPTIONAL] Retry delay (seconds).  Default: 10
  *   timeout       [OPTIONAL] Timeout for the job to execute.  Default 300
  *   timeout_units [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: MINUTES
+ *   verbose       [OPTIONAL] If present and set to true, some extra debugging information will be printed.
  */
 def execute(Map params)
 {
     Map output = [:]
 
     String  path              = "${env.WORKSPACE}"
-    Integer retries           = 1
+    Integer retries           = 0
     Integer retry_delay       = 10
     Integer timeout           = 300
     String  timeout_units     = "SECONDS"
@@ -76,58 +77,70 @@ def execute(Map params)
     // Validate parameters
     assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"
 
-    /*
-    // Some DEBUGGING output
-    env.println "execute()\n${params}\n"
-    env.println "State:\n" +
-                "- path          : ${path}\n" +
-                "- retries       : ${retries}\n" +
-                "- retry_delay   : ${retry_delay}\n" +
-                "- timeout       : ${timeout}\n" +
-                "- timeout_units : ${timeout_units}"
-    env.println "ENV:\n" +
-                "- workspace: ${env.WORKSPACE}"
-    */
+    // Optionally print out some debugging output
+    if(params.containsKey("verbose") && params.verbose == true)
+    {
+        env.println "execute()\n${params}\n"
+        env.println "State:\n" +
+                    "- path          : ${path}\n" +
+                    "- retries       : ${retries}\n" +
+                    "- retry_delay   : ${retry_delay}\n" +
+                    "- timeout       : ${timeout}\n" +
+                    "- timeout_units : ${timeout_units}"
+        env.println "ENV:\n" +
+                    "- workspace: ${env.WORKSPACE}"
+    }
 
-    // output variables for result capture
-    String stdout = ""
+    // Initialize output variables
+    String  stdout = ""
     Integer status = -1
 
-    try
+    // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
+    Integer attempts = retries + 1
+
+    while(0 != status && attempts > 0)
     {
-        retry(retries)
+        String temp_filename = "__output_" + randomString(30) + ".txt"
+
+        env.timeout(time: timeout, unit: timeout_units)
         {
-            try
+            env.dir("${path}")
             {
-                env.timeout(time: timeout, unit: timeout_units)
+                try
                 {
-                    String temp_filename = "__output_" + randomString(30) + ".txt"
+                    // Execute the command
+                    status = env.sh(script: "${command} > ${temp_filename}", returnStatus: true)
 
-                    env.dir("${path}")
+                    // Read in the temp file and remove it.
+                    stdout = env.readFile(temp_filename).trim()
+
+                    // Delete the temp file
+                    env.sh(script: "rm ${temp_filename}", returnStatus: true)
+                }
+                catch(e)
+                {
+                    env.sh(script: "rm ${temp_filename}", returnStatus: true)
+
+                    // If something threw an error and not our final attempt, clean up for retry
+                    if(attempts > 1)
                     {
-
-                        // Execute the command
-                        status = env.sh(script: "${command} > ${temp_filename}", returnStatus: true)
-
-                        // Read in the temp file and remove it.
-                        stdout = env.readFile(temp_filename).trim()
-
-                        // Delete the temp file
-                        env.sh(script: "rm ${temp_filename}", returnStatus: true)
+                        status = -1
+                        stdout = ""
                     }
                 }
             }
-            catch(e)
-            {
-                env.sleep retry_delay
-                throw e
-            }
         }
-    }
-    catch(e)
-    {
-        // If the job failed, this should catch it...
-        throw e
+
+        // Reset for next attempt if not the final attempt
+        if(0 != status && attempts > 1)
+        {
+            // Reset values
+            stdout = ""
+            status = -1
+        }
+
+        // Decrement attempts counter.
+        attempts--
     }
 
     // Save the results
