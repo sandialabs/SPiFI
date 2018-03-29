@@ -31,23 +31,27 @@ def randomString(Integer length)
 
 
 /**
+ * execute
+ *
  * Execute a command and capture stdout and exit status.
  *
  * Params:
- *   env           [REQUIRED] Jenkins environment (use 'this' in a jenkins pipeline)
- *   command       [REQUIRED] The command + arguments to run as a single string (i.e., "ls -l -t")
- *   path          [OPTIONAL] Defaults to ${env.WORKSPACE}.  If provided, assumes a path relative to current directory.
- *                            (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
- *   retries       [OPTIONAL] Number of retries.  Default: 0
- *   retry_delay   [OPTIONAL] Retry delay (seconds).  Default: 10
- *   timeout       [OPTIONAL] Timeout for the job to execute.  Default 300
- *   timeout_units [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: MINUTES
- *   verbose       [OPTIONAL] If present and set to true, some extra debugging information will be printed.
- *   dry_run       [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
- *                            Default: false
- *  dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (in seconds) to append when running.
- *  dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
- *  dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
+ *   env            [REQUIRED] Jenkins environment (use 'this' in a jenkins pipeline)
+ *   command        [REQUIRED] The command + arguments to run as a single string (i.e., "ls -l -t")
+ *
+ *   path           [OPTIONAL] Defaults to ${env.WORKSPACE}.  If provided, assumes a path relative to current directory.
+ *                             (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
+ *   retries        [OPTIONAL] Number of retries.  Default: 0
+ *   retry_delay    [OPTIONAL] Retry delay (seconds).  Default: 10
+ *   timeout        [OPTIONAL] Timeout for the job to execute.  Default 300
+ *   timeout_units  [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: MINUTES
+ *   verbose        [OPTIONAL] If present and set to true, some extra debugging information will be printed.
+ *
+ *   dry_run        [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
+ *                             Default: false
+ *   dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (in seconds) to append when running.  Default: 5
+ *   dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
+ *   dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
  */
 def execute(Map params)
 {
@@ -58,9 +62,6 @@ def execute(Map params)
     Integer retry_delay       = 10
     Integer timeout           = 300
     String  timeout_units     = "SECONDS"
-    Boolean dry_run           = false
-    Integer dry_run_status    = 0
-    String  dry_run_stdout    = ""
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -98,6 +99,29 @@ def execute(Map params)
         env.println "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}"
     }
+
+    // Handle Dry-Run Mode
+    Boolean dry_run           = false
+    Integer dry_run_delay     = 5
+    Integer dry_run_status    = 0
+    String  dry_run_stdout    = ""
+
+    if(params.containsKey("dry_run"))        dry_run = params.dry_run
+    if(params.containsKey("dry_run_status")) dry_run_status = params.dry_run_status
+    if(params.containsKey("dry_run_stdout")) dry_run_stdout = params.dry_run_stdout
+
+    if(dry_run)
+    {
+        env.println "[SPiFI]> DRY RUN!"
+        env.sleep dry_run_delay
+
+        output.status = dry_run_status
+        output.stdout = dry_run_stdout
+
+        return output
+    }
+
+    // If not in dry-run mode, then we continue...
 
     // Initialize output variables
     String  stdout = ""
