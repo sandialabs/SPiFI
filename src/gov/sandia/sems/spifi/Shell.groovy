@@ -141,7 +141,7 @@ def execute(Map params)
         if(0 != status && attempts > 1 && !retry_exception)
         {
             println "[SPiFI]> status = ${status}"
-            println "[SPiFI]> stdout = ${stdout}"
+            println "[SPiFI]> stdout:\n${stdout}\n"
             println "[SPiFI]> RETRYING due to nonzero exit status"
 
             // Reset values
