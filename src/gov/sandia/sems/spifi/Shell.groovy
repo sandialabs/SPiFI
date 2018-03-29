@@ -173,9 +173,13 @@ def execute(Map params)
         // Reset for next attempt if not the final attempt and we're not retryign due to an exception.
         if(0 != status && attempts > 1 && !retry_exception)
         {
-            println "[SPiFI]> status = ${status}"
-            println "[SPiFI]> stdout:\n${stdout}\n"
-            println "[SPiFI]> RETRYING due to nonzero exit status"
+            println "[SPiFI]> status = ${status}\n" +
+                    "[SPiFI]> stdout:\n${stdout}\n"
+            println "[SPiFI]> RETRYING due to nonzero exit status\n" +
+                    "[SPiFI]> - retrying in ${retry_delay} seconds."
+
+            // Retry Delay
+            env.sleep retry_delay
 
             // Reset values
             stdout = ""
