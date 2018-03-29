@@ -99,6 +99,8 @@ def execute(Map params)
 
     while(0 != status && attempts > 0)
     {
+        Boolean retry_exception = false
+
         String temp_filename = "__output_" + randomString(30) + ".txt"
 
         env.timeout(time: timeout, unit: timeout_units)
@@ -123,19 +125,20 @@ def execute(Map params)
                     // If something threw an error and not our final attempt, clean up for retry
                     if(attempts > 1)
                     {
-                        println "[SPiFI]> status = ${status}"
-                        println "[SPiFI]> stdout = ${stdout}"
                         println "[SPiFI]> RETRYING due to a thrown exception"
                         println "[SPiFI]> Exception:\n${e}"
+                        println "[SPiFI]> status = ${status}"
+                        println "[SPiFI]> stdout = ${stdout}"
                         status = -1
                         stdout = ""
+                        retry_exception = true
                     }
                 }
             }
         }
 
-        // Reset for next attempt if not the final attempt
-        if(0 != status && attempts > 1)
+        // Reset for next attempt if not the final attempt and we're not retryign due to an exception.
+        if(0 != status && attempts > 1 && !retry_exception)
         {
             println "[SPiFI]> status = ${status}"
             println "[SPiFI]> stdout = ${stdout}"
@@ -149,6 +152,10 @@ def execute(Map params)
         // Decrement attempts counter.
         attempts--
     }
+
+    // Print out the results to console log
+    println "[SPiFI]> status = ${status}"
+    println "[SPiFI]> stdout = ${stdout}"
 
     // Save the results
     output["status"] = status
