@@ -49,7 +49,7 @@ def randomString(Integer length)
  *
  *   dry_run        [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
  *                             Default: false
- *   dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (in seconds) to append when running.  Default: 5
+ *   dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (seconds) to append when running.  Default: 5
  *   dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
  *   dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
  */
