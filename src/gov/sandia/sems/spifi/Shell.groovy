@@ -43,6 +43,11 @@ def randomString(Integer length)
  *   timeout       [OPTIONAL] Timeout for the job to execute.  Default 300
  *   timeout_units [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: MINUTES
  *   verbose       [OPTIONAL] If present and set to true, some extra debugging information will be printed.
+ *   dry_run       [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
+ *                            Default: false
+ *  dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (in seconds) to append when running.
+ *  dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
+ *  dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
  */
 def execute(Map params)
 {
@@ -53,6 +58,9 @@ def execute(Map params)
     Integer retry_delay       = 10
     Integer timeout           = 300
     String  timeout_units     = "SECONDS"
+    Boolean dry_run           = false
+    Integer dry_run_status    = 0
+    String  dry_run_stdout    = ""
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -82,6 +90,7 @@ def execute(Map params)
     {
         env.println "[SPiFI]> Shell.execute()\n${params}"
         env.println "[SPiFI]> -  path          : ${path}\n" +
+                    "[SPiFI]> -  command       : ${command}\n" +
                     "[SPiFI]> -  retries       : ${retries}\n" +
                     "[SPiFI]> -  retry_delay   : ${retry_delay}\n" +
                     "[SPiFI]> -  timeout       : ${timeout}\n" +
