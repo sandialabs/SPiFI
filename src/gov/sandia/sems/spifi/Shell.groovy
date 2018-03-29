@@ -43,8 +43,8 @@ def randomString(Integer length)
  *                             (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
  *   retries        [OPTIONAL] Number of retries.  Default: 0
  *   retry_delay    [OPTIONAL] Retry delay (seconds).  Default: 10
- *   timeout        [OPTIONAL] Timeout for the job to execute.  Default 300
- *   timeout_units  [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: MINUTES
+ *   timeout        [OPTIONAL] Timeout for the job to execute.  Default 600
+ *   timeout_units  [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: SECONDS
  *   verbose        [OPTIONAL] If present and set to true, some extra debugging information will be printed.
  *
  *   dry_run        [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
@@ -60,7 +60,7 @@ def execute(Map params)
     String  path              = "${env.WORKSPACE}"
     Integer retries           = 0
     Integer retry_delay       = 10
-    Integer timeout           = 300
+    Integer timeout           = 600
     String  timeout_units     = "SECONDS"
 
     // Process required parameters.
