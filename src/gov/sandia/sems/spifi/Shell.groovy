@@ -80,15 +80,14 @@ def execute(Map params)
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)
     {
-        env.println "execute()\n${params}\n"
-        env.println "State:\n" +
-                    "- path          : ${path}\n" +
-                    "- retries       : ${retries}\n" +
-                    "- retry_delay   : ${retry_delay}\n" +
-                    "- timeout       : ${timeout}\n" +
-                    "- timeout_units : ${timeout_units}"
-        env.println "ENV:\n" +
-                    "- workspace: ${env.WORKSPACE}"
+        env.println "[SPiFI]> Shell.execute()\n${params}"
+        env.println "[SPiFI]> -  path          : ${path}\n" +
+                    "[SPiFI]> -  retries       : ${retries}\n" +
+                    "[SPiFI]> -  retry_delay   : ${retry_delay}\n" +
+                    "[SPiFI]> -  timeout       : ${timeout}\n" +
+                    "[SPiFI]> -  timeout_units : ${timeout_units}"
+        env.println "[SPiFI]> Environment:\n" +
+                    "[SPiFI]> -  workspace: ${env.WORKSPACE}"
     }
 
     // Initialize output variables
@@ -124,6 +123,10 @@ def execute(Map params)
                     // If something threw an error and not our final attempt, clean up for retry
                     if(attempts > 1)
                     {
+                        println "[SPiFI]> status = ${status}"
+                        println "[SPiFI]> stdout = ${stdout}"
+                        println "[SPiFI]> RETRYING due to a thrown exception"
+                        println "[SPiFI]> Exception:\n${e}"
                         status = -1
                         stdout = ""
                     }
@@ -134,6 +137,10 @@ def execute(Map params)
         // Reset for next attempt if not the final attempt
         if(0 != status && attempts > 1)
         {
+            println "[SPiFI]> status = ${status}"
+            println "[SPiFI]> stdout = ${stdout}"
+            println "[SPiFI]> RETRYING due to nonzero exit status"
+
             // Reset values
             stdout = ""
             status = -1
