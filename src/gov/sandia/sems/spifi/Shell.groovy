@@ -72,13 +72,13 @@ def execute(Map params)
     // Process required parameters.
     if(!params.containsKey("env"))
     {
-      error "Missing required param: env"
+        throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
     }
     def env = params.env
 
     if(!params.containsKey("command"))
     {
-      error "Missing required param: command"
+        throw new Exception("[SPiFI] ERROR: Missing required parameter: command")
     }
     String command = params.command
 
