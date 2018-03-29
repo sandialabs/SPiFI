@@ -101,7 +101,8 @@ class ParallelJobLauncher
         if(params.containsKey("dry_run_delay"))   { job.dry_run_delay   = params.dry_run_delay   }
         if(params.containsKey("monitor_node"))    { job.monitor_node    = params.monitor_node    }
 
-        this.env.println "Add job ${job.label}"
+        this.env.println "[SPiFI]> Append job ${job.label}"
+
         this._jobList[job.label] = [ jenkins_job_name: job.job_name,
                                      parameters:       job.parameters,
                                      quiet_period:     job.quiet_period,
@@ -162,8 +163,9 @@ class ParallelJobLauncher
         results.each
         {   _r ->
             def r = _r
-            this.env.println ">>> r = ${r}"
             this._updateLastResultSummary(r.value["status"])
+
+            this.env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
         }
 
         return results
@@ -195,27 +197,27 @@ class ParallelJobLauncher
     //
     def printJobList()
     {
-        String strJobs = "----[ JobList ]----------\n"
+        String strJobs = "[SPiFI]> ----[ JobList ]----------\n"
         for(job in this._jobList)
         {
-            strJobs += "${job.key}:\n"
+            strJobs += "[SPiFI]> Job: ${job.key}:\n"
             // strJobs += " - ${job.value}\n"
-            strJobs += " - jenkins_job_name: " + job.value["jenkins_job_name"] + "\n"
-            strJobs += " - monitor_node    : " + job.value["monitor_node"] + "\n"
-            strJobs += " - quiet_period    : " + job.value["quiet_period"] + "\n"
-            strJobs += " - timeout         : " + job.value["timeout"] + "\n"
-            strJobs += " - timeout_unit    : " + job.value.timeout_unit + "\n"
-            strJobs += " - propagate_error : " + job.value["propagate_error"] + "\n"
+            strJobs += "[SPiFI]>   - jenkins_job_name: " + job.value["jenkins_job_name"] + "\n"
+            strJobs += "[SPiFI]>   - monitor_node    : " + job.value["monitor_node"] + "\n"
+            strJobs += "[SPiFI]>   - quiet_period    : " + job.value["quiet_period"] + "\n"
+            strJobs += "[SPiFI]>   - timeout         : " + job.value["timeout"] + "\n"
+            strJobs += "[SPiFI]>   - timeout_unit    : " + job.value.timeout_unit + "\n"
+            strJobs += "[SPiFI]>   - propagate_error : " + job.value["propagate_error"] + "\n"
             if(job.value.dry_run == true)
             {
-                strJobs += " - dry_run         : " + job.value.dry_run + "\n"
-                strJobs += " - dry_run_status  : " + job.value.dry_run_status + "\n"
-                strJobs += " - dry_run_delay   : " + job.value.dry_run_delay + "\n"
+                strJobs += "[SPiFI]>   - dry_run         : " + job.value.dry_run + "\n"
+                strJobs += "[SPiFI]>   - dry_run_status  : " + job.value.dry_run_status + "\n"
+                strJobs += "[SPiFI]>   - dry_run_delay   : " + job.value.dry_run_delay + "\n"
             }
-            strJobs += " - parameters      : \n"
+            strJobs += "[SPiFI]>   - parameters      : \n"
             for(param in job.value["parameters"])
             {
-                strJobs += "     " + param + "\n"
+                strJobs += "[SPiFI]>       " + param + "\n"
             }
         }
         this.env.println "${strJobs}"
@@ -247,7 +249,10 @@ class ParallelJobLauncher
         {
             if(job.value.dry_run)
             {
-                this.env.println ">>> DRY RUN MODE <<<"
+                this.env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
+                                 "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
+                                 "[SPiFI]> - Status: ${job.value.dry_run_status}"
+
                 results[job.key]["status"] = job.value.dry_run_status
                 this.env.sleep job.value.dry_run_delay
             }
@@ -267,7 +272,9 @@ class ParallelJobLauncher
                 results[job.key]["url"]      = status.getAbsoluteUrl()
                 results[job.key]["duration"] = status.getDuration()
             }
-            this.env.println "${job.value.jenkins_job_name} = ${results[job.key]}"
+
+            this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
+
         }
         return results
     }
