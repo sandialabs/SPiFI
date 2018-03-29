@@ -604,7 +604,7 @@ node()
             try
             {
                 def shell = new gov.sandia.sems.spifi.Shell()
-                def output = shell.execute(env: this, command: "ls -l -tr")
+                def output = shell.execute(env: this, command: "ls -l -tr", verbose: true)
                 println "Shell Output:\n" +
                         "- status: ${output.status}\n" +
                         "- stdout: ${output.stdout}\n"
