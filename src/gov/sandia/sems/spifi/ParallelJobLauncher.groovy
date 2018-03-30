@@ -201,7 +201,6 @@ class ParallelJobLauncher
         for(job in this._jobList)
         {
             strJobs += "[SPiFI]> Job: ${job.key}:\n"
-            // strJobs += " - ${job.value}\n"
             strJobs += "[SPiFI]>   - jenkins_job_name: " + job.value["jenkins_job_name"] + "\n"
             strJobs += "[SPiFI]>   - monitor_node    : " + job.value["monitor_node"] + "\n"
             strJobs += "[SPiFI]>   - quiet_period    : " + job.value["quiet_period"] + "\n"
@@ -220,6 +219,9 @@ class ParallelJobLauncher
                 strJobs += "[SPiFI]>       " + param + "\n"
             }
         }
+        // Strip off trailing newline...
+        strJobs = strJobs.replaceAll("\\s\$","")
+
         this.env.println "${strJobs}"
     }
 
