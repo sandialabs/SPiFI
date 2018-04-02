@@ -630,14 +630,22 @@ node()
         // Stage 7: Summary (is that even necessary?)
         stage("7) Email Summary")
         {
-            println email_body
-            sendEmailSummary(to:       emailDevOps,
-                             reply_to: emailReplyTo,
-                             subject:  "[SPiFI] Testing Summary PASSED",
-                             body:     email_body)
+            // Final test is to try and send email using SPiFI EmailMessage class
+            // if it fails then send the usual email.
+            try
+            {
+                def message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
+                message.setCustomEmail("[SPiFI] Testing Summary PASSED", email_body)
+                message.send()
+            }
+            catch(e)
+            {
+                email_body += "<H3>Stage (7): Email Summary</H3>\n"
+                email_body += "<ul><li>FAILED: Send email using SPiFI::EmailMessage.send()</li></ul>\n"
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }
         }   // End Stage 7
-
-
     }   // timeout
 }   // node
 
