@@ -386,41 +386,17 @@ class EmailMessage implements Serializable
      {
          String output = """
                 <STYLE>
-                table, th, td {
-                border: 1px solid black;
-                border-collapse: collapse;
-                padding: 5px;
-                font-family: monospace;
-                font-size: 12px;
-                }
-                table {
-                    border-spacing: 5px;
-                    vertical-align: middle;
-                }
-                th {
-                    font-weight: bold;
-                    font-size:   14px;
-                    text-align:  center;
-                }
 
-                /* Defined <span/> blocks to allow in-line coloring of text */
-                span.gray {
-                    color: gray;
-                }
-                span.red {
-                    color: red;
-                }
-                span.green {
-                    color: green;
-                }
-                span.yellow {
-                    color: yellow;
-                }
-                span.blue {
-                    color: blue;
-                }
+                /* Defined <span/> blocks to allow in-line coloring/formatting of text */
+                span.bold   { font-weight: bolder; }
+                span.gray   { color: gray;    }
+                span.red    { color: red;     }
+                span.green  { color: #00bb00; }
+                span.yellow { color: #cccc00; }
+                span.blue   { color: blue;    }
 
-                /* Code Block */
+                /* ---------- Code Block ---------- */
+
                 /* - use with <pre class="code">...</pre> */
                 pre.code {
                     background: #f4f4f4;
@@ -440,9 +416,25 @@ class EmailMessage implements Serializable
                     margin: auto 20px auto 20px;
                 }
 
-                /* Table Themes */
+                /* ---------- Table Themes ---------- */
+                table, th, td {
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 5px;
+                font-family: monospace;
+                font-size: 12px;
+                }
+                table {
+                    border-spacing: 5px;
+                    vertical-align: middle;
+                }
+                th {
+                    font-weight: bold;
+                    font-size:   14px;
+                    text-align:  center;
+                }
 
-                /* Light Background Theme */
+                /* ---------- Light Background Theme ---------- */
                 .bgLight th {
                     background-color: #AFAFAF;
                 }
@@ -453,7 +445,7 @@ class EmailMessage implements Serializable
                     background-color: #FFEFEE;
                 }
 
-                /* Dark Background Theme */
+                /* ---------- Dark Background Theme ---------- */
                 .bgDark th {
                     background-color: #0C1A49;
                     color: #737785;
@@ -467,7 +459,7 @@ class EmailMessage implements Serializable
                     color: #737785;
                 }
 
-                /* Green Background Theme */
+                /* ----------  Green Background Theme ---------- */
                 .bgGreen th {
                     background-color: #AFAFAF;
                 }
@@ -478,7 +470,7 @@ class EmailMessage implements Serializable
                     background-color: #8CD564;
                 }
 
-                /* Status based themes */
+                /* ---------- Status based themes ---------- */
                 tr.SUCCESS td {
                     background-color: #80BD73;
                 }
@@ -489,7 +481,7 @@ class EmailMessage implements Serializable
                     background-color: #E3D389;
                 }
 
-                /* Center columns [1-9] */
+                /* ---------- Center columns [1-9] ---------- */
                 .tc1 td:nth-child(1), .tc1 th:nth-child(1),
                 .tc2 td:nth-child(2), .tc2 th:nth-child(2),
                 .tc3 td:nth-child(3), .tc3 th:nth-child(3),
