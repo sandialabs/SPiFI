@@ -114,7 +114,7 @@ class EmailMessage implements Serializable
     //  summary  [Map]    - REQUIRED Output Summary information from a call to
     //                               ParallelJobLauncher.getLastResultSummary()
     //
-    //  format   [String] - OPTIONAL Type of output table to generate.
+    //  format   [String] - OPTIONAL Type of output table to generate. Default: ASCII
     //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
     //
     def genResultSummaryTable(Map params)
