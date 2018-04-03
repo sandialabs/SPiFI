@@ -164,11 +164,11 @@ def execute(Map params)
                     // If something threw an error and not our final attempt, clean up for retry
                     if(attempts > 1)
                     {
-                        println "[SPiFI]> Command Failed due to thrown exception\n" +
-                                "[SPiFI]> - status = ${status}\n" +
-                                "[SPiFI]> - stdout:\n${stdout}\n" +
-                                "[SPiFI]> - exception:\n${e}"
-                        println "[SPiFI]> Retrying in ${retry_delay} seconds."
+                        env.println "[SPiFI]> Command Failed due to thrown exception\n" +
+                                    "[SPiFI]> - status = ${status}\n" +
+                                    "[SPiFI]> - stdout:\n${stdout}\n" +
+                                    "[SPiFI]> - exception:\n${e}"
+                        env.println "[SPiFI]> Retrying in ${retry_delay} seconds."
 
                         // Reset values
                         status = -1
@@ -185,10 +185,10 @@ def execute(Map params)
         // Reset for next attempt if not the final attempt and we're not retryign due to an exception.
         if(0 != status && attempts > 1 && !retry_exception)
         {
-            println "[SPiFI]> Command Failed due to nonzero exit status\n" +
-            println "[SPiFI]> - status = ${status}\n" +
-                    "[SPiFI]> - stdout:\n${stdout}"
-            println "[SPiFI]> Retrying in ${retry_delay} seconds."
+            env.println "[SPiFI]> Command Failed due to nonzero exit status\n" +
+            env.println "[SPiFI]> - status = ${status}\n" +
+                        "[SPiFI]> - stdout:\n${stdout}"
+            env.println "[SPiFI]> Retrying in ${retry_delay} seconds."
 
             // Reset values
             stdout = ""
@@ -203,9 +203,9 @@ def execute(Map params)
     }
 
     // Print out the results to console log
-    println "[SPiFI]> Command returned:\n" +
-            "[SPiFI]> - status = ${status}\n" +
-            "[SPiFI]> - stdout:\n${stdout}"
+    env.println "[SPiFI]> Command returned:\n" +
+                "[SPiFI]> - status = ${status}\n" +
+                "[SPiFI]> - stdout:\n${stdout}"
 
     // Save the results
     output["status"] = status
