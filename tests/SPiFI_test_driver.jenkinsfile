@@ -292,11 +292,13 @@ node()
                 return
             }
 
+            /*
             if(!stage_passed)
             {
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
+            */
 
         }   // end stage 3
 
@@ -452,11 +454,13 @@ node()
                 return
             }
 
+            /*
             if(!stage_passed)
             {
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
+            */
 
         }   // End Stage 4
 
@@ -581,11 +585,13 @@ node()
             // tie off the list
             email_body += "</ol>\n"
 
+            /*
             if(!stage_passed)
             {
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
+            */
 
         }   // End Stage 5
 
@@ -615,35 +621,81 @@ node()
             }
             email_body += "</ul>\n"
 
+            /*
             if(!stage_passed)
             {
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
+            */
 
         } // End Stage 6
 
 
 
+        // Stage 7: Test org.sandia.sems.spifi.Git
+        stage("7) Git")
+        {
+            boolean stage_passed = true
+
+            email_body += "<H3>Stage (7): Test Git</H3>\n"
+            email_body += "<ul>\n"
+            try
+            {
+
+                def git_spifi = new gov.sandia.sems.spifi.Git()
+
+
+                git_spifi.clone(env: this,
+                                dir: "SPiFI",
+                                url: "git@gitlab-ex.sandia.gov:wcmclen/sems-pipeline-framework-infrastructure.git",
+                                credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                retries: 2,
+                                retry_delay: 10,
+                                timeout: 90,
+                                timeout_units: "SECONDS",
+                                verbose: true
+                               )
+
+                def stdout = sh(script: "ls -ltr", returnStdout: true)
+                println "STDOUT:\n${stdout}"
+
+                email_body += "<li>SUCCESS: Git.clone() cloned a repository</li>\n"
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
+                println "ERROR: Git.clone() threw an exception:\n${e}"
+                stage_passed = false
+                currentBuild.result='FAILURE'
+            }
+
+            email_body += "</ul>\n"
+
+        } // End Stage 7
+
+
+
         // Stage 7: Summary (is that even necessary?)
-        stage("7) Email Summary")
+        stage("8) Email Summary")
         {
             // Final test is to try and send email using SPiFI EmailMessage class
             // if it fails then send the usual email.
             try
             {
                 def message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
-                message.setCustomEmail("[SPiFI] Testing Summary PASSED", email_body)
+                message.setCustomEmail("[SPiFI] Testing Summary", email_body)
                 message.send()
             }
             catch(e)
             {
-                email_body += "<H3>Stage (7): Email Summary</H3>\n"
+                email_body += "<H3>Stage (8): Email Summary</H3>\n"
                 email_body += "<ul><li>FAILED: Send email using SPiFI::EmailMessage.send()</li></ul>\n"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-        }   // End Stage 7
+        }   // End Stage 8
+
     }   // timeout
 }   // node
 
