@@ -657,7 +657,7 @@ node()
                                 verbose: true
                                )
 
-                def stdout = sh(script: "ls -ltr", returnStdout: true)
+                def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
 
                 email_body += "<li>SUCCESS: Git.clone() cloned a repository</li>\n"
