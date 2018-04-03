@@ -7,7 +7,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([cron('1 0 * * *')]),
+    pipelineTriggers([ cron('1 0 * * *'), pollSCM('H/20 H(7-20) * * *') ]),
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
@@ -17,10 +17,8 @@ properties([
 ])
 
 
-
-String email_body = "<H1>SPiFI Test Summary</H1>\n"
-
-def exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
+String email_body       = "<H1>SPiFI Test Summary</H1>\n"
+List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
 
