@@ -9,6 +9,10 @@
  *     def shell = new gov.sandia.sems.spifi.Shell()
  *     def output = shell.execute(env: this, command: 'ls -l -t -r [, <optional params>]')
  *
+ * @author  William McLendon
+ * @version 1.0
+ * @since   2018-04-04
+ *
  */
 package gov.sandia.sems.spifi;
 
@@ -20,6 +24,8 @@ import org.apache.commons.lang.RandomStringUtils
  * Generate a random alphanumeric string
  *
  * @param length Integer Length of string to generate.
+ *
+ * @return String
  */
 def randomString(Integer length)
 {
@@ -31,27 +37,28 @@ def randomString(Integer length)
 
 
 /**
- * execute
- *
  * Execute a command and capture stdout and exit status.
  *
- * Params:
- *   env            [REQUIRED] Jenkins environment (use 'this' in a jenkins pipeline)
- *   command        [REQUIRED] The command + arguments to run as a single string (i.e., "ls -l -t")
+ * @param env            [REQUIRED] Jenkins environment (use 'this' from the Jenkins pipeline)
+ * @param command        [REQUIRED] The command + arguments to run as a single string (i.e., "ls -l -t")
+ * @param path           [OPTIONAL] Defaults to ${env.WORKSPACE}.  If provided, assumes a path relative to current directory.
+ *                                  (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
+ * @param retries        [OPTIONAL] Number of retries.  Default: 0
+ * @param retry_delay    [OPTIONAL] Retry delay (seconds).  Default: 10
+ * @param timeout        [OPTIONAL] Timeout for the job to execute.  Default 600
+ * @param timeout_units  [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: SECONDS
+ * @param verbose        [OPTIONAL] If present and set to true, some extra debugging information will be printed.
+ * @param dry_run        [OPTIONAL] If true, then execute a 'dry run' mode operation.
+ *                                  Print out info with a delay but don't execute.
+ *                                  Default: false
+ * @param dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (seconds) to append when running.  Default: 5
+ * @param dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
+ * @param dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
  *
- *   path           [OPTIONAL] Defaults to ${env.WORKSPACE}.  If provided, assumes a path relative to current directory.
- *                             (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
- *   retries        [OPTIONAL] Number of retries.  Default: 0
- *   retry_delay    [OPTIONAL] Retry delay (seconds).  Default: 10
- *   timeout        [OPTIONAL] Timeout for the job to execute.  Default 600
- *   timeout_units  [OPTIONAL] Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS} Default: SECONDS
- *   verbose        [OPTIONAL] If present and set to true, some extra debugging information will be printed.
- *
- *   dry_run        [OPTIONAL] If true, then execute a 'dry run' mode operation.  Print out info with a delay but don't execute.
- *                             Default: false
- *   dry_run_delay  [OPTIONAL] If dry_run is true, this is the delay (seconds) to append when running.  Default: 5
- *   dry_run_status [OPTIONAL] If dry_run is true, this is the exit status to be returned.  Default: 0
- *   dry_run_stdout [OPTIONAL] If dry_run is true, this is the stdout that will be returned. Default: ""
+ * @return Map containing two keys: {stdout, status} which contain the stdout and exit status of the command that was run.
+ *             If there were multiple retries due to nonzero exit status, then the output from the LAST run is returned.
+ *             If the last attempt results in an exception thrown then status = -1, stdout = ""
+ *             If the routine is run in dry-run mode, then status = dry_run_status, stdout = dry_run_stdout.
  */
 def execute(Map params)
 {

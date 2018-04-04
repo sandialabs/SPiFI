@@ -3,7 +3,7 @@
  *  Git.groovy
  *
  *  Git plugin function wrapper for SPiFI
- *  Mainly the use of this is as a helper function for pipelines since it's
+ *  Mainly the use of this is as a convenience function for pipelines since it's
  *  fairly common that github, gitlab, etc. might fail to clone if the network
  *  is experiencing a lot of lag, etc. so some retries are handy to have.
  *
@@ -18,51 +18,33 @@ package gov.sandia.sems.spifi;
 
 
 /**
- * clone
+ * Clone a git repository with retries, timeout, and directory location provided.
  *
- * Clone a git repository
- *
- * @param params A map of the parameters to the function.
- *               You can just give the following properties directly without putting them
- *               into a map if you want:
- *
- *               env            [REQUIRED] Object  The jenkins environment in the jenkins file.
- *                                                 This should be the `this` object.
- *               url            [REQUIRED] String  The URL to the git repository. i.e., git@github.com:trilinos/Trilinos.git
- *               branch         [OPTIONAL] String  The branch name to check out.
- *                                                 Default: master
- *               credentialsId  [OPTIONAL] String  A Jenkins credentialsID if required.
- *                                                 Default: null
- *               dir            [OPTIONAL] String  The directory to clone into, relative to dir at the current scope.
- *                                                 Default: ""
- *               retries        [OPTIONAL] Integer Number of retries to attempt.
- *                                                 Default: 0
- *               retry_delay    [OPTIONAL] Integer Number of seconds to wait before retrying.
- *                                                 Default: 30
- *               timeout        [OPTIONAL] Integer How long is the timeout to be per attempt?
- *                                                 Default: 10
- *               timeout_units  [OPTIONAL] String  Units to use for the timeout.  Can be one of {HOURS|MINUTES|SECONDS}.
- *                                                 Default: MINUTES
- *               verbose        [OPTIONAL] Boolean Print out verbose information to the console.
- *                                                 Default: false
+ * @param env            [REQUIRED] Object  The jenkins environment in the jenkins file.
+ *                                          This should be the `this` object.
+ * @param url            [REQUIRED] String  The URL to the git repository.
+ *                                          i.e., git@github.com:trilinos/Trilinos.git
+ * @param branch         [OPTIONAL] String  The branch name to check out.
+ *                                          Default: master
+ * @param credentialsId  [OPTIONAL] String  A Jenkins credentialsID if required.
+ *                                          Default: null
+ * @param dir            [OPTIONAL] String  The directory to clone into, relative to
+ *                                          dir at the current scope.
+ *                                          Default: ""
+ * @param retries        [OPTIONAL] Integer Number of retries to attempt.
+ *                                          Default: 0
+ * @param retry_delay    [OPTIONAL] Integer Number of seconds to wait before retrying.
+ *                                          Default: 30
+ * @param timeout        [OPTIONAL] Integer How long is the timeout to be per attempt?
+ *                                          Default: 10
+ * @param timeout_units  [OPTIONAL] String  Units to use for the timeout.
+ *                                          Allowed values are: {HOURS|MINUTES|SECONDS}.
+ *                                          Default: MINUTES
+ * @param verbose        [OPTIONAL] Boolean Print out verbose information to the console.
+ *                                          Default: false
  *
  * @return true if clone was successful, false if it failed.
  */
-class __default_params
-{
-    def     env            = null
-    String  url            = "__REQUIRED__"
-    String  branch         = "master"
-    String  credentialsId  = null
-    String  dir            = "."
-    Integer retries        = 0
-    Integer retry_delay    = 30
-    Integer timeout        = 10
-    String  timeout_units  = "MINUTES"
-}
-
-
-
 def clone(Map params)
 {
     // Set up default values
