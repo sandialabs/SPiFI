@@ -42,10 +42,11 @@ class EmailMessage implements Serializable
     /**
      * Constructor for EmailMessage
      *
-     * @param emailType  [REQUIRED] String - What type of email should be generated.
-     *                                       Allowed values are [ SUCCESS | FAILURE | CUSTOM ]
-     * @param recipients [REQUIRED] String - Recipient list. Space-separated list of email
-     *                                       recipients: "one@foo.com two@foo.com"
+     * @param env        [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+     * @param emailType  [REQUIRED] String  - What type of email should be generated.
+     *                                        Allowed values are [ SUCCESS | FAILURE | CUSTOM ]
+     * @param recipients [REQUIRED] String  - Recipient list. Space-separated list of email
+     *                                        recipients: "one@foo.com two@foo.com"
      * @param replyTo    [REQUIRED] String] - Reply-To email address. Example: "bar@foo.com"
      *
      * @return nothing

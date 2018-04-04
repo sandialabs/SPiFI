@@ -21,7 +21,26 @@ package gov.sandia.sems.spifi;
 
 
 
-// ----[ class ParallelJobLauncher ]------------------------------------------
+/**
+ * Job launcher class to simplify the options in a Jenkins pipeline for launching
+ * multiple Jenkins jobs in parallel.  This class provides the ability to set
+ * timeouts, dry-run operations for debugging, use of a monitor node, etc. on a
+ * per-job basis as well as aggregation of results with summarization.  The goal
+ * is to allow a simplified interface to a Jenkins pipeline and reduce repetition
+ * in pipelines with many stages that launch numerous jobs so the pipeline developer
+ * can focus more on the "what I want to do" and less on the "how do I do it".
+ *
+ * Usage Pattern from a Jenkins Pipeline:
+ *
+ *     def launcher = gov.sandia.sems.spifi.ParallelJobLaucher(this)
+ *     launcher.appendJob("Job 1", "JENKINS_JOB_ALPHA")
+ *     launcher.appendJob("Job 2", "JENKINS_JOB_BRAVO")
+ *     launcher.appendJob("Job 2", "JENKINS_JOB_CHARLIE")
+ *     def results = launcher.launchInParallel()
+ *     def summary = launcher.getLastResultSummary()
+ *     launcher.clearJobs()
+ *
+ */
 class ParallelJobLauncher
 {
     // helper subclass for dynamic parameters on appendJob
@@ -50,8 +69,8 @@ class ParallelJobLauncher
     /**
      * Constructor for the job launcher.
      *
-     * @param env This is the Jenkins scripting environment that is needed for things like prinln(),
-     *            build(), etc. to function in a Jenkins environment. Pass 'this' tas the argument.
+     * @param env [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+     *
      */
     ParallelJobLauncher(env)
     {
@@ -64,31 +83,41 @@ class ParallelJobLauncher
 
     /**
      *  Add a new job into the job list.
+     *
      *  Example:
      *     appendJob(label: "T1", job_name: "Jenkins-Job-To-Launch")
      *
-     *  @param label           [OPTIONAL] String   - Job label name.
-     *  @param job_name        [OPTIONAL] String   - Name of Jenkins job to launch.
-     *  @param parameters      [OPTIONAL] List     - List of jenkins parameters to the job, example:
-     *                                               [
-     *                                                   (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1")),
-     *                                                   (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2"))
-     *                                               ]
-     *                                               If there are no parameters, an empty list [] or null can be used.
-     *  @param quiet_period    [OPTIONAL] Integer  - Quiet period (seconds).  Default=0
-     *  @param timeout         [OPTIONAL] Integer  - Timeout duration.  Default=90
-     *  @param timeout_unit    [OPTIONAL] String   - Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
-     *  @param propagate_error [OPTIONAL] Boolean  - Propagate error to overall pipeline?  { true, false }
-     *  @param dry_run         [OPTIONAL] Boolean  - If true, then use dry-run mode (job will not be launched).
-     *  @param dry_run_status  [OPTIONAL] String   - If dry_run is true, set status to this value.
-     *                                               Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT}
-     *  @param dry_run_delay   [OPTIONAL] Integer  - If dry_run is true, this introduces a delay (in seconds)
-     *                                               for the 'simulated' job.  Default: 30
-     *  @param monitor_node    [OPTIONAL] String]  - Node expression for the Jenkins "node" where the job
-     *                                               monitor will run.  Note: This does not affect where the
-     *                                               job itself will run since that's controlled by the job
-     *                                               itself (or should be).  If omitted then no 'monitor' job
-     *                                               will be created.
+     *  @param label           [REQUIRED] String  - Job label name.  Must be unique.
+     *  @param job_name        [REQUIRED] String  - Name of Jenkins job to launch.
+     *  @param parameters      [OPTIONAL] List    - List of jenkins parameters to the job, example:
+     *                                              [
+     *                                                  (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1")),
+     *                                                  (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2"))
+     *                                              ]
+     *                                              If there are no parameters, an empty list [] or null can be used.
+     *                                              Default: null
+     *  @param quiet_period    [OPTIONAL] Integer - Quiet period (seconds).
+     *                                              Default: 0
+     *  @param timeout         [OPTIONAL] Integer - Timeout duration.
+     *                                              Default: 90
+     *  @param timeout_unit    [OPTIONAL] String  - Timeout Unit {HOURS, MINUTES, SECONDS}.
+     *                                              Default="MINUTES"
+     *  @param propagate_error [OPTIONAL] Boolean - Propagate error to overall pipeline?  { true, false }
+     *                                              Deault: false
+     *  @param dry_run         [OPTIONAL] Boolean - If true, then use dry-run mode (job will not be launched).
+     *                                              Default: false
+     *  @param dry_run_status  [OPTIONAL] String  - If dry_run is true, set status to this value.
+     *                                              Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT}
+     *                                              Default: "SUCCESS"
+     *  @param dry_run_delay   [OPTIONAL] Integer - If dry_run is true, this introduces a delay (in seconds)
+     *                                              for the 'simulated' job.
+     *                                              Default: 30
+     *  @param monitor_node    [OPTIONAL] String  - Node expression for the Jenkins "node" where the job
+     *                                              monitor will run.  Note: This does not affect where the
+     *                                              job itself will run since that's controlled by the job
+     *                                              itself (or should be).  If omitted then no 'monitor' job
+     *                                              will be created.
+     *                                              Default: ""
      *
      *  @return nothing
      */
@@ -129,7 +158,11 @@ class ParallelJobLauncher
 
 
     /**
-     *  Clear / reset the job list and result summary.
+     *  Clear / reset the job list and result summary.  This is an optional step and is only really
+     *  necessary if you're going to launch additional sets of jobs using the same launcher object.
+     *  If only one batch of jobs exists within the same scope that the launcher is instantiated then
+     *  this cleanup step isn't necessary.
+     *
      *  @return nothing
      */
     def clearJobs()
