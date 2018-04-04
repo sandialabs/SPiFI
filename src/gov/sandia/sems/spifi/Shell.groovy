@@ -1,10 +1,10 @@
 #!/usr/bin/env groovy
 /**
- *  Shell.groovy
+ * Shell.groovy
  *
- *  Shell script execution wrapper for SPiFI
+ * Shell script execution wrapper for SPiFI
  *
- *  Jenkins Pipeline Usage:
+ * Jenkins Pipeline Usage:
  *
  *     def shell = new gov.sandia.sems.spifi.Shell()
  *     def output = shell.execute(env: this, command: 'ls -l -t -r [, <optional params>]')
@@ -12,7 +12,6 @@
  * @author  William McLendon
  * @version 1.0
  * @since   2018-04-04
- *
  */
 package gov.sandia.sems.spifi;
 

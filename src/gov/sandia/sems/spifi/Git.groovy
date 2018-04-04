@@ -1,16 +1,16 @@
 #!/usr/bin/env groovy
 /**
- *  Git.groovy
+ * Git.groovy
  *
- *  Git plugin function wrapper for SPiFI
- *  Mainly the use of this is as a convenience function for pipelines since it's
- *  fairly common that github, gitlab, etc. might fail to clone if the network
- *  is experiencing a lot of lag, etc. so some retries are handy to have.
+ * Git plugin function wrapper for SPiFI
+ * Mainly the use of this is as a convenience function for pipelines since it's
+ * fairly common that github, gitlab, etc. might fail to clone if the network
+ * is experiencing a lot of lag, etc. so some retries are handy to have.
  *
- *  Example Usage:
+ * Example Usage:
  *
- *     def git_spifi = new gov.sandia.sems.spifi.Git()
- *     git_spifi.clone(env: this, url: "git@github.com:trilinos/Trilinos.git")
+ *    def git_spifi = new gov.sandia.sems.spifi.Git()
+ *    git_spifi.clone(env: this, url: "git@github.com:trilinos/Trilinos.git")
  *
  * @author  William McLendon
  * @version 1.0
