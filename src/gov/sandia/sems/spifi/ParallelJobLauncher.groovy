@@ -1,15 +1,18 @@
 
-////////////////////////////////////////////////////////////////////////////////
-//
-//  ParallelJobLauncher.groovy
-//  ---------------------------
-//
-//  Class to handle organizing and launching Jenkins jobs in parallel.
-//
-//  See Also:
-//  -
-//
-////////////////////////////////////////////////////////////////////////////////
+/**
+ *  ParallelJobLauncher.groovy
+ *
+ *  Class to handle organizing and launching Jenkins jobs in parallel with convenience
+ *  features to specify a 'dry-run' mode which prints out the job it would have launched
+ *  with a parameterized delay without actually launching the job in Jenkins.  A useful
+ *  feature for debugging pipelines.
+ *
+ *  Other parameterizable features are timeout settings and whether or not to launch each job
+ *  within its own node{} block (Jenkins pipelines recommend using one of these
+ *  'monitor nodes' as a 'best practice' but in our experience the monitor node consumes
+ *  an executor from a build slave which can become problematic when launching many jobs.)
+ *
+ */
 package gov.sandia.sems.spifi;
 
 
@@ -40,7 +43,12 @@ class ParallelJobLauncher
     private Map<String,String> _lastResultSummary         // Status on the latest results
 
 
-    // ----[ Constructor ]-----------------------------------------------------
+    /**
+     * Constructor for the job launcher.
+     *
+     * @param env This is the Jenkins scripting environment that is needed for things like prinln(),
+     *            build(), etc. to function in a Jenkins environment. Pass 'this' tas the argument.
+     */
     ParallelJobLauncher(env)
     {
         // Set Parameter Default(s)
@@ -50,37 +58,36 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ appendJob ]-------------------------------------------------------
-    //
-    //  Add a new job into the job list.  The parameter is a map that can have the
-    //  following key/value pairs:
-    //
-    //  label            [String]  - REQUIRED Job label name.
-    //  job_name         [String]  - REQUIRED Name of Jenkins job to launch.
-    //  parameters       [List]    - OPTIONAL List of jenkins parameters to the job, example:
-    //                                        [
-    //                                            (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1")),
-    //                                            (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2"))
-    //                                        ]
-    //                                        If there are no parameters, an empty list [] or null can be used.
-    //  quiet_period     [Integer] - OPTIONAL Quiet period (seconds).  Default=0
-    //  timeout          [Integer] - OPTIONAL Timeout duration.  Default=90
-    //  timeout_unit     [String]  - OPTIONAL Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
-    //  propagate_error  [Boolean] - OPTIONAL Propagate error to overall pipeline?  { true, false }
-    //  dry_run          [Boolean] - OPTIONAL If true, then use dry-run mode (job will not be launched).
-    //  dry_run_status   [String]  - OPTIONAL If dry_run is true, set status to this value.
-    //                                        Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT}
-    //  dry_run_delay    [Integer] - OPTIONAL If dry_run is true, this introduces a delay (in seconds)
-    //                                        for the 'simulated' job.  Default: 30
-    //  monitor_node     [String]  - OPTIONAL Node expression for the Jenkins "node" where the job
-    //                                        monitor will run.  Note: This does not affect where the
-    //                                        job itself will run since that's controlled by the job
-    //                                        itself (or should be).  If omitted then no 'monitor' job
-    //                                        will be created.
-    //
-    //  Example:
-    //     appendJob(label: "T1", job_name: "Jenkins-Job-To-Launch")
-    //
+    /**
+     *  Add a new job into the job list.
+     *  Example:
+     *     appendJob(label: "T1", job_name: "Jenkins-Job-To-Launch")
+     *
+     *  @param label           [OPTIONAL] String   - Job label name.
+     *  @param job_name        [OPTIONAL] String   - Name of Jenkins job to launch.
+     *  @param parameters      [OPTIONAL] List     - List of jenkins parameters to the job, example:
+     *                                               [
+     *                                                   (string(name:"PARAM_NAME_1", value:"PARAM_VALUE_1")),
+     *                                                   (string(name:"PARAM_NAME_2", value:"PARAM_VALUE_2"))
+     *                                               ]
+     *                                               If there are no parameters, an empty list [] or null can be used.
+     *  @param quiet_period    [OPTIONAL] Integer  - Quiet period (seconds).  Default=0
+     *  @param timeout         [OPTIONAL] Integer  - Timeout duration.  Default=90
+     *  @param timeout_unit    [OPTIONAL] String   - Timeout Unit {HOURS, MINUTES, SECONDS}.  Default="MINUTES"
+     *  @param propagate_error [OPTIONAL] Boolean  - Propagate error to overall pipeline?  { true, false }
+     *  @param dry_run         [OPTIONAL] Boolean  - If true, then use dry-run mode (job will not be launched).
+     *  @param dry_run_status  [OPTIONAL] String   - If dry_run is true, set status to this value.
+     *                                               Must be one of {SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT}
+     *  @param dry_run_delay   [OPTIONAL] Integer  - If dry_run is true, this introduces a delay (in seconds)
+     *                                               for the 'simulated' job.  Default: 30
+     *  @param monitor_node    [OPTIONAL] String]  - Node expression for the Jenkins "node" where the job
+     *                                               monitor will run.  Note: This does not affect where the
+     *                                               job itself will run since that's controlled by the job
+     *                                               itself (or should be).  If omitted then no 'monitor' job
+     *                                               will be created.
+     *
+     *  @return nothing
+     */
     def appendJob(Map params)
     {
         assert params.containsKey("label")
@@ -117,10 +124,10 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ clearJobs ]------------------------------------------------------
-    //
-    //  Clear / Reset the job list and result summary.
-    //
+    /**
+     *  Clear / reset the job list and result summary.
+     *  @return nothing
+     */
     def clearJobs()
     {
         this._jobList.clear()
@@ -128,10 +135,12 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ launchInParallel ]-------------------------------------------
-    //
-    //  Launch the jobs in parallel
-    //
+    /**
+     *  Schedule and launch the jobs in the joblist in parallel.
+     *
+     *  @return Map Results of the run containing key/value pairs:
+     *              label: Jenkins result status ( SUCCESS | FAILURE | UNSTABLE | ABORTED | NOT_BUILT )
+     */
     def launchInParallel()
     {
         def builders = [:]
@@ -172,29 +181,27 @@ class ParallelJobLauncher
     }
 
 
-
-    // ----[ getLastResultSummary ]--------------------------------------------
-    //
-    // Get a summary of the most recent set of tests.
-    //
-    // Returns a Map: ["NUMTESTS"    : <# of jobs run>,
-    //                 "NUMSUCCESS"  : <# of SUCCESS jobs>,
-    //                 "NUMFAILURE"  : <# of FAILURE jobs>,
-    //                 "NUMUNSTABLE" : <# of UNSTABLE jobs>
-    //                 "NUMABORTED"  : <# of ABORTED jobs>
-    //                 "NUMNOT_BUILT": <# of NOT_BUILT jobs>
-    //                ]
-    //
+    /**
+     * Return a summary of the most recent set of tests run by LaunchInParallel.
+     *
+     * @return Map with a summary of the most recent set of tests. The following
+     *             key value pairs are included in the output:
+     *             NUMTESTS     - The # of jobs that were run.
+     *             NUMSUCCESS   - The # of jobs that completed successfully.
+     *             NUMFAILURE   - The # of jobs that completed with a failure.
+     *             NUMUNSTABLE  - The # of jobs that completed with status UNSTABLE.
+     *             NUMABORTED   - The # of jobs that completed with status ABORTED.
+     *             NUMNOT_BUILT - The # of jobs that completed with status NOT_BUILT.
+     */
     def getLastResultSummary()
     {
         return this._lastResultSummary
     }
 
 
-    // ----[ printJobList ]---------------------------------------------------
-    //
-    //  Pretty print the job list.
-    //
+    /**
+     *  Pretty Print the job list into the Jenkinns console output.
+     */
     def printJobList()
     {
         String strJobs = "[SPiFI]> ----[ JobList ]----------\n"
@@ -231,10 +238,10 @@ class ParallelJobLauncher
     // -------------------------------------------------------------------------
 
 
-    // ----[ _jobBody ]---------------------------------------------------------
-    //
-    // The actual body 'launcher' of the job.
-    //
+    /**
+     * Body of the job launcher.  This method handles the actual launching and
+     * result capture of a single job that is to be launched in Jenkins.
+     */
     def _jobBody(job)
     {
         def results = [:]
@@ -282,10 +289,11 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ _jobBodyWithMonitorNode ]-----------------------------------------
-    //
-    // Launch the job with a monitor node.
-    //
+    /**
+     *  Drives the launching of a job if a monitor-node is requested.
+     *  - This is not the default mode of operation since monitor nodes occupy an
+     *    executor node.
+     */
     def _jobBodyWithMonitorNode(job)
     {
         def results = [:]
@@ -297,17 +305,20 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ _jobBodyWithoutMonitorNode ]--------------------------------------
-    //
-    // Launch the job without a monitor node.
-    //
+    /**
+     *  Drives the launching of a job if a monitor-node is not requested.
+     *  - This is the default mode of operation.
+     */
     def _jobBodyWithoutMonitorNode(job)
     {
         return this._jobBody(job)
     }
 
 
-    // ----[ _resetLastResultSummary ]------------------------------------------
+    /**
+     *  Reset / Clear the summary from the last result.
+     *  This will be called every time we invoke LaunchInParallel()
+     */
     def _resetLastResultSummary()
     {
         this._lastResultSummary.clear()
@@ -320,9 +331,20 @@ class ParallelJobLauncher
     }
 
 
-    // ----[ _updateLastResultSummary ]-----------------------------------------
+    /**
+     *  Increment an entry of LastResultSummary for a given key by 1.
+     *
+     *  @param status [REQUIRED] String - The status value to increment. This can be one of:
+     *                                    [SUCCESS|FAILURE|UNSTABLE|ABORTED|NOT_BUILT]
+     *                                    and "NUM" is prepended to the string to generate the
+     *                                    appropriate keys.
+     *  @return nothing
+     */
     def _updateLastResultSummary(String status)
     {
+        // verify parameter(s)
+        assert "SUCCESS"==status || "FAILURE"==status || "UNSTABLE"==status || "ABORTED"==status || "NOT_BUILT"==status
+
         String statusKey = "NUM" + status
         this._lastResultSummary[statusKey] += 1
     }
