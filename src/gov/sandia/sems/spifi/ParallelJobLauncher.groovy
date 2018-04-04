@@ -12,6 +12,10 @@
  *  'monitor nodes' as a 'best practice' but in our experience the monitor node consumes
  *  an executor from a build slave which can become problematic when launching many jobs.)
  *
+ * @author  William McLendon
+ * @version 1.0
+ * @since   2018-04-04
+ *
  */
 package gov.sandia.sems.spifi;
 

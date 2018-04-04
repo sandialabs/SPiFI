@@ -12,6 +12,10 @@
  *     def git_spifi = new gov.sandia.sems.spifi.Git()
  *     git_spifi.clone(env: this, url: "git@github.com:trilinos/Trilinos.git")
  *
+ * @author  William McLendon
+ * @version 1.0
+ * @since   2018-04-04
+ *
  */
 package gov.sandia.sems.spifi;
 

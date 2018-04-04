@@ -1,33 +1,33 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-//  EmailMessage.groovy
-//  ---------------------------
-//
-//  An email builder helper class that comes with some pre-configured 'canned'
-//  emails as well as a customizable email setting.  This class provides a
-//  HTML style pre-configured, allowing the point-of-use code to only need to
-//  generate the appropriate email body.
-//
-//  See Also:
-//  -
-//
-////////////////////////////////////////////////////////////////////////////////
+/**
+ * EmailMessage.groovy
+ *
+ * An email builder helper class that comes with some pre-configured 'canned'
+ * emails as well as a customizable email setting.  This class provides a
+ * HTML style pre-configured, allowing the point-of-use code to only need to
+ * generate the appropriate email body.
+ *
+ * @author  William McLendon
+ * @version 1.0
+ * @since   2018-04-04
+ *
+ */
 package gov.sandia.sems.spifi;
 
 
-// ----[ class EmailMessage ]-------------------------------------------
-//
-// Helper class to generate formatted emails by consolidating all the STYLE and
-// HEADER information for HTML style emails.  This can be expanded later to include
-// canned emails for the different status messages that we will generate in this
-// pipeline job.
-//
-// Canned email types are set by the emailType parameter.  Currently there are
-// the following types:
-// - SUCCESS : Canned email for SUCCESS status.
-// - FAILURE : Canned email for FAILURE status.
-// - CUSTOM  : Customizable email address.
-//
+
+/**
+ * Helper class to generate formatted emails by consolidating all the STYLE and
+ * HEADER information for HTML style emails.  This can be expanded later to include
+ * canned emails for the different status messages that we will generate in this
+ * pipeline job.
+ *
+ * Canned email types are set by the emailType parameter.  Currently there are
+ * the following types:
+ * - SUCCESS : Canned email for SUCCESS status.
+ * - FAILURE : Canned email for FAILURE status.
+ * - CUSTOM  : Customizable email address.
+ *
+ */
 class EmailMessage implements Serializable
 {
     // Member Variables
@@ -39,13 +39,17 @@ class EmailMessage implements Serializable
     private String _emailSubject  // Email Title
 
 
-    // ----[ Constructor ]-----------------------------------------------------
-    //
-    // param emailType  [String] - Email Class.  Canned values are { SUCCESS, FAILURE, CUSTOM }
-    // param recipients [String] - Recipient list.
-    //                             Comma-separated list of email recipients: "one@foo.com, two@foo.com"
-    // param replyTo    [String] - Reply-To email address. Example: "bar@foo.com"
-    //
+    /**
+     * Constructor for EmailMessage
+     *
+     * @param emailType  [REQUIRED] String - What type of email should be generated.
+     *                                       Allowed values are [ SUCCESS | FAILURE | CUSTOM ]
+     * @param recipients [REQUIRED] String - Recipient list. Space-separated list of email
+     *                                       recipients: "one@foo.com two@foo.com"
+     * @param replyTo    [REQUIRED] String] - Reply-To email address. Example: "bar@foo.com"
+     *
+     * @return nothing
+     */
     EmailMessage(env, String emailType, String recipients, String replyTo)
     {
         this._env          = env
@@ -64,23 +68,25 @@ class EmailMessage implements Serializable
                 this._emailBody = "<P>TEST SUCCESS</P>"
                 break
             case "CUSTOM":
-            default:
                 this._emailSubject = "Status"
                 this._emailType = "CUSTOM"
+                break
+            default:
+                throw new Exception("Invalid emailType parameter provided to SPiFI::EmailMessage constructor.")
                 break
         }
     }
 
 
-    // ----[ setCustomEmailBody ]-----------------------------------------------
-    //
-    //  Set up a custom email.
-    //
-    //  param subject [String] : The subject of the email.
-    //  param body    [String] : The email body.  This can be text or HTML
-    //                           If HTML then this is the content that goes
-    //                           inside the <BODY></BODY> section.
-    //
+    /**
+     * Set the subject and body of a custom email message.
+     *
+     * @param subject [REQUIRED] String - The subject of the email.
+     * @param body    [REQUIRED] String - The body of the email.  This goes inside
+     *                                    the <body></body> tags of the HTML message.
+     *
+     * @return nothing
+     */
     def setCustomEmail(String subject, String body)
     {
         this._emailSubject = subject
@@ -88,35 +94,45 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ sendEmail ]--------------------------------------------------------
-    //
-    //  Send the email.
-    //
+    /**
+     * Sends the email.
+     *
+     * @return nothing
+     */
     def send()
     {
-        String emailBody = this._getTemplate().replace("{{EMAIL_BODY}}", this._emailBody)
+        try
+        {
+            String emailBody = this._genTemplate().replace("{{EMAIL_BODY}}", this._emailBody)
 
-        this._env.emailext(body: "${emailBody}",        \
-                           compressLog: true,           \
-                           replyTo: this._replyTo,      \
-                           subject: this._emailSubject, \
-                           to: this._recipients,        \
-                           mimeType: 'text/html')
+            this._env.emailext(body: "${emailBody}",        \
+                               compressLog: true,           \
+                               replyTo: this._replyTo,      \
+                               subject: this._emailSubject, \
+                               to: this._recipients,        \
+                               mimeType: 'text/html')
+        }
+        catch(e)
+        {
+
+        }
     }
 
 
-    // ----[ genResultSummaryTable ]--------------------------------------------------
-    //
-    //  Generate a pretty printable summary table for emails, etc.
-    //
-    //  Allowable Parameters:
-    //
-    //  summary  [Map]    - REQUIRED Output Summary information from a call to
-    //                               ParallelJobLauncher.getLastResultSummary()
-    //
-    //  format   [String] - OPTIONAL Type of output table to generate. Default: ASCII
-    //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
-    //
+    /**
+     * Generate a pretty printable summary table for emails, etc.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::getLastResultSummary()
+     *
+     * @param summary  [REQUIRED] Map    - Output Summary information from a call to
+     *                                     ParallelJobLauncher.getLastResultSummary()
+     * @param format   [OPTIONAL] String - Type of output table to generate.
+     *                                     Must be one of: [ ASCII | HTML | MARKDOWN ]
+     *                                     Default: ASCII
+     *
+     * @return String containing the Summary table for results that can be inserted into
+     *                the console log, email, etc.
+     */
     def genResultSummaryTable(Map params)
     {
         // If format isn't provided, make it ASCII
@@ -156,19 +172,21 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ genResultDetailTable ]--------------------------------------------------
-    //
-    //  Generate a pretty printable list of results by job from the results output
-    //  of ParallelJobLauncher.launchInParallel()
-    //
-    //  Allowable Parameters:
-    //
-    //  results  [Map]    - REQUIRED Results from a call to
-    //                               ParallelJobLauncher.launchInParallel()
-    //
-    //  format   [String] - OPTIONAL Type of output table to generate.
-    //                               Must be one of: [ ASCII | HTML | MARKDOWN ]
-    //
+    /**
+     * Generate a pretty printable list of results by job from the results output
+     * of ParallelJobLauncher.launchInParallel()
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @param results  [REQUIRED] Map    - Results from a call to
+     *                                     ParallelJobLauncher.launchInParallel()
+     * @param format   [OPTIONAL] String - Type of output table to generate.
+     *                                     Must be one of: [ ASCII | HTML | MARKDOWN ]
+     *                                     Default: ASCII
+     *
+     * @return String containing the Detail table for results that can be inserted into
+     *                the console log, email, etc.
+     */
     def genResultDetailTable(Map params)
     {
         // If format isn't provided, make it ASCII
@@ -206,7 +224,14 @@ class EmailMessage implements Serializable
     // -------------------------------------------------------------------------
 
 
-    // ----[ _genResultSummaryTableHTML ]---------------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * result summary in HTML format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::getLastResultSummary()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultSummaryTableHTML(summary)
     {
         String output = """
@@ -251,7 +276,14 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genResultSummaryTableASCII ]--------------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * result summary in ASCII format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::getLastResultSummary()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultSummaryTableASCII(summary)
     {
         String output = """
@@ -275,7 +307,14 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genResultSummaryTableMarkdown ]-----------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * result summary in Markdown format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::getLastResultSummary()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultSummaryTableMarkdown(summary)
     {
         String output = """
@@ -298,7 +337,14 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genResultDetailTableHTML ]----------------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * detailed results in HTML format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultDetailTableHTML(results)
     {
         String output = """
@@ -342,7 +388,14 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genResultDetailTableASCII ]---------------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * detailed results in ASCII format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultDetailTableASCII(results)
     {
         String output = """
@@ -359,7 +412,14 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genResultDetailTableMarkdown ]------------------------------------
+    /**
+     * Private method.  Format a string containing tabular results from the ParallelJobLauncher
+     * detailed results in Markdown format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @return String containing the formatted table of results
+     */
     def _genResultDetailTableMarkdown(results)
     {
         String output = """
@@ -376,11 +436,12 @@ class EmailMessage implements Serializable
     }
 
 
-    // ----[ _genStyleSheet ]---------------------------------------------------
     /**
      *  _genStyleSheet
      *
      *  Generate the stylesheet part of a header (everything in <STYLE></STYLE>)
+     *
+     *  @return String containing the CSS Stylesheet, including the <STYLE></STYLE> HTML tags.
      */
      def _genStyleSheet()
      {
@@ -506,15 +567,17 @@ class EmailMessage implements Serializable
      }
 
 
-    // ----[ _getTemplate ]-----------------------------------------------------
     /**
-     *  _getTemplate
-     *
      * Private method.  Generates a template email HTML header with style
      * rules,etc.  The body can be customized with the setCustomEmail() method
      * or specific "canned" emails can be generated.
+     *
+     * Includes tags "{{STYLESHEET}}" and "{{EMAIL_BODY}}" which are to be replaced
+     * in other methods.
+     *
+     * @return Template HTML email message text.
      */
-    def _getTemplate()
+    def _genTemplate()
     {
         String template = """
             <!DOCTYPE html>
