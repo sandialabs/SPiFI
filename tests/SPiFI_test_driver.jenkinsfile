@@ -7,7 +7,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([ cron('1 0 * * *'), pollSCM('H/20 H(7-20) * * *') ]),
+    pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 H(7-20) * * *') ]),
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
