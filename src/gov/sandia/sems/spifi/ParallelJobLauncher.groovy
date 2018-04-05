@@ -226,11 +226,11 @@ class ParallelJobLauncher
 
 
     /**
-     * Return a summary of the most recent set of tests run by LaunchInParallel.
+     * Return a summary of the most recent set of jobs run by LaunchInParallel.
      *
-     * @return Map with a summary of the most recent set of tests. The following
+     * @return Map with a summary of the most recent set of jobs. The following
      *             key value pairs are included in the output:
-     *             NUMTESTS     - The # of jobs that were run.
+     *             NUMJOBS      - The # of jobs that were run.
      *             NUMSUCCESS   - The # of jobs that completed successfully.
      *             NUMFAILURE   - The # of jobs that completed with a failure.
      *             NUMUNSTABLE  - The # of jobs that completed with status UNSTABLE.
@@ -376,7 +376,7 @@ class ParallelJobLauncher
     def _resetLastResultSummary()
     {
         this._lastResultSummary.clear()
-        this._lastResultSummary["NUMTESTS"]     = this._jobList.size()
+        this._lastResultSummary["NUMJOBS"]      = this._jobList.size()
         this._lastResultSummary["NUMSUCCESS"]   = 0
         this._lastResultSummary["NUMFAILURE"]   = 0
         this._lastResultSummary["NUMUNSTABLE"]  = 0
@@ -403,5 +403,5 @@ class ParallelJobLauncher
         this._lastResultSummary[statusKey] += 1
     }
 
-}  // class parallelTestLauncher
+}  // class parallelJobLauncher
 

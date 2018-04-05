@@ -224,13 +224,13 @@ node()
 
                 email_body += "<H4>Launcher Summary</H4>\n"
                 email_body += "<ol>\n"
-                if(summary.NUMTESTS == 5)
+                if(summary.NUMJOBS == 5)
                 {
-                    email_body += "<li>PASSED: NUMTESTS == 5</li>\n"
+                    email_body += "<li>PASSED: NUMJOBS == 5</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMTESTS != 5 (got ${summary.NUMTESTS})</li>\n"
+                    email_body += "<li>FAILED: NUMJOBS != 5 (got ${summary.NUMJOBS})</li>\n"
                     stage_passed = false
                 }
 
@@ -385,13 +385,13 @@ node()
 
                 email_body += "<H4>Launcher Summary</H4>\n"
                 email_body += "<ol>\n"
-                if(launcher_summary.NUMTESTS == 5)
+                if(launcher_summary.NUMJOBS == 5)
                 {
-                    email_body += "<li>PASSED: NUMTESTS == 5</li>\n"
+                    email_body += "<li>PASSED: NUMJOBS == 5</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMTESTS != 5 (got ${launcher_summary.NUMTESTS})</li>\n"
+                    email_body += "<li>FAILED: NUMJOBS != 5 (got ${launcher_summary.NUMJOBS})</li>\n"
                     stage_passed = false
                 }
 

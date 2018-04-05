@@ -146,7 +146,7 @@ class EmailMessage implements Serializable
         // Check required param: summary
         assert params.containsKey("summary")
 
-        assert params.summary.containsKey("NUMTESTS")
+        assert params.summary.containsKey("NUMJOBS")
         assert params.summary.containsKey("NUMSUCCESS")
         assert params.summary.containsKey("NUMFAILURE")
         assert params.summary.containsKey("NUMUNSTABLE")
@@ -239,7 +239,7 @@ class EmailMessage implements Serializable
         String output = """
                         <table class="bgGreen tc2">
                             <tr><th>Summary Stat</th><th>Count</th></tr>
-                            <tr><td>Num Tests</td><td>${summary.NUMTESTS}</td></tr>
+                            <tr><td>Num Tests</td><td>${summary.NUMJOBS}</td></tr>
                             <tr {{CLASSNUMSUCCESS}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
                             <tr {{CLASSFAIL}}><td>Num Failed</td><td>${summary.NUMFAILURE}</td></tr>
                             <tr {{CLASSUNSTABLE}}><td>Num Unstable</td><td>${summary.NUMUNSTABLE}</td></tr>
@@ -258,7 +258,7 @@ class EmailMessage implements Serializable
 
         output += "</table>\n"
 
-        if(summary.NUMSUCCESS != summary.NUMTESTS)
+        if(summary.NUMSUCCESS != summary.NUMJOBS)
         {
             output = output.replace("{{CLASSNUMSUCCESS}}", "class='FAILURE'")
         }
@@ -291,7 +291,7 @@ class EmailMessage implements Serializable
         String output = """
                            Summary Stat   |   Count
                         ------------------+-----------
-                           Num Tests      |   ${summary.NUMTESTS}
+                           Num Tests      |   ${summary.NUMJOBS}
                            Num Passed     |   ${summary.NUMSUCCESS}
                            Num Failure    |   ${summary.NUMFAILURE}
                            Num Unstable   |   ${summary.NUMUNSTABLE}
@@ -322,7 +322,7 @@ class EmailMessage implements Serializable
         String output = """
                         | Summary Stat    | Count  |
                         | --------------- |:------:|
-                        |   Num Tests     | ${summary.NUMTESTS}  |
+                        |   Num Tests     | ${summary.NUMJOBS}  |
                         |   Num Passed    | ${summary.NUMSUCCESS}  |
                         |   Num Failure   | ${summary.NUMFAILURE}  |
                         |   Num Unstable  | ${summary.NUMUNSTABLE}  |
