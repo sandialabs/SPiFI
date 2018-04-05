@@ -125,7 +125,8 @@ node()
 
             try
             {
-                @Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI@formatting') _                  // Note: this must be const string, can't parameterize :/
+                //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: master)</li></ol>\n"
             }
             catch(ex)
