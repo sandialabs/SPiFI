@@ -350,34 +350,39 @@ class EmailMessage implements Serializable
     def _genResultDetailTableHTML(results)
     {
         String output = """
-                        <table class="bgGreen tc2">
-                            <tr><th>Job Name</th><th>Result</th></tr>
+                        <table class="bgGreen tc1 tc2">
+                            <tr><th>Status</th><th>Duration (ms)</th><th>Job Name</th></tr>
                         """.stripIndent()
         results.each
-        {   _r ->
-            def r = _r
+        {   r ->
 
             assert r.value.containsKey("job")
             assert r.value.containsKey("id")
             assert r.value.containsKey("status")
+            assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
 
             String msg = """
                          <tr {{CLASS}}>
-                             <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
                              <td>${r.value.status}</td>
+                             <td>${r.value.duration}</td>
+                             <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
                          </tr>
                          """.stripIndent()
 
             switch(r.value.status)
             {
-                case "ABORTED":
-                case "NOT_BUILT":
                 case "FAILURE":
                     msg = msg.replace("{{CLASS}}", "class='FAILURE'")
                     break
                 case "UNSTABLE":
                     msg = msg.replace("{{CLASS}}", "class='UNSTABLE'")
+                    break
+                case "ABORTED":
+                    msg = msg.replace("{{CLASS}}", "class='ABORTED'")
+                    break
+                case "NOT_BUILT":
+                    msg = msg.replace("{{CLASS}}", "class='NOT_BUILT'")
                     break
                 default:
                     msg = msg.replace("{{CLASS}}", "")
@@ -401,14 +406,21 @@ class EmailMessage implements Serializable
     def _genResultDetailTableASCII(results)
     {
         String output = """
-                           Job Name                                                               |   Result
-                        --------------------------------------------------------------------------+--------------
+                           Status      |   Job Name
+                        ---------------+----------------------------------------------------------------------------
                         """.stripIndent()
         results.each
         {   r ->
+
             assert r.value.containsKey("job")
+            assert r.value.containsKey("id")
             assert r.value.containsKey("status")
-            output += sprintf("   %-70s |   %s\n", [r.value.job, r.value.status])
+            assert r.value.containsKey("duration")
+            assert r.value.containsKey("url")
+
+            String job_name = "${r.value.job} #${r.value.id}"
+
+            output += sprintf("   %-9s   |   %-70s\n", [r.value.status, job_name])
         }
         return output
     }
@@ -425,14 +437,19 @@ class EmailMessage implements Serializable
     def _genResultDetailTableMarkdown(results)
     {
         String output = """
-                        | Job Name | Result |
-                        | -------- |:------:|
+                        | Status   | Duration | Job Name |
+                        |:--------:|:--------:| -------- |
                         """.stripIndent()
         results.each
         {   r ->
+
             assert r.value.containsKey("job")
+            assert r.value.containsKey("id")
             assert r.value.containsKey("status")
-            output += sprintf("| %s | %s |\n", [r.value.job, r.value.status])
+            assert r.value.containsKey("duration")
+            assert r.value.containsKey("url")
+
+            output += sprintf("| %s | %s | [%s #%s](%s/console) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, r.value.url])
         }
         return output
     }
@@ -542,6 +559,12 @@ class EmailMessage implements Serializable
                 }
                 tr.UNSTABLE td {
                     background-color: #E3D389;
+                }
+                tr.ABORTED td {
+                    background-color: #e6e6e6;
+                }
+                tr.NOT_BUILT td {
+                    background-color: #e6e6e6;
                 }
 
                 /* ---------- Center columns [1-9] ---------- */
