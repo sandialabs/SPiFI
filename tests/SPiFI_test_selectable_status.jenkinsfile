@@ -44,6 +44,9 @@ node()
 
     stage('Execute')
     {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Execute\n" +
+                "\u27A4"
 
         int delayTime = 10
         String exitStatus = "SUCCESS"
