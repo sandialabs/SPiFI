@@ -351,7 +351,7 @@ class EmailMessage implements Serializable
     {
         String output = """
                         <table class="bgGreen tc1 tc2">
-                            <tr><th>Status</th><th>Duration (ms)</th><th>Job Name</th></tr>
+                            <tr><th>Status</th><th>Duration (s)</th><th>Job Name</th></tr>
                         """.stripIndent()
         results.each
         {   r ->
@@ -437,8 +437,8 @@ class EmailMessage implements Serializable
     def _genResultDetailTableMarkdown(results)
     {
         String output = """
-                        | Status   | Duration | Job Name |
-                        |:--------:|:--------:| -------- |
+                        | Status   | Duration (s) | Job Name |
+                        |:--------:|:------------:| -------- |
                         """.stripIndent()
         results.each
         {   r ->

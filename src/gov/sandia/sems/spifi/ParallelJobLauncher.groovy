@@ -183,7 +183,13 @@ class ParallelJobLauncher
      * Schedule and launch the jobs in the joblist in parallel.
      *
      * @return Map Results of the run containing key/value pairs:
-     *             label: Jenkins result status ( SUCCESS | FAILURE | UNSTABLE | ABORTED | NOT_BUILT )
+     *             label: [
+     *                        job:      <jenkins job name (String)>,
+     *                        status:   <jenkins job status (String)>,
+     *                        id:       <jenkins job build id (String)>,
+     *                        url:      <absolute URL to jenkins job (String)>,
+     *                        duration: <duration of job in seconds (Float)>
+     *                    ]
      */
     def launchInParallel()
     {
@@ -327,7 +333,7 @@ class ParallelJobLauncher
                 results[job.key]["status"]   = status.getResult()
                 results[job.key]["id"]       = status.getId()
                 results[job.key]["url"]      = status.getAbsoluteUrl()
-                results[job.key]["duration"] = status.getDuration()
+                results[job.key]["duration"] = status.getDuration()/1000
             }
 
             this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
