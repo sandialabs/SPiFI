@@ -189,9 +189,9 @@ class ParallelJobLauncher
         }
 
         // normalize expected duration bounds to seconds.
-        job.expected_duration_units = "SECONDS"
         job.expected_duration_min   = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
         job.expected_duration_max   = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
+        job.expected_duration_units = "SECONDS"  // set units AFTER they are normalized to seconds.
 
         this.env.println "[SPiFI]> Append job ${job.label}"
 

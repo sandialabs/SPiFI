@@ -339,7 +339,7 @@ node()
                                 expected_duration_min: 1,
                                 expected_duration_units: "MINUTES",
                                 parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
-                                              (string(name:"SLEEP_TIME", value: "10"))
+                                              (string(name:"SLEEP_TIME", value: "12"))
                                             ]
                                 )
 
@@ -350,7 +350,7 @@ node()
                                 expected_duration_max: 8,
                                 expected_duration_units: "SECONDS",
                                 parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
-                                              (string(name:"SLEEP_TIME", value: "10"))
+                                              (string(name:"SLEEP_TIME", value: "12"))
                                             ]
                                 )
 
