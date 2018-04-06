@@ -17,7 +17,9 @@
  * @since   2018-04-04
  *
  */
-package gov.sandia.sems.spifi;
+package gov.sandia.sems.spifi
+
+import gov.sandia.sems.spifi.Utility
 
 
 
@@ -57,6 +59,11 @@ class ParallelJobLauncher
         String  dry_run_status  = "SUCCESS"
         Integer dry_run_delay   = 30
         String  monitor_node    = ""
+
+        // expected_duration_max <= 0 implies infinity.
+        Integer expected_duration_min   = 0
+        Integer expected_duration_max   = 0
+        String  expected_duration_units = "SECONDS"
     }
 
 
@@ -119,10 +126,25 @@ class ParallelJobLauncher
      *                                             will be created.
      *                                             Default: ""
      *
+     * @param expected_duration_min   [OPTIONAL] Integer - Add a minimum expected time for the job to run.
+     *                                                     Only checked if job status == SUCCESS.
+     *                                                     Set to <= 0 to ignore minimum expected time bound.
+     *                                                     If > 0 and execution time is less, set job status to UNSTABLE.
+     *                                                     Default: 0
+     * @param expected_duration_max   [OPTIONAL] Integer - Add a maximum expected time for the job to run.
+     *                                                     Only checked if job status == SUCCESS.
+     *                                                     Set to <= 0 to ignore maximum expected time bound.
+     *                                                     If > 0 and execution time is greater, set job status to UNSTABLE.
+     *                                                     Default: 0
+     * @param expected_duration_units [OPTIONAL] String  - Units of the expected time bounds.  Can be HOURS, MINUTES, or SECONDS.
+     *                                                     Default: "SECONDS"
+     *
      * @return nothing
      */
     def appendJob(Map params)
     {
+        def utility = new gov.sandia.sems.spifi.Utility()
+
         // Check for required parameters
         if(!params.containsKey("label"))
         {
@@ -148,6 +170,28 @@ class ParallelJobLauncher
         if(params.containsKey("dry_run_delay"))   { job.dry_run_delay   = params.dry_run_delay   }
         if(params.containsKey("monitor_node"))    { job.monitor_node    = params.monitor_node    }
 
+        if(params.containsKey("expected_duration_min"))   { job.expected_duration_min   = params.expected_duration_min   }
+        if(params.containsKey("expected_duration_max"))   { job.expected_duration_max   = params.expected_duration_max   }
+        if(params.containsKey("expected_duration_units")) { job.expected_duration_units = params.expected_duration_units }
+
+        // Validate parameter value(s)
+        if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
+        {
+            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob invalid parameter timeout_unit provided: ${job.timeout_unit}")
+        }
+        if( !("SECONDS"==job.expected_duration_units || "MINUTES"==job.expected_duration_units || "HOURS"==job.expected_duration_units) )
+        {
+            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob invalid parameter expected_duration_units provided: ${job.timeout_unit}")
+        }
+        if(job.expected_duration_max > 0 && job.expected_duration_min >= job.expected_duration_max)
+        {
+            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob expected_duration_min >= expected_duration_max")
+        }
+
+        // normalize expected duration bounds to seconds.
+        job.expected_duration_min = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
+        job.expected_duration_max = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
+
         this.env.println "[SPiFI]> Append job ${job.label}"
 
         this._jobList[job.label] = [ jenkins_job_name: job.job_name,
@@ -159,7 +203,9 @@ class ParallelJobLauncher
                                      dry_run:          job.dry_run,
                                      dry_run_status:   job.dry_run_status,
                                      dry_run_delay:    job.dry_run_delay,
-                                     monitor_node:     job.monitor_node
+                                     monitor_node:     job.monitor_node,
+                                     expected_duration_min: job.expected_duration_min,
+                                     expected_duration_max: job.expected_duration_max
                                    ]
     }
 
@@ -298,6 +344,7 @@ class ParallelJobLauncher
      */
     def _jobBody(job)
     {
+        def utility = new gov.sandia.sems.spifi.Utility()
         def results = [:]
 
         results[job.key] = [:]
@@ -328,6 +375,21 @@ class ParallelJobLauncher
                                             parameters : job.value.parameters,
                                             quietPeriod: job.value.quiet_period,
                                             propagate  : job.value.propagate_error
+
+                Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
+                String jobStatus = status.getResult()
+
+                // If job was successful, check the execution time bounds.
+                if(jobStatus=="SUCCESS")
+                {
+                    // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
+                    //                        if we care about max duration and duration > max expected
+                    if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
+                        (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
+                    {
+                        jobStatus = "UNSTABLE"
+                    }
+                }
 
                 // Save selected parts of the result to the results
                 results[job.key]["status"]   = status.getResult()

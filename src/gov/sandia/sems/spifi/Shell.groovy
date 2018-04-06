@@ -13,25 +13,9 @@
  * @version 1.0
  * @since   2018-04-04
  */
-package gov.sandia.sems.spifi;
+package gov.sandia.sems.spifi
 
-import org.apache.commons.lang.RandomStringUtils
-
-
-
-/**
- * Generate a random alphanumeric string
- *
- * @param length [REQUIRED] Integer - Length of string to generate.
- *
- * @return String of random alphanumeric characters (CAPS only). i.e., "AC8ZF9ORQ51G7"
- */
-def randomString(Integer length)
-{
-  String charset = (('A'..'Z') + ('0'..'9')).join()
-  String randomString = RandomStringUtils.random(length, charset.toCharArray())
-  return randomString
-}
+import gov.sandia.sems.spifi.Utility
 
 
 
@@ -70,6 +54,9 @@ def randomString(Integer length)
  */
 def execute(Map params)
 {
+    def utility = new gov.sandia.sems.spifi.Utility()
+
+
     Map output = [:]
 
     // Set up default values
@@ -155,7 +142,7 @@ def execute(Map params)
     {
         Boolean retry_exception = false
 
-        String temp_filename = "__output_" + randomString(30) + ".txt"
+        String temp_filename = "__output_" + utility.randomString(30) + ".txt"
 
         env.timeout(time: timeout, unit: timeout_units)
         {
