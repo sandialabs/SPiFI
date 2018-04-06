@@ -189,8 +189,9 @@ class ParallelJobLauncher
         }
 
         // normalize expected duration bounds to seconds.
-        job.expected_duration_min = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
-        job.expected_duration_max = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
+        job.expected_duration_units = "SECONDS"
+        job.expected_duration_min   = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
+        job.expected_duration_max   = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
 
         this.env.println "[SPiFI]> Append job ${job.label}"
 
@@ -204,8 +205,9 @@ class ParallelJobLauncher
                                      dry_run_status:   job.dry_run_status,
                                      dry_run_delay:    job.dry_run_delay,
                                      monitor_node:     job.monitor_node,
-                                     expected_duration_min: job.expected_duration_min,
-                                     expected_duration_max: job.expected_duration_max
+                                     expected_duration_min:   job.expected_duration_min,
+                                     expected_duration_max:   job.expected_duration_max,
+                                     expected_duration_units: job.expected_duration_units
                                    ]
     }
 
