@@ -306,22 +306,25 @@ class ParallelJobLauncher
         for(job in this._jobList)
         {
             strJobs += "[SPiFI]> Job: ${job.key}:\n"
-            strJobs += "[SPiFI]>   - jenkins_job_name: " + job.value["jenkins_job_name"] + "\n"
-            strJobs += "[SPiFI]>   - monitor_node    : " + job.value["monitor_node"] + "\n"
-            strJobs += "[SPiFI]>   - quiet_period    : " + job.value["quiet_period"] + "\n"
-            strJobs += "[SPiFI]>   - timeout         : " + job.value["timeout"] + "\n"
-            strJobs += "[SPiFI]>   - timeout_unit    : " + job.value.timeout_unit + "\n"
-            strJobs += "[SPiFI]>   - propagate_error : " + job.value["propagate_error"] + "\n"
+            strJobs += "[SPiFI]>   - jenkins_job_name        : " + job.value["jenkins_job_name"] + "\n"
+            strJobs += "[SPiFI]>   - monitor_node            : " + job.value["monitor_node"] + "\n"
+            strJobs += "[SPiFI]>   - quiet_period            : " + job.value["quiet_period"] + "\n"
+            strJobs += "[SPiFI]>   - timeout                 : " + job.value["timeout"] + "\n"
+            strJobs += "[SPiFI]>   - timeout_unit            : ${job.value.timeout_unit}\n"
+            strJobs += "[SPiFI]>   - propagate_error         : ${job.value.propagate_error}\n"
+            strJobs += "[SPiFI]>   - expected_duration_min   : ${job.value.expected_duration_min}\n"
+            strJobs += "[SPiFI]>   - expected_duration_max   : ${job.value.expected_duration_max}\n"
+            strJobs += "[SPiFI]>   - expected_duration_units : ${job.value.expected_duration_units}\n"
             if(job.value.dry_run == true)
             {
-                strJobs += "[SPiFI]>   - dry_run         : " + job.value.dry_run + "\n"
-                strJobs += "[SPiFI]>   - dry_run_status  : " + job.value.dry_run_status + "\n"
-                strJobs += "[SPiFI]>   - dry_run_delay   : " + job.value.dry_run_delay + "\n"
+                strJobs += "[SPiFI]>   - dry_run                 : " + job.value.dry_run + "\n"
+                strJobs += "[SPiFI]>   - dry_run_status          : " + job.value.dry_run_status + "\n"
+                strJobs += "[SPiFI]>   - dry_run_delay           : " + job.value.dry_run_delay + "\n"
             }
-            strJobs += "[SPiFI]>   - parameters      : \n"
+            strJobs += "[SPiFI]>   - parameters              : \n"
             for(param in job.value["parameters"])
             {
-                strJobs += "[SPiFI]>       " + param + "\n"
+                strJobs += "[SPiFI]>               " + param + "\n"
             }
         }
         // Strip off trailing newline...
@@ -387,15 +390,18 @@ class ParallelJobLauncher
                     if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
                         (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
                     {
+                        this.env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                                         "SPiFI>          Setting status to UNSTABLE"
+
                         jobStatus = "UNSTABLE"
                     }
                 }
 
                 // Save selected parts of the result to the results
-                results[job.key]["status"]   = status.getResult()
+                results[job.key]["status"]   = jobStatus
                 results[job.key]["id"]       = status.getId()
                 results[job.key]["url"]      = status.getAbsoluteUrl()
-                results[job.key]["duration"] = status.getDuration()/1000
+                results[job.key]["duration"] = duration_seconds
             }
 
             this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"

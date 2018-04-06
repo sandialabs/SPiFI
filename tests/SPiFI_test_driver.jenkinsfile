@@ -314,6 +314,7 @@ node()
 
             def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
 
+            // Add one job of each type to the list
             exit_status_list.each
             {   _exit_status ->
 
@@ -328,6 +329,30 @@ node()
                                                ]
                                   )
             }
+
+            // Add jobs that test expected_duration_min and expected_duration_max bounds
+            // Both should have their status reset to UNSTABLE
+            launcher.appendJob(label: "T-EXPECTED-DURATION-MIN-RUN",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 90,
+                                timeout_unit: "SECONDS",
+                                expected_duration_min: 1,
+                                expected_duration_units: "MINUTES",
+                                parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME", value: "10"))
+                                            ]
+                                )
+
+            launcher.appendJob(label: "T-EXPECTED-DURATION-MAX-RUN",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 90,
+                                timeout_unit: "SECONDS",
+                                expected_duration_max: 8,
+                                expected_duration_units: "SECONDS",
+                                parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME", value: "10"))
+                                            ]
+                                )
 
             // Print out the list of jobs.
             try
@@ -385,13 +410,13 @@ node()
 
                 email_body += "<H4>Launcher Summary</H4>\n"
                 email_body += "<ol>\n"
-                if(launcher_summary.NUMJOBS == 5)
+                if(launcher_summary.NUMJOBS == 7)
                 {
-                    email_body += "<li>PASSED: NUMJOBS == 5</li>\n"
+                    email_body += "<li>PASSED: NUMJOBS == 7</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMJOBS != 5 (got ${launcher_summary.NUMJOBS})</li>\n"
+                    email_body += "<li>FAILED: NUMJOBS != 7 (got ${launcher_summary.NUMJOBS})</li>\n"
                     stage_passed = false
                 }
 
@@ -415,13 +440,13 @@ node()
                     stage_passed = false
                 }
 
-                if(launcher_summary.NUMUNSTABLE == 1)
+                if(launcher_summary.NUMUNSTABLE == 3)
                 {
-                    email_body += "<li>PASSED: NUMUNSTABLE == 1</li>\n"
+                    email_body += "<li>PASSED: NUMUNSTABLE == 3</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMUNSTABLE != 1 (got ${launcher_summary.NUMUNSTABLE})</li>\n"
+                    email_body += "<li>FAILED: NUMUNSTABLE != 3 (got ${launcher_summary.NUMUNSTABLE})</li>\n"
                     stage_passed = false
                 }
 
@@ -676,7 +701,7 @@ node()
 
 
 
-        // Stage 7: Summary (is that even necessary?)
+        // Stage 8: Summary (is that even necessary?)
         stage("8) Email Summary")
         {
             // Final test is to try and send email using SPiFI EmailMessage class
