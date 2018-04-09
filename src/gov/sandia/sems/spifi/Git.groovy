@@ -38,9 +38,13 @@ package gov.sandia.sems.spifi;
  * @param retries        [OPTIONAL] Integer Number of retries to attempt.
  *                                          Default: 0
  * @param retry_delay    [OPTIONAL] Integer Number of seconds to wait before retrying.
- *                                          Default: 30
+ *                                          Default: 60
  * @param timeout        [OPTIONAL] Integer How long is the timeout to be per attempt?
- *                                          Default: 10
+ *                                          The default here is 30 minutes -but- in practice the Jenkins Git plugin
+ *                                          doesn't expose the timeout option in the pipeline call so Jenkins will end
+ *                                          up using the default, which is 10 minutes. Fixing this is a high priority
+ *                                          for SPiFI development.
+ *                                          Default: 30
  * @param timeout_units  [OPTIONAL] String  Units to use for the timeout.
  *                                          Allowed values are: {HOURS|MINUTES|SECONDS}.
  *                                          Default: MINUTES
@@ -48,6 +52,10 @@ package gov.sandia.sems.spifi;
  *                                          Default: false
  *
  * @return true if clone was successful, false if it failed.
+ *
+ * @TODO Find out if there is a way in a pipeline job to change Jenkins' default timeout for git requests.
+ *       - Unfortunately, the Jenkins attitude is that no repository should take more than 10 minutes to clone... that's cute, but
+ *         we see failures on Trilinos frequently because either Github or SNL Proxy throttles the download.
  */
 def clone(Map params)
 {
@@ -57,8 +65,8 @@ def clone(Map params)
     String  branch        = "master"
     String  credentialsId = null
     Integer retries       = 0
-    Integer retry_delay   = 30
-    Integer timeout       = 10
+    Integer retry_delay   = 60
+    Integer timeout       = 30
     String  timeout_units = "MINUTES"
 
     // Process required parameters.

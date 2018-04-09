@@ -30,11 +30,11 @@ import gov.sandia.sems.spifi.Utility
  * @param retries        [OPTIONAL] Integer - Number of retries.
  *                                            Default: 0
  * @param retry_delay    [OPTIONAL] Integer - Retry delay (seconds).
- *                                            Default: 10
- * @param timeout        [OPTIONAL] Integer - Timeout for the job to execute.
- *                                            Default 600
+ *                                            Default: 60
+ * @param timeout        [OPTIONAL] Integer - Timeout for the job to execute. The default is 90 minutes.
+ *                                            Default 90
  * @param timeout_units  [OPTIONAL] String    Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS}
- *                                            Default: "SECONDS"
+ *                                            Default: "MINUTES"
  * @param verbose        [OPTIONAL] Boolean - If present and set to true, some extra debugging information will be printed.
  *                                            Default: false
  * @param dry_run        [OPTIONAL] Boolean - If true, then execute a 'dry run' mode operation.
@@ -62,9 +62,9 @@ def execute(Map params)
     // Set up default values
     String  path              = "${env.WORKSPACE}"
     Integer retries           = 0
-    Integer retry_delay       = 10
-    Integer timeout           = 600
-    String  timeout_units     = "SECONDS"
+    Integer retry_delay       = 60
+    Integer timeout           = 90
+    String  timeout_units     = "MINUTES"
     // Dry run defaults.
     Boolean dry_run           = false
     Integer dry_run_delay     = 5
