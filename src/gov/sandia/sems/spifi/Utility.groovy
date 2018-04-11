@@ -2,7 +2,9 @@
 /**
  * Utility.groovy
  *
- * Utility functions
+ * Utility functions used internally within SPiFI.  
+ * 
+ * Ordinarily these will not be exposed to users of the library.
  *
  * @author  William McLendon
  * @version 1.0
