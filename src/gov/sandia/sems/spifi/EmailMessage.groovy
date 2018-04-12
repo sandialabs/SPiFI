@@ -116,7 +116,7 @@ class EmailMessage implements Serializable
         }
         catch(e)
         {
-            throw new Exception("[SPiFI] An Error occurred attempting to send an email!")
+            throw new Exception("[SPiFI] An Error occurred attempting to send an email!\n${e}")
         }
     }
 
@@ -406,8 +406,8 @@ class EmailMessage implements Serializable
     def _genResultDetailTableASCII(results)
     {
         String output = """
-                           Status      |   Job Name
-                        ---------------+----------------------------------------------------------------------------
+                           Status      |   Duration   |    Job Name
+                        ---------------+--------------|-----------------------------------------------------------------------
                         """.stripIndent()
         results.each
         {   r ->
@@ -420,7 +420,7 @@ class EmailMessage implements Serializable
 
             String job_name = "${r.value.job} #${r.value.id}"
 
-            output += sprintf("   %-9s   |   %-70s\n", [r.value.status, job_name])
+            output += sprintf("   %-9s   |   %-8.2f   |   %-70s\n", [r.value.status, r.value.duration, job_name])
         }
         return output
     }
