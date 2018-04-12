@@ -116,7 +116,7 @@ class EmailMessage implements Serializable
         }
         catch(e)
         {
-
+            throw new Exception("[SPiFI] An Error occurred attempting to send an email!")
         }
     }
 
