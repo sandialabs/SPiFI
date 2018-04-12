@@ -406,7 +406,7 @@ class EmailMessage implements Serializable
     def _genResultDetailTableASCII(results)
     {
         String output = """
-                           Status      |   Duration   |    Job Name
+                           Status      |   Duration   |   Job Name
                         ---------------+--------------|-----------------------------------------------------------------------
                         """.stripIndent()
         results.each
