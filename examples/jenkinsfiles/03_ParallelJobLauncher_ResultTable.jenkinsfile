@@ -1,0 +1,42 @@
+/**
+ * Launch a set of jobs in parallel using SPiFI
+ *
+ */
+node()
+{
+    // Load the SPiFI library, v1.0.0
+    @Library('SPiFI@v1.0.0') _
+
+
+    // Pipeline Stage
+    stage("Stage 1")
+    {
+        // Instantiate a ParallelJobLauncher
+        def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+
+        // Add some jobs to run
+        launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
+        launcher.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
+        launcher.appendJob(label: "Job-3", job_name: "YE_ANOTHER_JENKINS_JOB")
+
+        // Pretty Print the list of jobs to console output
+        launcher.printJobList()
+
+        // Launch the jobs
+        def results = launcher.launchInParallel()
+
+        // Get the summary stats of the run
+        def summary = launcher.getLastResultSummary()
+
+        // Check the summary
+        // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
+        if(summary.NUMTESTS != summary.NUMSUCCESS)
+        {
+            currentBuild.result = 'FAILURE'
+            return
+        }
+    }  // end Stage 1
+
+
+}  // end node()
+
