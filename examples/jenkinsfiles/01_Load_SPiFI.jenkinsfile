@@ -1,0 +1,11 @@
+/**
+ * Load the SPiFI Library
+ *
+ */
+node()
+{
+    // Load the SPiFI library, v1.0.0
+    @Library('SPiFI@v1.0.0') _
+
+}
+
