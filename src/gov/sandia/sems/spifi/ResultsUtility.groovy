@@ -344,7 +344,9 @@ class ResultsUtility implements Serializable
 
             String job_name = "${r.value.job} #${r.value.id}"
 
-            output += sprintf("   %-9s   |   %-8.2f   |   %-70s\n", [r.value.status, r.value.duration, job_name])
+            Float duration = r.value.duration
+
+            output += sprintf("   %-9s   |   %-8.2f   |   %-70s\n", [r.value.status, duration, job_name])
         }
         return output
     }
