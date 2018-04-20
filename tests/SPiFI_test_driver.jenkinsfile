@@ -129,8 +129,7 @@ node()
 
             try
             {
-                //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
-                @Library('SPiFI@refactor') _                  // Note: Test Branch Specific
+                @Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
