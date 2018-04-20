@@ -697,7 +697,7 @@ node()
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
-                     subject:  "[SPiFI] Testing Summary",
+                     subject:  "[SPiFI] Testing Summary PASSED for ${BRANCH_NAME}",
                      body:     email_body
             }
             catch(e)
@@ -720,7 +720,7 @@ def sendEmailFailureAndQuit(Map params)
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED",
+                     subject:  "[SPiFI] Testing Summary FAILED for ${BRANCH_NAME}",
                      body:     email_body)
     currentBuild.result='FAILURE'
 }
