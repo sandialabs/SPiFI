@@ -48,20 +48,38 @@ class HTMLUtility implements Serializable
     /**
      * generate
      *
-     * @param body [REQUIRED] String  - String containing the body of the HTML to generate.
-     *                                  This is the content that would be inside the <BODY></BODY> elements
-     *                                  in a HTML document.
+     * @param body [REQUIRED] String   - String containing the body of the HTML to generate.
+     *                                   This is the content that would be inside the <BODY></BODY> elements
+     *                                   in a HTML document.
+     * @param footer [OPTIONAL] String - String containing optional extra footer text to add the the footer before
+     *                                   the standard link to the Jenkins job running the pipeline.
+     *                                   - The footer will be set to Gray text and will have a newline added after it.
+     *                                   - The footer must be a self-contained HTML block (i.e., all <element> tags
+     *                                     must have the corresponding </element> closing tag.)
      *
      * @return String containing the assembled HTML document with template and headers.
      */
     def generate(Map params)
     {
+        // Set default properties.
+        String footer = ""
+
+        // Verify required parameters are provided.
         if(!params.containsKey("body"))
         {
             throw new Exception("[SPiFI] Missing required parameter: 'body'.")
         }
+
+        // If optional parameter(s) are provided, override the default.
+        if(params.containsKey("footer"))
+        {
+            footer = params.footer + "<BR/>"
+        }
+
+        // Assemble the HTML document
         String output = this._genTemplate()
         output = output.replace("{{BODY}}", params.body)
+        output = output.replace("{{FOOTER}}", footer)
         return output
     }
 
@@ -230,7 +248,7 @@ class HTMLUtility implements Serializable
             </HEAD>
             <BODY>
             {{BODY}}
-            <P><span class="gray">--<BR/>View output on <A HREF="${this._env.BUILD_URL}">Jenkins</A>.</span></P>
+            <P><span class="gray">--<BR/>{{FOOTER}}View output on <A HREF="${this._env.BUILD_URL}">Jenkins</A>.</span></P>
             </BODY>
             </HTML>
             """.stripIndent()
