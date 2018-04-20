@@ -694,9 +694,6 @@ node()
             // if it fails then send the usual email.
             try
             {
-//                def message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
-//                message.setCustomEmail("[SPiFI] Testing Summary", email_body)
-//                message.send()
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
