@@ -12,7 +12,8 @@ properties([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
         string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: '')
+        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: ''),
+        string(name: 'BRANCH_NAME', defaultValue: 'master', description: 'SPiFI Branch Name to test')
     ])
 ])
 
@@ -24,8 +25,9 @@ List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUI
 
 node()
 {
-    String emailDevOps = "wcmclen@sandia.gov"
+    String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+    String branchName   = "master"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
@@ -34,6 +36,10 @@ node()
     if(params.containsKey("EMAIL_DEVOPS"))
     {
         emailDevOps = params.EMAIL_DEVOPS
+    }
+    if(params.containsKey("BRANCH_NAME"))
+    {
+        branchName = params.BRANCH_NAME
     }
 
     // Global faiulre counter for use at the end of testing.
@@ -697,7 +703,7 @@ node()
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
-                     subject:  "[SPiFI] Testing Summary PASSED for ${env.BRANCH_NAME}",
+                     subject:  "[SPiFI] Testing Summary PASSED for ${branchName}",
                      body:     email_body
             }
             catch(e)
@@ -720,7 +726,7 @@ def sendEmailFailureAndQuit(Map params)
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED for ${env.BRANCH_NAME}",
+                     subject:  "[SPiFI] Testing Summary FAILED for ${branchName}",
                      body:     email_body)
     currentBuild.result='FAILURE'
 }
