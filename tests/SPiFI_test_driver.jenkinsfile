@@ -13,11 +13,10 @@ properties([
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
         string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
         string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'BRANCH_NAME', defaultValue: 'master', description: 'SPiFI Branch Name to test')
     ])
 ])
 
-import groovy.transform.Field
+// import groovy.transform.Field
 
 
 String email_body       = "<H1>SPiFI Test Summary</H1>\n"
@@ -38,10 +37,6 @@ node()
     if(params.containsKey("EMAIL_DEVOPS"))
     {
         emailDevOps = params.EMAIL_DEVOPS
-    }
-    if(params.containsKey("BRANCH_NAME"))
-    {
-        branchName = params.BRANCH_NAME
     }
 
     // Global faiulre counter for use at the end of testing.
@@ -137,11 +132,13 @@ node()
 
             try
             {
-                @Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
+                //@Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
+                //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
+                //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
-                //@Library("SPiFI@v0.2.0") _       // Note: this must be const string, can't parameterize :/
-                @Library(LIBRARY_VERSION) _       // Note: this must be const string, can't parameterize :/
+                //@Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
+                @Library("SPiFI@v0.2.0") _       // Note: this must be const string, can't parameterize :/
+                branchName = "v0.2.0"
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
