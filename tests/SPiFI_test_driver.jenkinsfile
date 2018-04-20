@@ -17,6 +17,8 @@ properties([
     ])
 ])
 
+import groovy.transform.Field
+
 
 String email_body       = "<H1>SPiFI Test Summary</H1>\n"
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
@@ -135,8 +137,11 @@ node()
 
             try
             {
+                @Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
+
                 //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
-                @Library("SPiFI@remove_EmailMessage") _       // Note: this must be const string, can't parameterize :/
+                //@Library("SPiFI@v0.2.0") _       // Note: this must be const string, can't parameterize :/
+                @Library(LIBRARY_VERSION) _       // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
