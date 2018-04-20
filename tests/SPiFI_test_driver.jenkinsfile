@@ -129,7 +129,8 @@ node()
 
             try
             {
-                @Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
+                //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
+                @Library("SPiFI@remove_EmailMessage") _       // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
@@ -687,21 +688,25 @@ node()
         // Stage 8: Summary (is that even necessary?)
         stage("8) Email Summary")
         {
-            println ">>> Send email summary using SPiFI::EmailMessage class"
+            println ">>> Send email summary"
 
             // Final test is to try and send email using SPiFI EmailMessage class
             // if it fails then send the usual email.
             try
             {
-                def message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
-                message.setCustomEmail("[SPiFI] Testing Summary", email_body)
-                message.send()
+//                def message = new gov.sandia.sems.spifi.EmailMessage(this, "CUSTOM", emailDevOps, emailReplyTo)
+//                message.setCustomEmail("[SPiFI] Testing Summary", email_body)
+//                message.send()
+                mail to:       emailDevOps,
+                     replyTo:  emailReplyTo,
+                     mimeType: "text/html",
+                     subject:  "[SPiFI] Testing Summary",
+                     body:     email_body
             }
             catch(e)
             {
                 println ">>> ERROR:${e}"
                 email_body += "<H3>Stage (8): Email Summary</H3>\n"
-                email_body += "<ul><li>FAILED: Send email using SPiFI::EmailMessage.send()</li></ul>\n"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
