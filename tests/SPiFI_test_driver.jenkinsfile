@@ -136,7 +136,8 @@ node()
             try
             {
                 //@Library('SPiFI@master') _                  // Note: this must be const string, can't parameterize :/
-                @Library("SPiFI@remove_EmailMessage") _       // Note: this must be const string, can't parameterize :/
+                //@Library("SPiFI@v0.2.0") _       // Note: this must be const string, can't parameterize :/
+                @Library("SPiFI@${BRANCH_NAME}") _       // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
