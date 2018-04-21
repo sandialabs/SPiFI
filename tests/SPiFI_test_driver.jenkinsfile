@@ -7,7 +7,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 7-20 * * *') ]),
+    pipelineTriggers([ cron('H 0 * * *')]),
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
@@ -15,6 +15,10 @@ properties([
         string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: ''),
     ])
 ])
+
+// ,pollSCM('H/15 7-20 * * *')   // -- POLLING SCM isn't working b/c Jenkins compares the branch against master so it runs every !!@#! time
+
+
 
 // import groovy.transform.Field
 
