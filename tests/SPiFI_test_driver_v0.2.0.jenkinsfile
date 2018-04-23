@@ -141,7 +141,7 @@ node()
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 @Library('SPiFI@v0.2.0') _     // Note: this must be const string, can't parameterize :/
-                branchName = "master"
+                branchName = "v0.2.0"
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
@@ -633,12 +633,14 @@ node()
             email_body += "<H3>Stage (6): Test Shell</H3>\n"
 
             email_body += "<ul>\n"
+
             try
             {
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this, command: "ls -l -tr", verbose: true)
                 println "Shell Output:\n" +
-                        "- status: ${output.status}\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
                         "- stdout: ${output.stdout}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
             }
@@ -647,6 +649,62 @@ node()
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
+
+            try
+            {
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls /aksfosuayfoausydfoy123123123",
+                                           retries: 2,
+                                           retry_delay: 2,
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- stdout:\n${output.stdout}\n"
+                if(output.status == 2 && output.retries == 2)
+                {
+                    email_body += "<li>PASSED: Shell.execute() nonzero status retry failure</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+
+            try
+            {
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls /aksfosuayfoausydfoy123123123",
+                                           retries: 2,
+                                           retry_delay: 2,
+                                           status_values_ok: [2],
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- stdout:\n${output.stdout}\n"
+                if(output.status == 2 && output.retries==0)
+                {
+                    email_body += "<li>PASSED: Shell.execute() nonzero status whitelisted</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Shell.execute() nonzero status whitelisted</li>\n"
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+
             email_body += "</ul>\n"
 
         } // End Stage 6
