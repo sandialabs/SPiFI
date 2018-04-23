@@ -649,7 +649,11 @@ node()
             try
             {
                 def shell = new gov.sandia.sems.spifi.Shell()
-                def output = shell.execute(env: this, command: "ls /aksfosuayfoausydfoy123123123", retries: 2, verbose: true)
+                def output = shell.execute(env: this,
+                                           command: "ls /aksfosuayfoausydfoy123123123",
+                                           retries: 2,
+                                           retry_delay: 2,
+                                           verbose: true)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
@@ -675,6 +679,7 @@ node()
                 def output = shell.execute(env: this,
                                            command: "ls /aksfosuayfoausydfoy123123123",
                                            retries: 2,
+                                           retry_delay: 2,
                                            status_values_ok: [2],
                                            verbose: true)
                 println "Shell Output:\n" +
