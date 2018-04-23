@@ -688,11 +688,11 @@ node()
                         "- stdout:\n${output.stdout}\n"
                 if(output.status == 2 && output.retries==0)
                 {
-                    email_body += "<li>PASSED: Shell.execute() nonzero status retry failure</li>\n"
+                    email_body += "<li>PASSED: Shell.execute() nonzero status whitelisted</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
+                    email_body += "<li>FAILED: Shell.execute() nonzero status whitelisted</li>\n"
                 }
             }
             catch(e)
