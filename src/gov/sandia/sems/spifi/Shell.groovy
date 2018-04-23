@@ -167,7 +167,7 @@ def execute(Map params)
     // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
     Integer attempts = retries + 1
 
-    while(0 != status && attempts > 0)
+    while(!(status in status_values_ok) && attempts > 0)
     {
         Boolean retry_exception = false
 
