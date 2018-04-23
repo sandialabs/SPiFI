@@ -169,8 +169,8 @@ def execute(Map params)
                         env.println "[SPiFI]> Command Failed due to thrown exception\n" +
                                     "[SPiFI]> - status = ${status}\n" +
                                     "[SPiFI]> - stdout:\n${stdout}\n" +
-                                    "[SPiFI]> - exception:\n${e}"
-                        env.println "[SPiFI]> Retrying in ${retry_delay} seconds."
+                                    "[SPiFI]> - exception:\n${e}\n" +
+                                    "[SPiFI]> Retrying in ${retry_delay} seconds."
 
                         // Reset values
                         status = -1
@@ -188,9 +188,9 @@ def execute(Map params)
         if(0 != status && attempts > 1 && !retry_exception)
         {
             env.println "[SPiFI]> Command Failed due to nonzero exit status\n" +
-            env.println "[SPiFI]> - status = ${status}\n" +
-                        "[SPiFI]> - stdout:\n${stdout}"
-            env.println "[SPiFI]> Retrying in ${retry_delay} seconds."
+                        "[SPiFI]> - status = ${status}\n" +
+                        "[SPiFI]> - stdout:\n${stdout}\n" +
+                        "[SPiFI]> Retrying in ${retry_delay} seconds."
 
             // Reset values
             stdout = ""
