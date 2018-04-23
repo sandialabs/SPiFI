@@ -52,8 +52,11 @@ import gov.sandia.sems.spifi.Utility
  *                                            trigger a retry.)
  *                                            Default: []
  *
- * @return Map containing two keys: {stdout, status} which contain the stdout and exit status of the command that was run.
+ * @return Map containing two keys: {stdout, status, retries} which contain the stdout and exit status of the command
+ *             that was run.
  *             If there were multiple retries due to nonzero exit status, then the output from the LAST run is returned.
+ *             and retries is set to the number of additional attempts.  Note, if successful on the first attempt this
+ *             will be 0.
  *             If the last attempt results in an exception thrown then status = -1, stdout = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, stdout = dry_run_stdout.
  */
@@ -147,8 +150,9 @@ def execute(Map params)
         env.println "[SPiFI]> DRY RUN!"
         env.sleep dry_run_delay
 
-        output.status = dry_run_status
-        output.stdout = dry_run_stdout
+        output.status  = dry_run_status
+        output.stdout  = dry_run_stdout
+        output.retries = 0
 
         return output
     }
@@ -158,6 +162,7 @@ def execute(Map params)
     // Initialize output variables
     String  stdout = ""
     Integer status = -1
+    Integer num_retries = 0
 
     // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
     Integer attempts = retries + 1
@@ -199,6 +204,7 @@ def execute(Map params)
                         // Reset values
                         status = -1
                         stdout = ""
+                        num_retries++
                         retry_exception = true
 
                         // Sleep for retry delay (seconds)
@@ -220,6 +226,7 @@ def execute(Map params)
             // Reset values
             stdout = ""
             status = -1
+            num_retries++
 
             // Sleep for retry delay (seconds)
             env.sleep retry_delay
@@ -231,12 +238,14 @@ def execute(Map params)
 
     // Print out the results to console log
     env.println "[SPiFI]> Command returned:\n" +
-                "[SPiFI]> - status = ${status}\n" +
-                "[SPiFI]> - stdout:\n${stdout}"
+                "[SPiFI]> - retries: ${num_retries}\n" +
+                "[SPiFI]> - status : ${status}\n" +
+                "[SPiFI]> - stdout:\n${stdout}\n"
 
     // Save the results
-    output["status"] = status
-    output["stdout"] = stdout
+    output["status"]  = status
+    output["stdout"]  = stdout
+    output["retries"] = num_retries
 
     return output
 }
