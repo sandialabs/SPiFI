@@ -162,7 +162,7 @@ def execute(Map params)
     // Initialize output variables
     String  stdout = ""
     Integer status = -1
-    Integer num_retries = 0
+    Integer retries_performed = 0
 
     // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
     Integer attempts = retries + 1
@@ -204,7 +204,7 @@ def execute(Map params)
                         // Reset values
                         status = -1
                         stdout = ""
-                        num_retries++
+                        retries_performed++
                         retry_exception = true
 
                         // Sleep for retry delay (seconds)
@@ -226,7 +226,7 @@ def execute(Map params)
             // Reset values
             stdout = ""
             status = -1
-            num_retries++
+            retries_performed++
 
             // Sleep for retry delay (seconds)
             env.sleep retry_delay
@@ -238,14 +238,14 @@ def execute(Map params)
 
     // Print out the results to console log
     env.println "[SPiFI]> Command returned:\n" +
-                "[SPiFI]> - retries: ${num_retries}\n" +
+                "[SPiFI]> - retries: ${retries_performed}\n" +
                 "[SPiFI]> - status : ${status}\n" +
                 "[SPiFI]> - stdout:\n${stdout}\n"
 
     // Save the results
     output["status"]  = status
     output["stdout"]  = stdout
-    output["retries"] = num_retries
+    output["retries"] = retries_performed
 
     return output
 }
