@@ -46,9 +46,17 @@ import gov.sandia.sems.spifi.Utility
  *                                            Default: 0
  * @param dry_run_stdout [OPTIONAL] String  - If dry_run is true, this is the stdout that will be returned.
  *                                            Default: ""
+ * @param status_values_ok [OPTIONAL] List  - List of Integers. This is a list of valid status values that will be
+ *                                            ok, along with the standard 0 return status.
+ *                                            (i.e., if the command returns any of these OR 0 then the command will not
+ *                                            trigger a retry.)
+ *                                            Default: []
  *
- * @return Map containing two keys: {stdout, status} which contain the stdout and exit status of the command that was run.
+ * @return Map containing two keys: {stdout, status, retries} which contain the stdout and exit status of the command
+ *             that was run.
  *             If there were multiple retries due to nonzero exit status, then the output from the LAST run is returned.
+ *             and retries is set to the number of additional attempts.  Note, if successful on the first attempt this
+ *             will be 0.
  *             If the last attempt results in an exception thrown then status = -1, stdout = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, stdout = dry_run_stdout.
  */
@@ -61,15 +69,23 @@ def execute(Map params)
 
     // Set up default values
     String  path              = "${env.WORKSPACE}"
+
+    // Retry Defaults
     Integer retries           = 0
     Integer retry_delay       = 60
+
+    // Timeout Defaults
     Integer timeout           = 90
     String  timeout_units     = "MINUTES"
-    // Dry run defaults.
-    Boolean dry_run           = false
-    Integer dry_run_delay     = 5
-    Integer dry_run_status    = 0
-    String  dry_run_stdout    = ""
+
+    // Dry run Defaults.
+    Boolean dry_run        = false
+    Integer dry_run_delay  = 5
+    Integer dry_run_status = 0
+    String  dry_run_stdout = ""
+
+    // Valid Nonzero Status Values (i.e., these won't trigger a retry)
+    List status_values_ok = [0]
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -96,6 +112,16 @@ def execute(Map params)
     if(params.containsKey("dry_run_status")) dry_run_status = params.dry_run_status
     if(params.containsKey("dry_run_stdout")) dry_run_stdout = params.dry_run_stdout
 
+    // Process status value whitelist
+    if(params.containsKey("status_values_ok"))
+    {
+        assert params.status_values_ok instanceof List
+
+        // Union the lists... this should keep 0 in the list always
+        def i = status_values_ok.intersect(params.status_values_ok)
+        status_values_ok = ((status_values_ok + params.status_values_ok)-i)+i
+    }
+
     // Validate parameters
     assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"
 
@@ -103,16 +129,17 @@ def execute(Map params)
     if(params.containsKey("verbose") && params.verbose == true)
     {
         env.println "[SPiFI]> Shell.execute()\n" +
-                    "[SPiFI]> -  path          : ${path}\n" +
-                    "[SPiFI]> -  command       : ${command}\n" +
-                    "[SPiFI]> -  retries       : ${retries}\n" +
-                    "[SPiFI]> -  retry_delay   : ${retry_delay}\n" +
-                    "[SPiFI]> -  timeout       : ${timeout}\n" +
-                    "[SPiFI]> -  timeout_units : ${timeout_units}\n" +
-                    "[SPiFI]> -  dry_run       : ${dry_run}\n" +
-                    "[SPiFI]> -  dry_run_delay : ${dry_run_delay}\n" +
-                    "[SPiFI]> -  dry_run_status: ${dry_run_status}\n" +
-                    "[SPiFI]> -  dry_run_stdout: ${dry_run_stdout}"
+                    "[SPiFI]> -  path               : ${path}\n" +
+                    "[SPiFI]> -  command            : ${command}\n" +
+                    "[SPiFI]> -  retries            : ${retries}\n" +
+                    "[SPiFI]> -  retry_delay        : ${retry_delay}\n" +
+                    "[SPiFI]> -  timeout            : ${timeout}\n" +
+                    "[SPiFI]> -  timeout_units      : ${timeout_units}\n" +
+                    "[SPiFI]> -  dry_run            : ${dry_run}\n" +
+                    "[SPiFI]> -  dry_run_delay      : ${dry_run_delay}\n" +
+                    "[SPiFI]> -  dry_run_status     : ${dry_run_status}\n" +
+                    "[SPiFI]> -  dry_run_stdout     : ${dry_run_stdout}\n" +
+                    "[SPiFI]> -  Valid Status Values: ${status_values_ok}"
         env.println "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}"
         env.println "[SPiFI]> Raw Params:\n${params}"
@@ -123,8 +150,9 @@ def execute(Map params)
         env.println "[SPiFI]> DRY RUN!"
         env.sleep dry_run_delay
 
-        output.status = dry_run_status
-        output.stdout = dry_run_stdout
+        output.status  = dry_run_status
+        output.stdout  = dry_run_stdout
+        output.retries = 0
 
         return output
     }
@@ -134,6 +162,7 @@ def execute(Map params)
     // Initialize output variables
     String  stdout = ""
     Integer status = -1
+    Integer num_retries = 0
 
     // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
     Integer attempts = retries + 1
@@ -175,6 +204,7 @@ def execute(Map params)
                         // Reset values
                         status = -1
                         stdout = ""
+                        num_retries++
                         retry_exception = true
 
                         // Sleep for retry delay (seconds)
@@ -185,9 +215,10 @@ def execute(Map params)
         }
 
         // Reset for next attempt if not the final attempt and we're not retryign due to an exception.
-        if(0 != status && attempts > 1 && !retry_exception)
+        if(!(status in status_values_ok) && attempts > 1 && !retry_exception)
         {
-            env.println "[SPiFI]> Command Failed due to nonzero exit status\n" +
+            env.println "[SPiFI]> Command Failed due to exit status\n" +
+                        "[SPiFI]> - valid status values = ${status_values_ok}\n" +
                         "[SPiFI]> - status = ${status}\n" +
                         "[SPiFI]> - stdout:\n${stdout}\n" +
                         "[SPiFI]> Retrying in ${retry_delay} seconds."
@@ -195,6 +226,7 @@ def execute(Map params)
             // Reset values
             stdout = ""
             status = -1
+            num_retries++
 
             // Sleep for retry delay (seconds)
             env.sleep retry_delay
@@ -206,12 +238,14 @@ def execute(Map params)
 
     // Print out the results to console log
     env.println "[SPiFI]> Command returned:\n" +
-                "[SPiFI]> - status = ${status}\n" +
-                "[SPiFI]> - stdout:\n${stdout}"
+                "[SPiFI]> - retries: ${num_retries}\n" +
+                "[SPiFI]> - status : ${status}\n" +
+                "[SPiFI]> - stdout:\n${stdout}\n"
 
     // Save the results
-    output["status"] = status
-    output["stdout"] = stdout
+    output["status"]  = status
+    output["stdout"]  = stdout
+    output["retries"] = num_retries
 
     return output
 }
