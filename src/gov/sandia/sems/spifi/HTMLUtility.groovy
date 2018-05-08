@@ -180,11 +180,13 @@ class HTMLUtility implements Serializable
                     background-color: #AFAFAF;
                     background: #AFAFAF;
                 }
+                .bgGreen tr {
+                    background-color: #B1E894;
+                    background: #B1E894;
+                }
                 .bgGreen tr:nth-child(even) {
-                    background-color: #66FF99;
-                    background: #66FF99;
-                    //background-color: #B1E894;
-                    //background: #B1E894;
+                    background-color: #B1E894;
+                    background: #B1E894;
                 }
                 .bgGreen tr:nth-child(odd) {
                     background-color: #8CD564;
