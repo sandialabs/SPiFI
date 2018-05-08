@@ -52,7 +52,7 @@ class ParallelJobLauncher
         String  job_name        = "__REQUIRED__"
         List    parameters      = null
         Integer quiet_period    = 0
-        Integer timeout         = 168
+        Integer timeout         = 23
         String  timeout_unit    = "HOURS"
         Boolean propagate_error = false
         Boolean dry_run         = false
@@ -105,10 +105,11 @@ class ParallelJobLauncher
      *                                             Default: null
      * @param quiet_period    [OPTIONAL] Integer - Quiet period (seconds).
      *                                             Default: 0
-     * @param timeout         [OPTIONAL] Integer - Timeout duration. The default timeout is considered to be 'infinite'
-     *                                             in that we mean the job that is launched will manage its own timeout.
-     *                                             Note: 168 hours is 1 week.
-     *                                             Default: 168
+     * @param timeout         [OPTIONAL] Integer - Timeout duration.  If not provided, the default is 23 hours
+     *                                             i.e., 1 less than a day as many jobs would be run as a nightly run
+     *                                             and the job would be aborted before the next nightly set.  Most
+     *                                             job timeouts are less than a day.
+     *                                             Default: 23
      * @param timeout_unit    [OPTIONAL] String  - Timeout Unit {HOURS, MINUTES, SECONDS}.
      *                                             Default="HOURS"
      * @param propagate_error [OPTIONAL] Boolean - Propagate error to overall pipeline?  { true, false }
