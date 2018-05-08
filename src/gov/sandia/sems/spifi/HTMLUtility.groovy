@@ -154,6 +154,9 @@ class HTMLUtility implements Serializable
                 .bgLight th {
                     background-color: #AFAFAF;
                 }
+                .bgLight tr {
+                    background-color: #D9D9D8;
+                }
                 .bgLight tr:nth-child(even) {
                     background-color: #D9D9D8;
                 }
@@ -165,6 +168,10 @@ class HTMLUtility implements Serializable
                 .bgDark th {
                     background-color: #0C1A49;
                     color: #737785;
+                }
+                .bgDark tr {
+                    background-color: #545867;
+                    color: #151A2B;
                 }
                 .bgDark tr:nth-child(even) {
                     background-color: #545867;
