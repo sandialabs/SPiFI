@@ -178,12 +178,15 @@ class HTMLUtility implements Serializable
                 /* ----------  Green Background Theme ---------- */
                 .bgGreen th {
                     background-color: #AFAFAF;
+                    background: #AFAFAF;
                 }
                 .bgGreen tr:nth-child(even) {
                     background-color: #B1E894;
+                    background: #B1E894;
                 }
                 .bgGreen tr:nth-child(odd) {
                     background-color: #8CD564;
+                    background: #8CD564;
                 }
 
                 /* ---------- Status based themes ---------- */
