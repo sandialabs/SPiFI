@@ -144,7 +144,7 @@ def clone(Map params)
     catch(e)
     {
         env.println "[SPiFI]> git failed to clone: ${url}\n" +
-        env.println "[SPiFI]> -  Attempts made: ${attempts}"
+                    "[SPiFI]> -  Attempts made: ${attempts}"
         output = false
     }
     return output
