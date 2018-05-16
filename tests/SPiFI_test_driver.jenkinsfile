@@ -18,6 +18,9 @@ properties([
 
 // import groovy.transform.Field
 
+// Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
+String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
+
 
 String email_body       = "<H1>SPiFI Test Summary</H1>\n"
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
@@ -762,7 +765,7 @@ node()
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
-                     subject:  "[SPiFI] Testing Summary PASSED for ${branchName}",
+                     subject:  "[SPiFI] Testing Summary PASSED for ${branchName} on ${jenkins_site}",
                      body:     email_body
             }
             catch(e)
@@ -785,7 +788,7 @@ def sendEmailFailureAndQuit(Map params)
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED for ${branchName}",
+                     subject:  "[SPiFI] Testing Summary FAILED for ${branchName} on ${jenkins_site}",
                      body:     email_body)
     currentBuild.result='FAILURE'
 }
