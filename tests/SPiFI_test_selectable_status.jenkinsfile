@@ -26,7 +26,7 @@ properties([
                description: 'Sleep time (seconds)',
                name: 'SLEEP_TIME'),
         string(defaultValue: '',
-               description: "Node restriction, default: ''",
+               description: "Node restriction, default: 'RHEL7'",
                name: 'NODE_RESTRICTION'),
         choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
                description: 'Possible exit statuses for the job.',
@@ -36,7 +36,7 @@ properties([
 
 
 
-String node_restriction = ""
+String node_restriction = "RHEL7"
 
 if(params.containsKey("NODE_RESTRICTION"))
 {
