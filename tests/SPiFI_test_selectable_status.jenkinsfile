@@ -47,6 +47,9 @@ if(params.containsKey("NODE_RESTRICTION"))
 
 node(node_restriction)
 {
+    timestamps()
+    {
+
     stage('Clean Workspace')
     {
         println "\u27A4\n" +
@@ -93,6 +96,8 @@ node(node_restriction)
         } // timeout
 
     } // stage execute
+
+    } // timestamps
 
 }  // node
 
