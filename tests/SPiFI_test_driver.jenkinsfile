@@ -11,6 +11,9 @@ properties([
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
+        string(defaultValue: 'RHEL7 || RHEL6 || master',
+               description: "Node restriction, default: 'RHEL7 || RHEL6 || master'",
+               name: 'NODE_RESTRICTION'),
         string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
         string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov', description: ''),
     ])
@@ -21,13 +24,20 @@ properties([
 // Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
+// Set up node restriction(s)
+String node_restriction = "RHEL7 || RHEL6 || master"
+if(params.containsKey("NODE_RESTRICTION"))
+{
+  node_restriction = params.NODE_RESTRICTION
+}
 
+// Misc global vars.
 String email_body       = "<H1>SPiFI Test Summary</H1>\n"
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
 
-node()
+node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
