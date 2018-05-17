@@ -39,7 +39,14 @@ node()
         println "\u27A4\n" +
                 "\u27A4 Stage: Clean Workspace\n" +
                 "\u27A4"
-        cleanWs();
+        try
+        {
+            cleanWs();
+        }
+        catch(e)
+        {
+            println "WARNING!!!  cleanWs() failed.\n${e}"
+        }
     }
 
     stage('Execute')
