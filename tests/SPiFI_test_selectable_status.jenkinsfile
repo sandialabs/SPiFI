@@ -25,7 +25,7 @@ properties([
         string(defaultValue: '10',
                description: 'Sleep time (seconds)',
                name: 'SLEEP_TIME'),
-        string(defaultValue: '',
+        string(defaultValue: 'RHEL7',
                description: "Node restriction, default: 'RHEL7'",
                name: 'NODE_RESTRICTION'),
         choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
