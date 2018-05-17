@@ -25,6 +25,9 @@ properties([
         string(defaultValue: '10',
                description: 'Sleep time (seconds)',
                name: 'SLEEP_TIME'),
+        string(defaultValue: '',
+               description: "Node restriction, default: ''",
+               name: 'NODE_RESTRICTION'),
         choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
                description: 'Possible exit statuses for the job.',
                name: 'EXIT_STATUS')
@@ -32,7 +35,17 @@ properties([
 ])
 
 
-node()
+
+String node_restriction = ""
+
+if(params.containsKey("NODE_RESTRICTION"))
+{
+  node_restriction = params.NODE_RESTRICTION
+}
+
+
+
+node(node_restriction)
 {
     stage('Clean Workspace')
     {
