@@ -180,7 +180,7 @@ def execute(Map params)
                 try
                 {
                     // Execute the command
-                    status = env.sh(script: "${command} > ${temp_filename}", returnStatus: true)
+                    status = env.sh(script: "${command} 2>&1 ${temp_filename}", returnStatus: true)
 
                     // Read in the temp file and remove it.
                     stdout = env.readFile(temp_filename).trim()
