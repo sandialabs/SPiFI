@@ -41,7 +41,7 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
-    String branchName   = "master"
+    String branchName   = "v1.0.1"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
@@ -149,8 +149,8 @@ node(node_restriction)
                 //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                @Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
-                branchName = "master"
+                @Library('SPiFI@v1.0.1') _     // Note: this must be const string, can't parameterize :/
+                branchName = "v1.0.1"
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
