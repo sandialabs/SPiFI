@@ -223,7 +223,7 @@ def execute(Map params)
             env.println "[SPiFI]> Command Failed due to exit status\n" +
                         "[SPiFI]> - valid status values = ${status_values_ok}\n" +
                         "[SPiFI]> - status = ${status}\n" +
-                        "[SPiFI]> - stdout:\n${stdout}\n" +
+                        "[SPiFI]> - output:\n${stdout}\n" +
                         "[SPiFI]> Retrying in ${retry_delay} seconds."
 
             // Reset values
@@ -243,7 +243,7 @@ def execute(Map params)
     env.println "[SPiFI]> Command returned:\n" +
                 "[SPiFI]> - retries: ${retries_performed}\n" +
                 "[SPiFI]> - status : ${status}\n" +
-                "[SPiFI]> - stdout:\n${stdout}\n"
+                "[SPiFI]> - output :\n${stdout}\n"
 
     // Save the results
     output["status"]  = status
