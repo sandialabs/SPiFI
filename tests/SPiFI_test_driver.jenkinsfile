@@ -782,6 +782,7 @@ node(node_restriction)
                 def output = shell.execute(env: this,
                                            command: "SPiFI/tests/snlgitlab-clone-test.sh",
                                            retries: 2,
+                                           retry_delay: 10,
                                            timeout: 2,
                                            timeout_units: "MINUTES",
                                            verbose: true)
