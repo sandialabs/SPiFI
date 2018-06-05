@@ -874,7 +874,7 @@ def sendEmailFailureAndQuit(Map params)
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED for ${branchName} on ${jenkins_site}",
+                     subject:  "[SPiFI] Testing Summary FAILED",
                      body:     email_body)
     currentBuild.result='FAILURE'
 }
