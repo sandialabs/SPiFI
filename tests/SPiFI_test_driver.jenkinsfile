@@ -802,17 +802,17 @@ node(node_restriction)
                         "- status : ${output.status}\n" +
                         "- stdout : ${output.stdout}\n"
 
-                if(0 == status)
+                if(0 == output.status)
                 {
                     email_body += "<li>PASSED: Test Shell Script that clones a private repository.</li>\n"
                 }
                 else
                 {
+                    println "ERROR: nonzero exit status returned."
                     num_failures++
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
-                    println "ERROR: nonzero exit status returned."
                     sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                     return
                 }
