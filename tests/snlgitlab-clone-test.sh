@@ -14,6 +14,12 @@ if [ -e ${repository_dest} ]; then
     rm -rf ${repository_dest}
 fi
 
+#
+echo ""
+echo "Contents of ${HOME}/.ssh:"
+ls -lh ${HOME}/.ssh
+echo ""
+
 # turn on verbosity
 set -x
 
@@ -30,7 +36,7 @@ if [ $status -ne 0 ]; then
     exit 1
 else
     echo ""
-    echo "QAPLA> git exited with status: ${status}"
+    echo "SUCCESS> git exited with status: ${status}"
     echo ""
 fi
 
