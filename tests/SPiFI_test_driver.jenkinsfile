@@ -813,8 +813,6 @@ node(node_restriction)
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
-                    sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
-                    return
                 }
             }
             catch(e)
@@ -823,8 +821,6 @@ node(node_restriction)
                 currentBuild.result='FAILURE'
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR: occurred in Shell():\n${e}"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
-                return
             }
             email_body += "</ul>\n"
         }
@@ -857,9 +853,10 @@ node(node_restriction)
             try
             {
                 String status = "PASSED"
-                if(0!=num_failures)
+                if(0 != num_failures)
                 {
                     status = "FAILED"
+                    currentBuild.result = "FAILURE"
                 }
 
                 mail to:       emailDevOps,
