@@ -729,6 +729,9 @@ node(node_restriction)
         // Stage 7: Test org.sandia.sems.spifi.Git
         stage("7) Git")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Git\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += "<H3>Stage (7): Test Git</H3>\n"
@@ -776,6 +779,9 @@ node(node_restriction)
         //          Jenkins entity account as a member.
         stage("8) Test Shell Script that Clones")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Shell Script that Clones\n" +
+                    "\u27A4"
             email_body += "<H3>Stage (8): Test Clone from Script</H3>\n"
             email_body += "<ul>\n"
 
@@ -823,6 +829,9 @@ node(node_restriction)
 
         stage("9) Cleanup")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Cleanup\n" +
+                    "\u27A4"
             if(fileExists("SPiFI"))
             {
                 dir("SPiFI")
@@ -836,7 +845,9 @@ node(node_restriction)
         // Stage 10: Summary (is that even necessary?)
         stage("10) Email Summary")
         {
-            println ">>> Send email summary"
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Summary\n" +
+                    "\u27A4"
 
             // Final test is to try and send email using SPiFI EmailMessage class
             // if it fails then send the usual email.
