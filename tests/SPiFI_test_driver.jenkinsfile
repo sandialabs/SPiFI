@@ -757,7 +757,6 @@ node(node_restriction)
 
                 def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
-
                 email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
             }
             catch(e)
@@ -768,6 +767,7 @@ node(node_restriction)
                 num_failures++
                 currentBuild.result='FAILURE'
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
             }
 
             email_body += "</ul>\n"
@@ -813,6 +813,7 @@ node(node_restriction)
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
                     sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                    return
                 }
             }
             catch(e)
@@ -822,6 +823,7 @@ node(node_restriction)
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
             }
             email_body += "</ul>\n"
         }
