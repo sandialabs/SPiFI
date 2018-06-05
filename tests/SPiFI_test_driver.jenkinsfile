@@ -736,6 +736,7 @@ node(node_restriction)
 
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
+                                branch: "jenkins-credential-test",
                                 url: "git@gitlab-ex.sandia.gov:wcmclen/sems-pipeline-framework-infrastructure.git",
                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
                                 retries: 2,
