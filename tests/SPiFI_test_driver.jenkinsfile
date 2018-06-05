@@ -25,6 +25,10 @@ properties([
 // Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
+// What is the branch name that we want to use
+String branchName   = "master"
+
+
 // Set up node restriction(s)
 String node_restriction = "RHEL7 || RHEL6 || master"
 if(params.containsKey("NODE_RESTRICTION"))
@@ -42,7 +46,6 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
-    String branchName   = "master"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
@@ -151,7 +154,6 @@ node(node_restriction)
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 @Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
-                branchName = "master"
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
@@ -819,9 +821,20 @@ node(node_restriction)
         }
 
 
+        stage("9) Cleanup")
+        {
+            if(fileExists("SPiFI"))
+            {
+                dir("SPiFI")
+                {
+                    deleteDir()
+                }
+            }
+        }
 
-        // Stage 9: Summary (is that even necessary?)
-        stage("9) Email Summary")
+
+        // Stage 10: Summary (is that even necessary?)
+        stage("10) Email Summary")
         {
             println ">>> Send email summary"
 
@@ -848,7 +861,7 @@ node(node_restriction)
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-        }   // End Stage 8
+        }   // End Stage 10
 
     }   // timeout
 }   // node
