@@ -812,6 +812,7 @@ node(node_restriction)
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
+                    println "ERROR: nonzero exit status returned."
                     sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                     return
                 }
@@ -821,7 +822,7 @@ node(node_restriction)
                 num_failures++
                 currentBuild.result='FAILURE'
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
-                println "ERROR occurred in Shell():\n${e}"
+                println "ERROR: occurred in Shell():\n${e}"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
