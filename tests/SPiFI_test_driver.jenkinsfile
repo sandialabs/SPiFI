@@ -656,6 +656,7 @@ node(node_restriction)
             }
             catch(e)
             {
+                num_failures++
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
@@ -678,11 +679,13 @@ node(node_restriction)
                 }
                 else
                 {
+                    num_failures++
                     email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
                 }
             }
             catch(e)
             {
+                num_failures++
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
@@ -756,6 +759,7 @@ node(node_restriction)
                 email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
                 println "ERROR: Git.clone() threw an exception:\n${e}"
                 stage_passed = false
+                num_failures++
                 currentBuild.result='FAILURE'
             }
 
@@ -793,12 +797,15 @@ node(node_restriction)
                 }
                 else
                 {
+                    num_failures++
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
+                    currentBuild.result='FAILURE'
                 }
             }
             catch(e)
             {
+                num_failures++
                 currentBuild.result='FAILURE'
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
@@ -817,10 +824,16 @@ node(node_restriction)
             // if it fails then send the usual email.
             try
             {
+                String status = "PASSED"
+                if(0!=num_failures)
+                {
+                    status = "FAILED"
+                }
+
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
-                     subject:  "[SPiFI] Testing Summary PASSED for ${branchName} on ${jenkins_site}",
+                     subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
                      body:     email_body
             }
             catch(e)
