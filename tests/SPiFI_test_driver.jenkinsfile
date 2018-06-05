@@ -1,3 +1,4 @@
+#!/usr/bin/env groovy
 /**
  * SPiFI_test_driver.jenkinsfile
  *
@@ -650,7 +651,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout: ${output.stdout}\n"
+                        "- stdout : ${output.stdout}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
             }
             catch(e)
@@ -762,9 +763,52 @@ node(node_restriction)
         } // End Stage 7
 
 
+        // Stage 8: Test running a shell script that clones a repository that has the
+        //          Jenkins entity account as a member.
+        stage("8) Test Shell Script that Clones")
+        {
+            email_body += "<H3>Stage (8): Test Clone from Script</H3>\n"
+            email_body += "<ul>\n"
 
-        // Stage 8: Summary (is that even necessary?)
-        stage("8) Email Summary")
+            try
+            {
+                def shell = new gov.sandia.sems.spifi.Shell()
+
+                def output = shell.execute(env: this,
+                                           command: "SPiFI/tests/snlgitlab-clone-test.sh",
+                                           retries: 2,
+                                           timeout: 2,
+                                           timeout_units: "MINUTES",
+                                           verbose: true)
+
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
+                        "- stdout : ${output.stdout}\n"
+
+                if(0 == status)
+                {
+                    email_body += "<li>PASSED: Test Shell Script that clones a private repository.</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
+                    email_body += "</li>\n"
+                }
+            }
+            catch(e)
+            {
+                currentBuild.result='FAILURE'
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+            email_body += "</ul>\n"
+        }
+
+
+
+        // Stage 9: Summary (is that even necessary?)
+        stage("9) Email Summary")
         {
             println ">>> Send email summary"
 
@@ -781,7 +825,7 @@ node(node_restriction)
             catch(e)
             {
                 println ">>> ERROR:${e}"
-                email_body += "<H3>Stage (8): Email Summary</H3>\n"
+                email_body += "<H3>Stage (9): Email Summary</H3>\n"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
