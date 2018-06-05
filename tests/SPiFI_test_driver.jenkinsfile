@@ -26,7 +26,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
-String branchName   = "master"
+String branchName = "master"
 
 
 // Set up node restriction(s)
@@ -747,10 +747,9 @@ node(node_restriction)
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
 
-                                //branch: "jenkins-credential-test",
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
-                                branch: "jenkins-credential-test",
+                                branch: branchName,
                                 url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
                                 retries: 2,
