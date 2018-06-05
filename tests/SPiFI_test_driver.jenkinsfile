@@ -38,11 +38,6 @@ if(params.containsKey("NODE_RESTRICTION"))
 
 // Misc global vars.
 String email_body = "<H1>SPiFI Test Summary</H1>\n"
-email_body += "<ul>\n" +
-              "  <li>Node name: ${NODE_NAME}</li>\n" +
-              "</ul>\n"
-
-
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
@@ -51,6 +46,10 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+
+    email_body += "<ul>\n" +
+                  "  <li>Node name: ${NODE_NAME}</li>\n" +
+                  "</ul>\n"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
