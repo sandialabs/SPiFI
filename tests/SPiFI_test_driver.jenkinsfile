@@ -859,6 +859,8 @@ node(node_restriction)
                     currentBuild.result = "FAILURE"
                 }
 
+                email_body += "<P>--<BR/>View output on <A HREF=\"${BUILD_URL}\">Jenkins</A>.</P>"
+
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
