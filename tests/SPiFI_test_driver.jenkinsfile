@@ -737,9 +737,10 @@ node(node_restriction)
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
 
+                                //branch: "jenkins-credential-test",
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
-                                branch: "jenkins-credential-test",
+                                branch: "master",
                                 url: "git@gitlab-ex.sandia.gov:wcmclen/sems-pipeline-framework-infrastructure.git",
                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
                                 retries: 2,
@@ -761,6 +762,7 @@ node(node_restriction)
                 stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
             }
 
             email_body += "</ul>\n"
@@ -802,6 +804,7 @@ node(node_restriction)
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
+                    sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 }
             }
             catch(e)
@@ -810,6 +813,7 @@ node(node_restriction)
                 currentBuild.result='FAILURE'
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
             }
             email_body += "</ul>\n"
         }
