@@ -1,3 +1,4 @@
+#!/usr/bin/env groovy
 /**
  * SPiFI_test_driver.jenkinsfile
  *
@@ -24,6 +25,10 @@ properties([
 // Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
+// What is the branch name that we want to use
+String branchName = "master"
+
+
 // Set up node restriction(s)
 String node_restriction = "RHEL7 || RHEL6 || master"
 if(params.containsKey("NODE_RESTRICTION"))
@@ -32,7 +37,7 @@ if(params.containsKey("NODE_RESTRICTION"))
 }
 
 // Misc global vars.
-String email_body       = "<H1>SPiFI Test Summary</H1>\n"
+String email_body = "<H1>SPiFI Test Summary</H1>\n"
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
@@ -41,7 +46,11 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
-    String branchName   = "master"
+
+    email_body += "<H3>Job Information</H3>\n" +
+                  "<ul>\n" +
+                  "  <li>Job node: ${NODE_NAME}</li>\n" +
+                  "</ul>\n"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
@@ -150,7 +159,6 @@ node(node_restriction)
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 @Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
-                branchName = "master"
 
                 email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
             }
@@ -650,11 +658,12 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout: ${output.stdout}\n"
+                        "- stdout : ${output.stdout}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
             }
             catch(e)
             {
+                num_failures++
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
@@ -677,11 +686,13 @@ node(node_restriction)
                 }
                 else
                 {
+                    num_failures++
                     email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
                 }
             }
             catch(e)
             {
+                num_failures++
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
@@ -723,6 +734,9 @@ node(node_restriction)
         // Stage 7: Test org.sandia.sems.spifi.Git
         stage("7) Git")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Git\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += "<H3>Stage (7): Test Git</H3>\n"
@@ -735,7 +749,8 @@ node(node_restriction)
 
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
-                                url: "git@gitlab-ex.sandia.gov:wcmclen/sems-pipeline-framework-infrastructure.git",
+                                branch: branchName,
+                                url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
                                 retries: 2,
                                 retry_delay: 10,
@@ -746,7 +761,6 @@ node(node_restriction)
 
                 def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
-
                 email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
             }
             catch(e)
@@ -754,7 +768,10 @@ node(node_restriction)
                 email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
                 println "ERROR: Git.clone() threw an exception:\n${e}"
                 stage_passed = false
+                num_failures++
                 currentBuild.result='FAILURE'
+                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
             }
 
             email_body += "</ul>\n"
@@ -762,30 +779,106 @@ node(node_restriction)
         } // End Stage 7
 
 
-
-        // Stage 8: Summary (is that even necessary?)
-        stage("8) Email Summary")
+        // Stage 8: Test running a shell script that clones a repository that has the
+        //          Jenkins entity account as a member.
+        stage("8) Test Shell Script that Clones")
         {
-            println ">>> Send email summary"
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Shell Script that Clones\n" +
+                    "\u27A4"
+            email_body += "<H3>Stage (8): Test Clone from Script</H3>\n"
+            email_body += "<ul>\n"
+
+            try
+            {
+                def shell = new gov.sandia.sems.spifi.Shell()
+
+                def output = shell.execute(env: this,
+                                           command: "SPiFI/tests/snlgitlab-clone-test.sh",
+                                           retries: 2,
+                                           retry_delay: 10,
+                                           timeout: 2,
+                                           timeout_units: "MINUTES",
+                                           verbose: true)
+
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
+                        "- stdout : ${output.stdout}\n"
+
+                if(0 == output.status)
+                {
+                    email_body += "<li>PASSED: Test Shell Script that clones a private repository.</li>\n"
+                }
+                else
+                {
+                    println "ERROR: nonzero exit status returned."
+                    num_failures++
+                    email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
+                    email_body += "</li>\n"
+                    currentBuild.result='FAILURE'
+                }
+            }
+            catch(e)
+            {
+                num_failures++
+                currentBuild.result='FAILURE'
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR: occurred in Shell():\n${e}"
+            }
+            email_body += "</ul>\n"
+        }
+
+
+        stage("9) Cleanup")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Cleanup\n" +
+                    "\u27A4"
+            if(fileExists("SPiFI"))
+            {
+                dir("SPiFI")
+                {
+                    deleteDir()
+                }
+            }
+        }
+
+
+        // Stage 10: Summary (is that even necessary?)
+        stage("10) Email Summary")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Summary\n" +
+                    "\u27A4"
 
             // Final test is to try and send email using SPiFI EmailMessage class
             // if it fails then send the usual email.
             try
             {
+                String status = "PASSED"
+                if(0 != num_failures)
+                {
+                    status = "FAILED"
+                    currentBuild.result = "FAILURE"
+                }
+
+                email_body += "<P>--<BR/>View output on <A HREF=\"${BUILD_URL}\">Jenkins</A>.</P>"
+
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
-                     subject:  "[SPiFI] Testing Summary PASSED for ${branchName} on ${jenkins_site}",
+                     subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
                      body:     email_body
             }
             catch(e)
             {
                 println ">>> ERROR:${e}"
-                email_body += "<H3>Stage (8): Email Summary</H3>\n"
+                email_body += "<H3>Stage (9): Email Summary</H3>\n"
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-        }   // End Stage 8
+        }   // End Stage 10
 
     }   // timeout
 }   // node
@@ -798,7 +891,7 @@ def sendEmailFailureAndQuit(Map params)
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED for ${branchName} on ${jenkins_site}",
+                     subject:  "[SPiFI] Testing Summary FAILED",
                      body:     email_body)
     currentBuild.result='FAILURE'
 }
