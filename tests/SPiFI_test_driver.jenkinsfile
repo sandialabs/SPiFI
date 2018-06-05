@@ -47,8 +47,9 @@ node(node_restriction)
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
 
-    email_body += "<ul>\n" +
-                  "  <li>Node name: ${NODE_NAME}</li>\n" +
+    email_body += "<H3>Job Information</H3>\n" +
+                  "<ul>\n" +
+                  "  <li>Job node: ${NODE_NAME}</li>\n" +
                   "</ul>\n"
 
     if(params.containsKey("EMAIL_REPLYTO"))
