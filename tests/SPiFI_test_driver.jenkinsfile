@@ -4,6 +4,12 @@
  *
  * Test the SPiFI library
  */
+
+// Configure default node restrictions
+String node_restriction = "RHEL7 || RHEL6 || master"
+
+
+
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
@@ -12,19 +18,17 @@ properties([
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
-        string(defaultValue: 'RHEL7 || RHEL6 || master',
-               description: "Node restriction, default: 'RHEL7 || RHEL6 || master'",
+        string(defaultValue: node_restriction,
+               description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
         string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
         string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov', description: ''),
     ])
 ])
-
 // pipeline trigger with SCM Polling (old)
 // pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 7-20 * * *') ]),
 
 
-// import groovy.transform.Field
 
 // Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
@@ -33,8 +37,7 @@ String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 String branchName = "master"
 
 
-// Set up node restriction(s)
-String node_restriction = "RHEL7 || RHEL6 || master"
+// Load node restriction(s) from parameters
 if(params.containsKey("NODE_RESTRICTION"))
 {
   node_restriction = params.NODE_RESTRICTION
@@ -162,9 +165,17 @@ node(node_restriction)
                 //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                @Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
 
-                String version = gov.sandia.sems.spifi.Info.version()
+                String version = "UNKNOWN"
+                try
+                {
+                    version = gov.sandia.sems.spifi.Info.version()
+                }
+                catch(ex)
+                {
+                    println "An error occurred loading gov.sandia.sems.spifi.Info.version()\n${ex}"
+                }
 
                 email_body += "<ol>\n" +
                               "  <li>PASSED: Load SPiFI Library (version: ${version})</li>\n" +
