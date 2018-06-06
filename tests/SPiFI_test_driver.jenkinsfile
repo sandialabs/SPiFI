@@ -8,7 +8,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 7-20 * * *') ]),
+    pipelineTriggers([ cron('H 0 * * *') ]),
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
@@ -19,6 +19,10 @@ properties([
         string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov', description: ''),
     ])
 ])
+
+// pipeline trigger with SCM Polling (old)
+// pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 7-20 * * *') ]),
+
 
 // import groovy.transform.Field
 
