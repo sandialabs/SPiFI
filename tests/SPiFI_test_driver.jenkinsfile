@@ -160,12 +160,16 @@ node(node_restriction)
 
                 @Library('SPiFI@master') _     // Note: this must be const string, can't parameterize :/
 
-                email_body += "<ol><li>PASSED: Load SPiFI Library (branch: refactor)</li></ol>\n"
+                String version = gov.sandia.sems.spifi.Info.version()
+
+                email_body += "<ol>\n" +
+                              "  <li>PASSED: Load SPiFI Library (version: ${version})</li>\n" +
+                              "</ol>\n"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<ol><li>FAILED: Load SPiFI Library (branch: refactor)</li></ol>\n"
+                email_body += "<ol><li>FAILED: Load SPiFI Library</li></ol>\n"
                 stage_passed = false
             }
 
