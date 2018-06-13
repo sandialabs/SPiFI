@@ -166,8 +166,7 @@ node(node_restriction)
                 //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                //@Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
-                @Library('SPiFI-DEV@catch_job_timeout') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol>\n"
                 email_body += "  <li>PASSED: Load SPiFI Library</li>\n"
@@ -487,11 +486,11 @@ node(node_restriction)
                 email_body += "<ol>\n"
                 if(launcher_summary.NUMJOBS == 8)
                 {
-                    email_body += "<li>PASSED: NUMJOBS == 7</li>\n"
+                    email_body += "<li>PASSED: NUMJOBS == 8</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMJOBS != 7 (got ${launcher_summary.NUMJOBS})</li>\n"
+                    email_body += "<li>FAILED: NUMJOBS != 8 (got ${launcher_summary.NUMJOBS})</li>\n"
                     stage_passed = false
                 }
 
@@ -507,11 +506,11 @@ node(node_restriction)
 
                 if(launcher_summary.NUMFAILURE == 2)
                 {
-                    email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
+                    email_body += "<li>PASSED: NUMFAILURE == 2</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMFAILURE != 1 (got ${launcher_summary.NUMFAILURE})</li>\n"
+                    email_body += "<li>FAILED: NUMFAILURE != 2 (got ${launcher_summary.NUMFAILURE})</li>\n"
                     stage_passed = false
                 }
 
