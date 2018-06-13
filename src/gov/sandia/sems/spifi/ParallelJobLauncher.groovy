@@ -415,12 +415,18 @@ class ParallelJobLauncher
         }      // Try 
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
-            this.env.println "SPiFI> ERROR: Job timed out!"
+            this.env.println "SPiFI> --------------------------------------------------------\n" +
+                             "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
+                             "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
+                             "SPiFI> Exception:\n${e}\n" +
+                             "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
         catch(e)
         {
-            this.env.println "SPiFI> ERROR: Unknown error occurred:\n${e}"
+            this.env.println "SPiFI> --------------------------------------------------------\n" +
+                             "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
+                             "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
 
