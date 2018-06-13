@@ -363,55 +363,73 @@ class ParallelJobLauncher
         results[job.key]["duration"] = 0
 
         // Everything after this level is executed...
-        this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
+        try 
         {
-            if(job.value.dry_run)
+            this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
             {
-                this.env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
-                                 "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
-                                 "[SPiFI]> - Status: ${job.value.dry_run_status}"
-
-                results[job.key]["status"] = job.value.dry_run_status
-                this.env.sleep job.value.dry_run_delay
-            }
-        else
-            {
-                // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
-                //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
-                //
-                def status = this.env.build job        : job.value.jenkins_job_name,
-                                            parameters : job.value.parameters,
-                                            quietPeriod: job.value.quiet_period,
-                                            propagate  : job.value.propagate_error
-
-                Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
-                String jobStatus = status.getResult()
-
-                // If job was successful, check the execution time bounds.
-                if(jobStatus=="SUCCESS")
+                if(job.value.dry_run)
                 {
-                    // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
-                    //                        if we care about max duration and duration > max expected
-                    if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
-                        (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
-                    {
-                        this.env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
-                                         "SPiFI>          Setting status to UNSTABLE"
+                    this.env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
+                                     "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
+                                     "[SPiFI]> - Status: ${job.value.dry_run_status}"
 
-                        jobStatus = "UNSTABLE"
-                    }
+                    results[job.key]["status"] = job.value.dry_run_status
+                    this.env.sleep job.value.dry_run_delay
                 }
+            else
+                {
+                    // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
+                    //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+                    //
+                    def status = this.env.build job        : job.value.jenkins_job_name,
+                                                parameters : job.value.parameters,
+                                                quietPeriod: job.value.quiet_period,
+                                                propagate  : job.value.propagate_error
 
-                // Save selected parts of the result to the results
-                results[job.key]["status"]   = jobStatus
-                results[job.key]["id"]       = status.getId()
-                results[job.key]["url"]      = status.getAbsoluteUrl()
-                results[job.key]["duration"] = duration_seconds
-            }
+                    Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
+                    String jobStatus = status.getResult()
 
-            this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
+                    // If job was successful, check the execution time bounds.
+                    if(jobStatus=="SUCCESS")
+                    {
+                        // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
+                        //                        if we care about max duration and duration > max expected
+                        if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
+                            (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
+                        {
+                            this.env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                                             "SPiFI>          Setting status to UNSTABLE"
 
+                            jobStatus = "UNSTABLE"
+                        }
+                    }
+
+                    // Save selected parts of the result to the results
+                    results[job.key]["status"]   = jobStatus
+                    results[job.key]["id"]       = status.getId()
+                    results[job.key]["url"]      = status.getAbsoluteUrl()
+                    results[job.key]["duration"] = duration_seconds
+                }
+                this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
+            }  // Timeout
+        }      // Try 
+        catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
+        {
+            this.env.println "SPiFI> --------------------------------------------------------\n" +
+                             "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
+                             "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
+                             "SPiFI> Exception:\n${e}\n" +
+                             "SPiFI> --------------------------------------------------------"
+            results[job.key]["status"] = "FAILURE"
         }
+        catch(e)
+        {
+            this.env.println "SPiFI> --------------------------------------------------------\n" +
+                             "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
+                             "SPiFI> --------------------------------------------------------"
+            results[job.key]["status"] = "FAILURE"
+        }
+
         return results
     }
 
