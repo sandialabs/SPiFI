@@ -401,8 +401,8 @@ node(node_restriction)
                                 timeout_unit: "SECONDS",
                                 expected_duration_min: 1,
                                 expected_duration_units: "MINUTES",
-                                parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
-                                              (string(name:"SLEEP_TIME", value: "12"))
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "12"))
                                             ]
                                 )
 
@@ -412,10 +412,21 @@ node(node_restriction)
                                 timeout_unit: "SECONDS",
                                 expected_duration_max: 8,
                                 expected_duration_units: "SECONDS",
-                                parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
-                                              (string(name:"SLEEP_TIME", value: "12"))
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "12"))
                                             ]
                                 )
+
+            // This test should fail due to TIMEOUT
+            launcher.appendJob(label: "T-TIMEOUT-TEST",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 5,
+                                timeout_unit: "SECONDS",
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "10"))
+                                            ]
+                                )
+
 
             // Print out the list of jobs.
             try
@@ -473,7 +484,7 @@ node(node_restriction)
 
                 email_body += "<H4>Launcher Summary</H4>\n"
                 email_body += "<ol>\n"
-                if(launcher_summary.NUMJOBS == 7)
+                if(launcher_summary.NUMJOBS == 8)
                 {
                     email_body += "<li>PASSED: NUMJOBS == 7</li>\n"
                 }
@@ -493,7 +504,7 @@ node(node_restriction)
                     stage_passed = false
                 }
 
-                if(launcher_summary.NUMFAILURE == 1)
+                if(launcher_summary.NUMFAILURE == 2)
                 {
                     email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
                 }
