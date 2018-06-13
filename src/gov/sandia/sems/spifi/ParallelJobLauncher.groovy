@@ -418,7 +418,7 @@ class ParallelJobLauncher
             this.env.println "SPiFI> ERROR: Job timed out!"
             results[job.key]["status"] = "FAILURE"
         }
-        finally(e)
+        catch(e)
         {
             this.env.println "SPiFI> ERROR: Unknown error occurred:\n${e}"
             results[job.key]["status"] = "FAILURE"
