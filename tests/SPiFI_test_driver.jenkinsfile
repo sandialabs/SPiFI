@@ -166,7 +166,8 @@ node(node_restriction)
                 //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                //@Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@catch_job_timeout') _     // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol>\n"
                 email_body += "  <li>PASSED: Load SPiFI Library</li>\n"
