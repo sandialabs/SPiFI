@@ -4,7 +4,8 @@ echo "----------------------------"
 echo "Gitlab Clone Repository Test"
 echo "----------------------------"
 echo ""
-repository_url="git@gitlab.sandia.gov:SEMS/sems-snl-gitlab-test-repository.git"
+#repository_url="git@gitlab.sandia.gov:SEMS/sems-snl-gitlab-test-repository.git"
+repository_url="${1}"
 repository_dest="__sems-snl-gitlab-test-repository"
 
 if [ -e ${repository_dest} ]; then
