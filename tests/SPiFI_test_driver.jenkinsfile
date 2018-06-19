@@ -782,12 +782,16 @@ node(node_restriction)
 
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
+                String repository_url = "git@gitlab-ex.sandia.gov:SEMS/sems-son-gitlab-test-repository.git"
+                String credentials_id = "80984bf0-0cb7-47ca-bf7a-892919ea7f34"
+                //String repository_url = "git@gitlab.sandia.gov:SEMS/sems-snl-gitlab-test-repository.git"
+                //String credentials_id = "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052"
 
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
                                 branch: branchName,
-                                url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
-                                credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                url: repository_url,
+                                credentialsId: credentials_id,
                                 retries: 2,
                                 retry_delay: 10,
                                 timeout: 90,
