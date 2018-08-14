@@ -380,6 +380,7 @@ class ResultsUtility implements Serializable
      */
     def _genResultDetailTableMarkdown(params)
     {
+        // this._env.println "[SPiFI-DEBUG]> Entering ResultsUtility::_genResultDetailTableMarkdown(params)"
         String output = """
                         | Status   | Duration (s) | Job Name |
                         |:--------:|:------------:| -------- |
