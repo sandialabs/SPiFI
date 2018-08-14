@@ -104,17 +104,20 @@ class ResultsUtility implements Serializable
      *
      * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
      *
-     * @param results  [REQUIRED] Map    - Results from a call to
-     *                                     ParallelJobLauncher.launchInParallel()
-     * @param format   [OPTIONAL] String - Type of output table to generate.
-     *                                     Must be one of: [ ASCII | HTML | MARKDOWN ]
-     *                                     Default: ASCII
+     * @param results         [REQUIRED] Map     - Results from a call to
+     *                                             ParallelJobLauncher.launchInParallel()
+     * @param format          [OPTIONAL] String  - Type of output table to generate.
+     *                                             Must be one of: [ ASCII | HTML | MARKDOWN ]
+     *                                             Default: ASCII
+     * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML 
+     *                                             and Markdown will be to the console
+     *                                             output on Jenkins.  If false, the 
+     *                                             links will point at the job itself.
+     *                                             Default: false
      *
      * @return String containing the Detail table for results that can be inserted into
      *                the console log, email, etc.
      *
-     * @todo: Add parameter to select whether or not we want the link to point to the 
-     *        jenkins console output or the jenkins job itself.
      */
     def genResultDetailTable(Map params)
     {
@@ -122,6 +125,12 @@ class ResultsUtility implements Serializable
         if(!params.containsKey("format"))
         {
             params["format"] = "ASCII"
+        }
+
+        // Set link_to_console if it's not already set.
+        if(!params.containsKey("link_to_console"))
+        {
+            params["link_to_console"] = false
         }
 
         // Check required param: results
@@ -132,16 +141,16 @@ class ResultsUtility implements Serializable
         switch(params.format)
         {
             case "HTML":
-                output += this._genResultDetailTableHTML(params.results)
+                output += this._genResultDetailTableHTML(params)
                 break
             case "MARKDOWN":
-                output += this._genResultDetailTableMarkdown(params.results)
+                output += this._genResultDetailTableMarkdown(params)
                 break
             case "ASCII":
-                output += this._genResultDetailTableASCII(params.results)
+                output += this._genResultDetailTableASCII(params)
                 break
             default:
-                output += this._genResultDetailTableASCII(params.results)
+                output += this._genResultDetailTableASCII(params)
                 break
         }
         return output
@@ -274,13 +283,13 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    def _genResultDetailTableHTML(results)
+    def _genResultDetailTableHTML(params)
     {
         String output = """
                         <table class="bgGreen tc1 tc2">
                             <tr><th>Status</th><th>Duration (s)</th><th>Job Name</th></tr>
                         """.stripIndent()
-        results.each
+        params.results.each
         {   r ->
 
             assert r.value.containsKey("job")
@@ -289,11 +298,17 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
 
+            String link = r.value.url
+            if(params.link_to_console) 
+            {
+                link += "/console"
+            }
+
             String msg = """
                          <tr {{CLASS}}>
                              <td>${r.value.status}</td>
                              <td>${r.value.duration}</td>
-                             <td><A HREF="${r.value.url}">${r.value.job} #${r.value.id}</A></td>
+                             <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>
                          </tr>
                          """.stripIndent()
 
@@ -330,13 +345,13 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    def _genResultDetailTableASCII(results)
+    def _genResultDetailTableASCII(params)
     {
         String output = """
                            Status      |   Duration   |   Job Name
                         ---------------+--------------|-----------------------------------------------------------------------
                         """.stripIndent()
-        results.each
+        params.results.each
         {   r ->
 
             assert r.value.containsKey("job")
@@ -363,13 +378,13 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    def _genResultDetailTableMarkdown(results)
+    def _genResultDetailTableMarkdown(params)
     {
         String output = """
                         | Status   | Duration (s) | Job Name |
                         |:--------:|:------------:| -------- |
                         """.stripIndent()
-        results.each
+        params.results.each
         {   r ->
 
             assert r.value.containsKey("job")
@@ -378,7 +393,13 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
 
-            output += sprintf("| %s | %s | [%s #%s](%s) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, r.value.url])
+            String link = r.value.url
+            if(params.link_to_console) 
+            {
+                link += "/console"
+            }
+
+            output += sprintf("| %s | %s | [%s #%s](%s) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, link])
         }
         return output
     }
