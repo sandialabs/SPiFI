@@ -112,6 +112,9 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the Detail table for results that can be inserted into
      *                the console log, email, etc.
+     *
+     * @todo: Add parameter to select whether or not we want the link to point to the 
+     *        jenkins console output or the jenkins job itself.
      */
     def genResultDetailTable(Map params)
     {
@@ -290,7 +293,7 @@ class ResultsUtility implements Serializable
                          <tr {{CLASS}}>
                              <td>${r.value.status}</td>
                              <td>${r.value.duration}</td>
-                             <td><A HREF="${r.value.url}/console">${r.value.job} #${r.value.id}</A></td>
+                             <td><A HREF="${r.value.url}">${r.value.job} #${r.value.id}</A></td>
                          </tr>
                          """.stripIndent()
 
@@ -375,7 +378,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
 
-            output += sprintf("| %s | %s | [%s #%s](%s/console) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, r.value.url])
+            output += sprintf("| %s | %s | [%s #%s](%s) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, r.value.url])
         }
         return output
     }
