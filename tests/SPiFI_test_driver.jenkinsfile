@@ -1016,10 +1016,10 @@ node(node_restriction)
             try
             {
                 num_tests++
-                String status = "PASSED"
+                String status = "SUCCESS"
                 if(0 != num_failures)
                 {
-                    status = "FAILED"
+                    status = "FAILURE"
                     currentBuild.result = "FAILURE"
                 }
                 
