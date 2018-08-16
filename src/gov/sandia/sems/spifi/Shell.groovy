@@ -60,7 +60,7 @@ import gov.sandia.sems.spifi.Utility
  *             If the last attempt results in an exception thrown then status = -1, stdout = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, stdout = dry_run_stdout.
  */
-def execute(Map params)
+static def execute(Map params)
 {
     def utility = new gov.sandia.sems.spifi.Utility()
 

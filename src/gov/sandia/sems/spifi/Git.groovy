@@ -57,7 +57,7 @@ package gov.sandia.sems.spifi;
  *       - Unfortunately, the Jenkins attitude is that no repository should take more than 10 minutes to clone... that's cute, but
  *         we see failures on Trilinos frequently because either Github or SNL Proxy throttles the download.
  */
-def clone(Map params)
+static def clone(Map params)
 {
     // Set up default values
     String  dir           = "."

@@ -584,7 +584,8 @@ node(node_restriction)
 
             // Test Summary Table Generation (ASCII)
             println ">>> Test Summary Table Generation (ASCII)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
                 email_body += "<li>PASSED: genResultSummaryTable (ASCII)</li>\n"
@@ -599,7 +600,8 @@ node(node_restriction)
 
             // Test Summary Table Generation (Markdown)
             println ">>> Test Summary Table Generation (MARKDOWN)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultSummaryTable (MARKDOWN)</li>\n"
@@ -614,7 +616,8 @@ node(node_restriction)
 
             // Test Summary Table Generation (HTML)
             println ">>> Test Summary Table Generation (HTML)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "HTML")
                 email_body += "<li>PASSED: genResultSummaryTable (HTML)</li>\n"
@@ -629,7 +632,8 @@ node(node_restriction)
 
             // Test Detail Table Generation (ASCII)
             println ">>> Test Detail Table Generation (ASCII)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "ASCII")
                 email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
@@ -646,7 +650,8 @@ node(node_restriction)
 
             // Test Detail Table Generation (MARKDOWN)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: default)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
@@ -660,7 +665,8 @@ node(node_restriction)
             }
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "MARKDOWN",
@@ -676,7 +682,8 @@ node(node_restriction)
             }
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "MARKDOWN",
@@ -696,7 +703,8 @@ node(node_restriction)
 
             // Test Detail Table Generation (HTML)
             println ">>> Test Detail Table Generation (HTML, link_to_console: default)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "HTML")
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
@@ -710,7 +718,8 @@ node(node_restriction)
             }
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "HTML",
@@ -726,7 +735,8 @@ node(node_restriction)
             }
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
-            try{
+            try
+            {
                 num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "HTML",
@@ -757,24 +767,44 @@ node(node_restriction)
 
             email_body += "<ol>\n"
 
+            // Test non-static version of Shell 
             try
             {
                 num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this, command: "ls -l -tr", verbose: true)
-                println "Shell Output:\n" +
+                println "Shell [NON STATIC] Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
                         "- stdout : ${output.stdout}\n"
-                email_body += "<li>PASSED: Shell.execute()</li>\n"
+                email_body += "<li>PASSED: Shell.execute() [NON STATIC]</li>\n"
             }
             catch(e)
             {
                 num_failures++
-                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                email_body += "<li>FAILED: Shell.execute() [NON STATIC] threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test static version of Shell 
+            try
+            {
+                num_tests++
+                def output = gov.sandia.sems.spifi.Shell.execute(env: this, command: "ls -l -tr", verbose: true)
+                println "Shell [STATIC] Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
+                        "- stdout : ${output.stdout}\n"
+                email_body += "<li>PASSED: Shell.execute() [STATIC]</li>\n"
+            }
+            catch(e)
+            {
+                num_failures++
+                email_body += "<li>FAILED: Shell.execute() [STATIC] threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+
+            // Test Shell retries
             try
             {
                 num_tests++
@@ -805,6 +835,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test Shell with a nonzero status that's whitelisted
             try
             {
                 num_tests++
@@ -835,7 +866,6 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
                 num_failures++
             }
-
             email_body += "</ol>\n"
 
         } // End Stage 6
@@ -852,6 +882,8 @@ node(node_restriction)
 
             email_body += "<H3>Stage (7): Test Git</H3>\n"
             email_body += "<ol>\n"
+
+            // Test Non-Static Git
             try
             {
                 num_tests++
@@ -872,11 +904,43 @@ node(node_restriction)
 
                 def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
-                email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
+                email_body += "<li>PASSED: Git.clone() [NON STATIC] cloned a repository</li>\n"
             }
             catch(e)
             {
-                email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
+                email_body += "<li>FAILED: Git.clone() [NON STATIC] threw an exception</li>\n"
+                println "ERROR: Git.clone() threw an exception:\n${e}"
+                stage_passed = false
+                num_failures++
+                currentBuild.result='FAILURE'
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            // Test Static Git
+            try
+            {
+                num_tests++
+
+                gov.sandia.sems.spifi.Git.clone(env: this,
+                                dir: "SPiFI-nonstatic",
+                                branch: branchName,
+                                url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
+                                credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                retries: 2,
+                                retry_delay: 10,
+                                timeout: 90,
+                                timeout_units: "SECONDS",
+                                verbose: true
+                               )
+
+                def stdout = sh(script: "ls -ltr SPiFI-nonstatic/", returnStdout: true)
+                println "STDOUT:\n${stdout}"
+                email_body += "<li>PASSED: Git.clone() [STATIC] cloned a repository</li>\n"
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Git.clone() [STATIC] threw an exception</li>\n"
                 println "ERROR: Git.clone() threw an exception:\n${e}"
                 stage_passed = false
                 num_failures++
