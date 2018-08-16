@@ -68,7 +68,7 @@ static def execute(Map params)
     Map output = [:]
 
     // Set up default values
-    String  path              = "${env.WORKSPACE}"
+    String  path              = env.WORKSPACE
 
     // Retry Defaults
     Integer retries           = 0
