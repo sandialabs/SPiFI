@@ -162,9 +162,10 @@ node(node_restriction)
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                // @Library('SPiFI') _             // Default version for production
 
                 email_body += "<ol>\n"
-                email_body += "  <li>PASSED: Load SPiFI Library</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@master)</li>\n"
 
                 // Update branchName with spifi.Info.version() if possible
                 try
@@ -184,7 +185,7 @@ node(node_restriction)
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<ol><li>FAILED: Load SPiFI Library</li></ol>\n"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@master)</li></ol>\n"
                 stage_passed = false
             }
 
