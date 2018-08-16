@@ -55,10 +55,10 @@ node(node_restriction)
     String emailReplyTo = "wcmclen@sandia.gov"
 
     email_body += "<H3>Job Information</H3>\n" +
-                  "<ul>\n" +
+                  "<ol>\n" +
                   "  <li>Job node: ${NODE_NAME}</li>\n" +
                   "  <li>Using   : SPiFI-DEV</li>\n" +
-                  "</ul>\n"
+                  "</ol>\n"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
@@ -185,7 +185,6 @@ node(node_restriction)
                     println ">>> Branch Loaded Version Info FAILED: ${branchName}"
                 }
                 email_body += "</ol>\n"
-
             }
             catch(ex)
             {
@@ -574,7 +573,7 @@ node(node_restriction)
 
             email_body += "<H3>Stage 5) Test Results Utility</H3>\n"
 
-            email_body += "<ul>\n"
+            email_body += "<ol>\n"
 
             def result_util = null
             try
@@ -740,7 +739,7 @@ node(node_restriction)
 
 
 
-            email_body += "</ul>\n"
+            email_body += "</ol>\n"
         }  // End Stage 5
 
 
@@ -752,7 +751,7 @@ node(node_restriction)
 
             email_body += "<H3>Stage (6): Test Shell</H3>\n"
 
-            email_body += "<ul>\n"
+            email_body += "<ol>\n"
 
             try
             {
@@ -828,7 +827,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
-            email_body += "</ul>\n"
+            email_body += "</ol>\n"
 
         } // End Stage 6
 
@@ -843,7 +842,7 @@ node(node_restriction)
             boolean stage_passed = true
 
             email_body += "<H3>Stage (7): Test Git</H3>\n"
-            email_body += "<ul>\n"
+            email_body += "<ol>\n"
             try
             {
 
@@ -876,7 +875,7 @@ node(node_restriction)
                 return
             }
 
-            email_body += "</ul>\n"
+            email_body += "</ol>\n"
 
         } // End Stage 7
 
@@ -889,7 +888,7 @@ node(node_restriction)
                     "\u27A4 Stage: Test Shell Script that Clones\n" +
                     "\u27A4"
             email_body += "<H3>Stage (8): Test Clone from Script</H3>\n"
-            email_body += "<ul>\n"
+            email_body += "<ol>\n"
 
             String repository_url = "git@gitlab-ex.sandia.gov:SEMS/sems-son-gitlab-test-repository.git"
             //String credentials_id = "80984bf0-0cb7-47ca-bf7a-892919ea7f34"
@@ -933,11 +932,56 @@ node(node_restriction)
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR: occurred in Shell():\n${e}"
             }
-            email_body += "</ul>\n"
+            email_body += "</ol>\n"
+        }
+
+        // Stage 9: Test HTMLUtility
+        stage("9) Test HTMLUtility")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test HTMLUtility\n" +
+                    "\u27A4"
+
+            def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
+
+            // Test generating an ordered list.
+            List email_data = []
+            try 
+            {
+                email_data.add("PASSED: HTMLUtility: Generate Ordered List")
+                email_body += htmlutil.generateList(data: email_data)
+            } 
+            catch(ex)
+            {
+                email_body += "<OL>\n"
+                email_body += "    <LI>FAILED: HTMLUtility: Generate Ordered List</LI>\n"
+                email_body += "</OL>\n"
+                currentBuild.result='FAILURE'
+                num_failures++
+                println "ERROR:\n${ex}\n"
+            }
+
+            // Test generating an unordered list
+            email_data.clear()
+            try 
+            {
+                email_data = []
+                email_data.add("PASSED: HTMLUtility: Generate Unordered List")
+                email_body += htmlutil.generateList(data: email_data, unordered_list: true)
+            } 
+            catch(ex)
+            {
+                email_body += "<OL>\n"
+                email_body += "    <LI>FAILED: HTMLUtility: Generate Unordered List</LI>\n"
+                email_body += "</OL>\n"
+                currentBuild.result='FAILURE'
+                num_failures++
+                println "ERROR:\n${ex}\n"
+            }
         }
 
 
-        stage("9) Cleanup")
+        stage("10) Cleanup")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Cleanup\n" +
@@ -952,8 +996,8 @@ node(node_restriction)
         }
 
 
-        // Stage 10: Summary (is that even necessary?)
-        stage("10) Email Summary")
+        // Stage 11: Summary (is that even necessary?)
+        stage("11) Email Summary")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Summary\n" +
@@ -985,7 +1029,7 @@ node(node_restriction)
                 sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-        }   // End Stage 10
+        }   // End Stage 11
 
     }   // timeout
 }   // node

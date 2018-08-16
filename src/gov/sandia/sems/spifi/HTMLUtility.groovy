@@ -84,6 +84,45 @@ class HTMLUtility implements Serializable
     }
 
 
+    /**
+     * Generate an HTML List string and return it.  
+     *
+     * The default list generated is an ordered list, but it can optionally be changed to generate an 
+     * unordered list by providing the `unordered_list` parameter.
+     * 
+     * @param data           [REQUIRED] List of String - A List containing the strings of what you want to be in the 
+     *                                                   list.  Each entry is an entry in the list.
+     * @param unordered_list [OPTIONAL] Boolean        - If this tag is present and set to true then the list type
+     *                                                   generated will be an unordered list. `<ul></ul>`
+     */
+    def generateList(Map params)
+    {
+        String list_type = "OL"
+        if(params.containsKey("unordered_list") && params.unordered_list == true)
+        {
+            list_type = "UL"
+        }
+
+        if(!params.containsKey("data"))
+        {
+            throw new Exception("[SPiFI] Missing required parameter: 'data'.")
+        }
+
+
+        // Create output variable
+        String output = ""
+
+        output += "<${list_type}>\n"
+
+        params.data.each
+        { entry ->
+            output += "<LI>${entry}</LI>\n"
+        }
+        output += "</${list_type}>\n"
+        return output
+    }
+
+
 
     // -------------------------------------------------------------------------
     // ----[ PRIVATE METHODS ]--------------------------------------------------
