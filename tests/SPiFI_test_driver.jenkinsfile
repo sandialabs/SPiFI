@@ -44,7 +44,7 @@ if(params.containsKey("NODE_RESTRICTION"))
 }
 
 // Misc global vars.
-String email_body = "<H1>SPiFI Test Summary</H1>\n"
+String email_body = ""
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
@@ -70,7 +70,8 @@ node(node_restriction)
     }
 
     // Global faiulre counter for use at the end of testing.
-    Integer num_failures = 0;
+    Integer num_failures = 0
+    Integer num_tests    = 0
 
 
     // ----[ begin stage: Clean Workspace ]------------------------------------
@@ -145,7 +146,7 @@ node(node_restriction)
             // Test desired result: SUCCESS
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -195,7 +196,7 @@ node(node_restriction)
 
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -237,7 +238,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -271,7 +272,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -347,14 +348,14 @@ node(node_restriction)
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             /*
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
             */
@@ -436,7 +437,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -471,7 +472,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -548,17 +549,9 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-
-            /*
-            if(!stage_passed)
-            {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
-                return
-            }
-            */
 
         }   // End Stage 4
 
@@ -577,7 +570,8 @@ node(node_restriction)
 
             def result_util = null
             try
-            {
+            {   
+                num_tests++
                 result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
                 email_body += "<li>PASSED: Instantiate</li>\n"
             }
@@ -591,6 +585,7 @@ node(node_restriction)
             // Test Summary Table Generation (ASCII)
             println ">>> Test Summary Table Generation (ASCII)"
             try{
+                num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
                 email_body += "<li>PASSED: genResultSummaryTable (ASCII)</li>\n"
                 println ">>> summary table ascii:\n${output}"
@@ -605,6 +600,7 @@ node(node_restriction)
             // Test Summary Table Generation (Markdown)
             println ">>> Test Summary Table Generation (MARKDOWN)"
             try{
+                num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultSummaryTable (MARKDOWN)</li>\n"
                 println ">>> summary table Markdown:\n${output}"
@@ -619,6 +615,7 @@ node(node_restriction)
             // Test Summary Table Generation (HTML)
             println ">>> Test Summary Table Generation (HTML)"
             try{
+                num_tests++
                 def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "HTML")
                 email_body += "<li>PASSED: genResultSummaryTable (HTML)</li>\n"
                 println ">>> summary table HTML:\n${output}"
@@ -633,6 +630,7 @@ node(node_restriction)
             // Test Detail Table Generation (ASCII)
             println ">>> Test Detail Table Generation (ASCII)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "ASCII")
                 email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
                 println ">>> details table ascii:\n${output}"
@@ -649,6 +647,7 @@ node(node_restriction)
             // Test Detail Table Generation (MARKDOWN)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: default)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
                 println ">>> details table ascii:\n${output}"
@@ -662,6 +661,7 @@ node(node_restriction)
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "MARKDOWN",
                                                               link_to_console: false)
@@ -677,6 +677,7 @@ node(node_restriction)
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "MARKDOWN",
                                                               link_to_console: true)
@@ -696,6 +697,7 @@ node(node_restriction)
             // Test Detail Table Generation (HTML)
             println ">>> Test Detail Table Generation (HTML, link_to_console: default)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, format: "HTML")
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
                 println ">>> details table ascii:\n${output}"
@@ -709,6 +711,7 @@ node(node_restriction)
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "HTML",
                                                               link_to_console: false)
@@ -724,6 +727,7 @@ node(node_restriction)
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
             try{
+                num_tests++
                 def output = result_util.genResultDetailTable(results: launcher_results, 
                                                               format: "HTML",
                                                               link_to_console: true)
@@ -755,6 +759,7 @@ node(node_restriction)
 
             try
             {
+                num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this, command: "ls -l -tr", verbose: true)
                 println "Shell Output:\n" +
@@ -772,6 +777,7 @@ node(node_restriction)
 
             try
             {
+                num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
                                            command: "ls /aksfosuayfoausydfoy123123123",
@@ -788,8 +794,8 @@ node(node_restriction)
                 }
                 else
                 {
-                    num_failures++
                     email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
+                    num_failures++
                 }
             }
             catch(e)
@@ -801,6 +807,7 @@ node(node_restriction)
 
             try
             {
+                num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
                                            command: "ls /aksfosuayfoausydfoy123123123",
@@ -819,12 +826,14 @@ node(node_restriction)
                 else
                 {
                     email_body += "<li>FAILED: Shell.execute() nonzero status whitelisted</li>\n"
+                    num_failures++
                 }
             }
             catch(e)
             {
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
+                num_failures++
             }
 
             email_body += "</ol>\n"
@@ -845,6 +854,7 @@ node(node_restriction)
             email_body += "<ol>\n"
             try
             {
+                num_tests++
 
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
@@ -871,7 +881,7 @@ node(node_restriction)
                 stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -897,6 +907,7 @@ node(node_restriction)
 
             try
             {
+                num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
 
                 def output = shell.execute(env: this,
@@ -919,10 +930,10 @@ node(node_restriction)
                 else
                 {
                     println "ERROR: nonzero exit status returned."
-                    num_failures++
                     email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
                     email_body += "</li>\n"
                     currentBuild.result='FAILURE'
+                    num_failures++
                 }
             }
             catch(e)
@@ -941,6 +952,7 @@ node(node_restriction)
             println "\u27A4\n" +
                     "\u27A4 Stage: Test HTMLUtility\n" +
                     "\u27A4"
+            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"                    
 
             def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
 
@@ -948,6 +960,7 @@ node(node_restriction)
             List email_data = []
             try 
             {
+                num_tests++
                 email_data.add("PASSED: HTMLUtility: Generate Ordered List")
                 email_body += htmlutil.generateList(data: email_data)
             } 
@@ -965,6 +978,7 @@ node(node_restriction)
             email_data = []
             try 
             {
+                num_tests++
                 email_data = []
                 email_data.add("PASSED: HTMLUtility: Generate Unordered List")
                 email_body += htmlutil.generateList(data: email_data, unordered_list: true)
@@ -1007,12 +1021,24 @@ node(node_restriction)
             // if it fails then send the usual email.
             try
             {
+                num_tests++
                 String status = "PASSED"
                 if(0 != num_failures)
                 {
                     status = "FAILED"
                     currentBuild.result = "FAILURE"
                 }
+                
+                String email_body_summary = ""
+                email_body_summary += "<H1>Testing Summary</H1>\n"
+                email_body_summary += "<H3>Overview</H3>\n"
+                email_body_summary += "<ol>\n"
+                email_body_summary += "<li>Final Status: ${status}</li>\n"
+                email_body_summary += "<li>Num Tests   : ${num_tests}</li>\n"
+                email_body_summary += "<li>Num Failures: ${num_failures}</li>\n"
+                email_body_summary += "</ol>\n"
+
+                email_body = email_body_summary + email_body
 
                 email_body += "<P>--<BR/>View output on <A HREF=\"${BUILD_URL}\">Jenkins</A>.</P>"
 
@@ -1024,9 +1050,10 @@ node(node_restriction)
             }
             catch(e)
             {
+                num_failures++
                 println ">>> ERROR:${e}"
                 email_body += "<H3>Stage (9): Email Summary</H3>\n"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
         }   // End Stage 11
@@ -1036,10 +1063,19 @@ node(node_restriction)
 
 
 
-//def sendEmailFailureAndQuit(String email_body)
-def sendEmailFailureAndQuit(Map params)
+def sendEmailFailure(Map params)
 {
-    email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
+    String email_body_summary = ""
+    email_body_summary += "<H1>Testing Summary</H1>\n"
+    email_body_summary += "<H3>Overview</H3>\n"
+    email_body_summary += "<ol>\n"
+    email_body_summary += "<li>Final Status: FAILURE</li>\n"
+    email_body_summary += "<li>Num Tests   : ${num_tests}</li>\n"
+    email_body_summary += "<li>Num Failures: ${num_failures}</li>\n"
+    email_body_summary += "</ol>\n"
+
+    email_body = email_body_summary + params.body
+
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
                      subject:  "[SPiFI] Testing Summary FAILED",
