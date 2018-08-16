@@ -1030,8 +1030,7 @@ node(node_restriction)
                                       "  <li>Final Status: ${status}</li>\n" +
                                       "  <li>Num Tests   : ${num_tests}</li>\n" +
                                       "  <li>Num Failures: ${num_failures}</li>\n" +
-                                      "  <li>Job node: ${NODE_NAME}</li>\n" +
-                                      "  <li>Using   : SPiFI-DEV</li>\n" +
+                                      "  <li>Job node    : ${NODE_NAME}</li>\n" +
                                       "</ol>\n"
                 email_body = email_body_summary + email_body
 
@@ -1067,8 +1066,7 @@ def sendEmailFailure(Map params)
                           "  <li>Final Status: FAILURE</li>\n" +
                           "  <li>Num Tests   : ${num_tests}</li>\n" +
                           "  <li>Num Failures: ${num_failures}</li>\n" +
-                          "  <li>Job node: ${NODE_NAME}</li>\n" +
-                          "  <li>Using   : SPiFI-DEV</li>\n" +
+                          "  <li>Job node    : ${NODE_NAME}</li>\n" +
                           "</ol>\n"
 
     email_body = email_body_summary + params.body
