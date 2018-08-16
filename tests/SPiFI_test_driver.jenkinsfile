@@ -962,7 +962,7 @@ node(node_restriction)
             }
 
             // Test generating an unordered list
-            email_data.clear()
+            email_data = []
             try 
             {
                 email_data = []
