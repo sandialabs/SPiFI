@@ -16,13 +16,21 @@ properties([
     disableConcurrentBuilds(),
     pipelineTriggers([ cron('H 0 * * *') ]),
     parameters([
-        booleanParam(name: 'CleanWorkspace', defaultValue: false,
+        booleanParam(name: 'CleanWorkspace', 
+                     defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
-        string(defaultValue: node_restriction,
-               description: "Node restriction, default: '${node_restriction}'",
-               name: 'NODE_RESTRICTION'),
-        string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', description: ''),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" ),
+        string(name: 'EMAIL_REPLYTO', 
+               defaultValue: 'wg-sems-admin@sandia.gov', 
+               description: 'Default Reply-To email address.'),
+        string(name: 'EMAIL_FROM', 
+               defaultValue: 'wg-sems-admin@sandia.gov', 
+               description: 'Default From email address.'),
+        string(name: 'EMAIL_DEVOPS', 
+               defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', 
+               description: 'Recipient List (space delimited) for testing result emails.'),
     ])
 ])
 // pipeline trigger with SCM Polling (old)
@@ -53,10 +61,15 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+    String emailFrom    = "wcmclen@sandia.gov"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
         emailReplyTo = params.EMAIL_REPLYTO
+    }
+    if(params.containsKey("EMAIL_FROM"))
+    {
+        emailFrom = params.EMAIL_FROM
     }
     if(params.containsKey("EMAIL_DEVOPS"))
     {
@@ -140,7 +153,7 @@ node(node_restriction)
             // Test desired result: SUCCESS
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -191,7 +204,7 @@ node(node_restriction)
 
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -233,7 +246,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -267,7 +280,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -343,14 +356,14 @@ node(node_restriction)
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             /*
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
             */
@@ -432,7 +445,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -467,7 +480,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -544,7 +557,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -876,7 +889,7 @@ node(node_restriction)
                 stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -1039,6 +1052,7 @@ node(node_restriction)
 
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
+                     from:     emailFrom,
                      mimeType: "text/html",
                      subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
                      body:     email_body
@@ -1048,7 +1062,7 @@ node(node_restriction)
                 num_failures++
                 println ">>> ERROR:${e}"
                 email_body += "<H3>Stage (9): Email Summary</H3>\n"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
         }   // End Stage 11
@@ -1072,10 +1086,11 @@ def sendEmailFailure(Map params)
 
     email_body = email_body_summary + params.body
 
-    sendEmailSummary(to:       params.to,
-                     reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED",
-                     body:     email_body)
+    sendEmailSummary(to:         params.to,
+                     reply_to:   params.reply_to,
+                     email_from: params.from,
+                     subject:    "[SPiFI] Testing Summary FAILED",
+                     body:       email_body)
     currentBuild.result='FAILURE'
 }
 
@@ -1097,6 +1112,7 @@ def sendEmailSummary(Map params)
 
     mail to:       params.to,
          replyTo:  params.reply_to,
+         from:     params.from,
          mimeType: 'text/html',
          subject:  params.subject,
          body:     __email_message
