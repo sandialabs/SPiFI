@@ -21,8 +21,8 @@ properties([
         string(defaultValue: node_restriction,
                description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
-        string(name: 'EMAIL_REPLYTO', defaultValue: 'wg-sems-admin@sandia.gov', description: ''),
-        string(name: 'EMAIL_FROM',    defaultValue: 'wg-sems-admin@sandia.gov', description: ''),
+        string(name: 'EMAIL_REPLYTO', defaultValue: 'wg-sems-admin@mailgate.sandia.gov', description: 'Default Reply-To email address.'),
+        string(name: 'EMAIL_FROM',    defaultValue: 'wg-sems-admin@mailgate.sandia.gov', description: 'Default From email address.'),
         string(name: 'EMAIL_DEVOPS',  defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', description: ''),
     ])
 ])
