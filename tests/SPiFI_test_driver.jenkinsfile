@@ -16,20 +16,20 @@ properties([
     disableConcurrentBuilds(),
     pipelineTriggers([ cron('H 0 * * *') ]),
     parameters([
-        booleanParam(name: 'CleanWorkspace', 
+        booleanParam(name: 'CleanWorkspace',
                      defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
         string(name: 'NODE_RESTRICTION',
                defaultValue: node_restriction,
                description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" ),
-        string(name: 'EMAIL_REPLYTO', 
-               defaultValue: 'wg-sems-admin@mailgate.sandia.gov', 
+        string(name: 'EMAIL_REPLYTO',
+               defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
                description: 'Default Reply-To email address.'),
-        string(name: 'EMAIL_FROM', 
-               defaultValue: 'wg-sems-admin@mailgate.sandia.gov', 
+        string(name: 'EMAIL_FROM',
+               defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
                description: 'Default From email address.'),
-        string(name: 'EMAIL_DEVOPS', 
-               defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', 
+        string(name: 'EMAIL_DEVOPS',
+               defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov',
                description: 'Recipient List (space delimited) for testing result emails.'),
     ])
 ])
@@ -578,7 +578,7 @@ node(node_restriction)
 
             def result_util = null
             try
-            {   
+            {
                 num_tests++
                 result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
                 email_body += "<li>PASSED: Instantiate</li>\n"
@@ -670,7 +670,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: false)
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
@@ -686,7 +686,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: true)
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
@@ -720,7 +720,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: false)
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
@@ -736,7 +736,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: true)
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
@@ -759,12 +759,16 @@ node(node_restriction)
         // Stage 6: Test org.sandia.sems.spifi.Shell
         stage("6) Shell")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Shell\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += "<H3>Stage (6): Test Shell</H3>\n"
 
             email_body += "<ol>\n"
 
+            // Test a basic Shell command
             try
             {
                 num_tests++
@@ -773,7 +777,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout : ${output.stdout}\n"
+                        "- console: ${output.console}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
             }
             catch(e)
@@ -783,6 +787,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test with retries
             try
             {
                 num_tests++
@@ -795,7 +800,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
-                        "- stdout:\n${output.stdout}\n"
+                        "- console:\n${output.console}\n"
                 if(output.status == 2 && output.retries == 2)
                 {
                     email_body += "<li>PASSED: Shell.execute() nonzero status retry failure</li>\n"
@@ -813,6 +818,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test with retries and nonzero allowable status value
             try
             {
                 num_tests++
@@ -826,7 +832,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
-                        "- stdout:\n${output.stdout}\n"
+                        "- console:\n${output.console}\n"
                 if(output.status == 2 && output.retries==0)
                 {
                     email_body += "<li>PASSED: Shell.execute() nonzero status whitelisted</li>\n"
@@ -841,6 +847,102 @@ node(node_restriction)
             {
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stderr"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stdout",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(!output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout+stderr"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stdout+stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:") && output.console.contains("total"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
                 num_failures++
             }
 
@@ -866,6 +968,9 @@ node(node_restriction)
 
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
+                // Delete the SPiFI directory if it's already there.
+                String stdout = sh(script: "rm -rf SPiFI", returnStdout: true)
+
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
                                 branch: branchName,
@@ -878,7 +983,7 @@ node(node_restriction)
                                 verbose: true
                                )
 
-                def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
+                stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
                 email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
             }
@@ -929,7 +1034,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout : ${output.stdout}\n"
+                        "- console: ${output.console}\n"
 
                 if(0 == output.status)
                 {
@@ -960,18 +1065,18 @@ node(node_restriction)
             println "\u27A4\n" +
                     "\u27A4 Stage: Test HTMLUtility\n" +
                     "\u27A4"
-            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"                    
+            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"
 
             def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
 
             // Test generating an ordered list.
             List email_data = []
-            try 
+            try
             {
                 num_tests++
                 email_data.add("PASSED: HTMLUtility: Generate Ordered List")
                 email_body += htmlutil.generateList(data: email_data)
-            } 
+            }
             catch(ex)
             {
                 email_body += "<OL>\n"
@@ -984,13 +1089,13 @@ node(node_restriction)
 
             // Test generating an unordered list
             email_data = []
-            try 
+            try
             {
                 num_tests++
                 email_data = []
                 email_data.add("PASSED: HTMLUtility: Generate Unordered List")
                 email_body += htmlutil.generateList(data: email_data, unordered_list: true)
-            } 
+            }
             catch(ex)
             {
                 email_body += "<OL>\n"
@@ -1036,7 +1141,7 @@ node(node_restriction)
                     status = "FAILURE"
                     currentBuild.result = "FAILURE"
                 }
-                
+
                 String email_body_summary = ""
                 email_body_summary += "<H1>Testing Summary</H1>\n" +
                                       "<H3>Overview</H3>\n" +
