@@ -23,7 +23,7 @@ properties([
                defaultValue: node_restriction,
                description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" ),
         string(name: 'EMAIL_REPLYTO',
-               defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
+               defaultValue: 'wcmclen@sandia.gov',
                description: 'Default Reply-To email address.'),
         string(name: 'EMAIL_FROM',
                defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
