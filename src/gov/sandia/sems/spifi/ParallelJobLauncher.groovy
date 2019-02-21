@@ -19,6 +19,8 @@
  */
 package gov.sandia.sems.spifi
 
+import gov.sandia.sems.spifi.DelayedRetry
+import gov.sandia.sems.spifi.DelayedRetryOnRegex
 import gov.sandia.sems.spifi.Utility
 
 
@@ -64,11 +66,17 @@ class ParallelJobLauncher
         Integer expected_duration_min   = 0
         Integer expected_duration_max   = 0
         String  expected_duration_units = "SECONDS"
+
+        // Job Retry Parameters.
+        Integer max_retries        = 99                 // Set a maximum # of allowable retries so things don't get too crazy.
+        Integer num_retries        = 0                  // Number of retries is for the job, regardless of the mix of 'matches'
+                                                        //  on retry-criteria.  Note: num_attempts == num_retries+1
+        List    retry_control_list = null               // Parameters for retries. delay, delay_units, regex
     }
 
 
     // Member Variables
-    private static env
+    private static _env
     private Map<String,String> _jobList                   // The jobs + their parameters
     private Map<String,String> _lastResultSummary         // Status on the latest results
 
@@ -79,10 +87,30 @@ class ParallelJobLauncher
      * @param env [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
      *
      */
+    ParallelJobLauncher(Map params)
+    {
+        // Validate parameters
+        if(!params.containsKey("env"))
+        {
+            throw new Exception("[SPiFI]> Missing required parameter: 'env'")
+        }
+
+        // Set Parameter Default(s)
+        this._env = params.env
+        this._jobList = [:]
+        this._lastResultSummary = [:]
+    }
+
+    @Deprecated
     ParallelJobLauncher(env)
     {
+        this.println "[SPiFI]>\n" +
+                     "[SPiFI]> DEPRECATION NOTICE: ParallelJobLauncher(this) will be deprecated in 2.0.0\n" +
+                     "[SPiFI]> DEPRECATION NOTICE: -  Please use ParallelJobLauncher(\"env\": this)\n" +
+                     "[SPiFI]>"
+
         // Set Parameter Default(s)
-        this.env = env
+        this._env = env
         this._jobList = [:]
         this._lastResultSummary = [:]
     }
@@ -142,11 +170,22 @@ class ParallelJobLauncher
      * @param expected_duration_units [OPTIONAL] String  - Units of the expected time bounds.  Can be HOURS, MINUTES, or SECONDS.
      *                                                     Default: "SECONDS"
      *
+     * @param retry_parameters        [OPTIONAL] List    - If provided, this is a List of Map objects that define conditions where
+     *                                                     this job should be retried. If the job is retried, only the LAST attempt
+     *                                                     will report results.
+     *
      * @return nothing
      */
     def appendJob(Map params)
     {
         def utility = new gov.sandia.sems.spifi.Utility()
+
+        this._env.println "[SPiFI] DEBUGGING> params:\n" + params                                       // SCAFFOLDING
+        params.retry_conditions.each                                                                    // SCAFFOLDING
+        { rci->                                                                                         // SCAFFOLDING
+            this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.Stringify()}"           // SCAFFOLDING
+        }                                                                                               // SCAFFOLDING
+
 
         // Check for required parameters
         if(!params.containsKey("label"))
@@ -196,7 +235,7 @@ class ParallelJobLauncher
         job.expected_duration_max   = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
         job.expected_duration_units = "SECONDS"  // set units AFTER they are normalized to seconds.
 
-        this.env.println "[SPiFI]> Append job ${job.label}"
+        this._env.println "[SPiFI]> Append job ${job.label}"
 
         this._jobList[job.label] = [ jenkins_job_name: job.job_name,
                                      parameters:       job.parameters,
@@ -266,7 +305,7 @@ class ParallelJobLauncher
         }
 
         // Launch the jobs in parallel
-        this.env.parallel builders
+        this._env.parallel builders
 
         // Update the result summary
         this._resetLastResultSummary()
@@ -275,7 +314,7 @@ class ParallelJobLauncher
             def r = _r
             this._updateLastResultSummary(r.value["status"])
 
-            this.env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
+            this._env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
         }
 
         return results
@@ -335,7 +374,7 @@ class ParallelJobLauncher
         // Strip off trailing newline...
         strJobs = strJobs.replaceAll("\\s\$","")
 
-        this.env.println "${strJobs}"
+        this._env.println "${strJobs}"
     }
 
 
@@ -363,25 +402,25 @@ class ParallelJobLauncher
         results[job.key]["duration"] = 0
 
         // Everything after this level is executed...
-        try 
+        try
         {
-            this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
+            this._env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
             {
                 if(job.value.dry_run)
                 {
-                    this.env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
+                    this._env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
                                      "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
                                      "[SPiFI]> - Status: ${job.value.dry_run_status}"
 
                     results[job.key]["status"] = job.value.dry_run_status
-                    this.env.sleep job.value.dry_run_delay
+                    this._env.sleep job.value.dry_run_delay
                 }
             else
                 {
                     // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
                     //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
                     //
-                    def status = this.env.build job        : job.value.jenkins_job_name,
+                    def status = this._env.build job        : job.value.jenkins_job_name,
                                                 parameters : job.value.parameters,
                                                 quietPeriod: job.value.quiet_period,
                                                 propagate  : job.value.propagate_error
@@ -397,7 +436,7 @@ class ParallelJobLauncher
                         if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
                             (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
                         {
-                            this.env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                            this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
                                              "SPiFI>          Setting status to UNSTABLE"
 
                             jobStatus = "UNSTABLE"
@@ -409,13 +448,30 @@ class ParallelJobLauncher
                     results[job.key]["id"]       = status.getId()
                     results[job.key]["url"]      = status.getAbsoluteUrl()
                     results[job.key]["duration"] = duration_seconds
+
+
+                    // To get the console log from the status object you need to call status.getRawBuild().getLog()
+                    //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
+                    // getLog() returns a string containing the log.
+                    // getLog( int maxLines ) returns a List<String> object.
+                    //this._env.println "SPiFI> status isa ${status.getClass().getName()}"
+                    //this._env.println "SPiFI> status.getRawBuild isa ${status.getRawBuild().getClass().getName()}"
+                    //this._env.println "SPiFI> status.getRawBuild.getLog():\n////${status.getRawBuild().getLog()}\n////"
+                    //this._env.println "SPiFI> status.getRawBuild.getLog(10):\n////${status.getRawBuild().getLog(10)}\n////"
+                    def log = status.getRawBuild().getLog(10)
+                    log.each
+                    {   _line ->
+                        this._env.println "SPiFI> [${job.key}]: ${_line}"
+                    }
+
+//                    results[job.key]["log"]      = status.getLog(100)       // EXPERIMENTAL
                 }
-                this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
+                this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // Timeout
-        }      // Try 
+        }      // Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
-            this.env.println "SPiFI> --------------------------------------------------------\n" +
+            this._env.println "SPiFI> --------------------------------------------------------\n" +
                              "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
                              "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
                              "SPiFI> Exception:\n${e}\n" +
@@ -424,7 +480,7 @@ class ParallelJobLauncher
         }
         catch(e)
         {
-            this.env.println "SPiFI> --------------------------------------------------------\n" +
+            this._env.println "SPiFI> --------------------------------------------------------\n" +
                              "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
                              "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
@@ -444,7 +500,7 @@ class ParallelJobLauncher
     def _jobBodyWithMonitorNode(job)
     {
         def results = [:]
-        this.env.node(job.value.monitor_node)
+        this._env.node(job.value.monitor_node)
         {
             results << this._jobBody(job)
         }

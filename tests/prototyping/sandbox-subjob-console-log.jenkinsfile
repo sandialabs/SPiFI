@@ -1,0 +1,109 @@
+#!/usr/bin/env groovy
+
+@Library('SPiFI-DEV@experimental') _
+
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '',
+                              artifactNumToKeepStr: '',
+                              daysToKeepStr: '365',
+                              numToKeepStr: '90'))
+])
+
+node("rhel7")
+{
+    timestamps()
+    {
+
+        try
+        {
+        }
+        catch(ex)
+        {
+        }
+
+        stage("Clean Workspace")
+        {
+            cleanWs()
+        }
+
+        /*
+        stage("Test Timeout")
+        {
+            try {
+            timeout(time: 5, unit: "SECONDS")
+            {
+                sleep 10
+            }
+            } catch(ex) {
+                println ">>> Timeout exception happened, ${ex}"
+            }
+        }
+        */
+        /*
+        stage("Test SPiFI::Shell()")
+        {
+            // sh(script: 'ls -l -t -r -a')
+            shell = new gov.sandia.sems.spifi.Shell()
+            def output = shell.execute(env: this,
+                                       command: "ls -l -t -r",
+                                       path: "foo")
+
+            println output
+            println "output.status: ${output.status}"
+            println "output.stdout:\n${output.stdout}\n"
+        }
+        */
+
+        stage("Test ParallelJobLauncher")
+        {
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+            // def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+
+            println ">>> -------------------------"
+            def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "foobar")
+            println ">>> retry                   = ${retry}\n" +
+                    ">>> retry                   = ${retry.Stringify()}\n" +
+                    ">>> retry.retry_delay       = ${retry.retry_delay}\n" +
+                    ">>> retry.retry_delay_units = ${retry.retry_delay_units}\n" +
+                    ">>> retry.retry_regex       = ${retry.retry_regex}"
+
+
+            launcher.appendJob(label: "T-1",
+                               job_name: "SPiFI_test_selectable_status",
+                               timeout: 90,
+                               timeout_unit: "SECONDS",
+                               parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                             (string(name:"SLEEP_TIME",  value: "3"))
+                                           ],
+                               dry_run: false,
+                               retry_max: 5,
+                               retry_conditions: [
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "ssh error"),
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "proxy error")
+                                                 ]
+                              )
+
+            launcher.printJobList()
+
+            def results = launcher.launchInParallel()
+
+            println ">>> Results:\n${results}"
+
+            def summary = launcher.getLastResultSummary()
+
+            def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+            def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+            println ">>> summary table:\n${output}"
+        }
+
+
+
+        // TODO: Decide if the 'test' should be a single big pipeline job that
+        //       exercises the capabilities of SPiFI or if it's just a pipeline job
+        //       that launches sub-jobs which test smaller things...
+
+    }
+}
+
+
+
