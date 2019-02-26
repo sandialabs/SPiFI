@@ -68,10 +68,12 @@ class ParallelJobLauncher
         String  expected_duration_units = "SECONDS"
 
         // Job Retry Parameters.
-        Integer max_retries        = 99                 // Set a maximum # of allowable retries so things don't get too crazy.
-        Integer num_retries        = 0                  // Number of retries is for the job, regardless of the mix of 'matches'
-                                                        //  on retry-criteria.  Note: num_attempts == num_retries+1
-        List    retry_control_list = null               // Parameters for retries. delay, delay_units, regex
+        Integer retry_lines_to_check = 200            // # of lines to pull from console log to check.
+        Integer retry_max_limit  = 99                 // Set a maximum # of allowable retries so things don't get too crazy.
+        Integer retry_max_count  = 0                  // Number of retries is for the job, regardless of the mix of 'matches'
+                                                      //  on retry-criteria.  Note: num_attempts == num_retries+1
+        List    retry_conditions = null               // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
+                                                      // - data members are:  retry_delay, retry_delay_units, retry_regex
     }
 
 
@@ -170,9 +172,17 @@ class ParallelJobLauncher
      * @param expected_duration_units [OPTIONAL] String  - Units of the expected time bounds.  Can be HOURS, MINUTES, or SECONDS.
      *                                                     Default: "SECONDS"
      *
-     * @param retry_parameters        [OPTIONAL] List    - If provided, this is a List of Map objects that define conditions where
-     *                                                     this job should be retried. If the job is retried, only the LAST attempt
-     *                                                     will report results.
+     * @param retry_max_count         [OPTIONAL] Integer - Maximum number of retries to attempt. Default: 0
+     *
+     * @param retry_lines_to_check    [OPTIONAL] Integer - If retry_conditions are provided, this is the # of lines from the end of
+     *                                                     the console used to scan for the presence of the retry condition.
+     *                                                     If this is 0 then it overrides retry checking.
+     *                                                     Default: 200
+     *
+     * @param retry_conditions        [OPTIONAL] List    - If provided, this is a List of retry conditions that if met, will trigger
+     *                                                     a re-run of the job. Currently this must be a list of DelayedRetryOnRegex
+     *                                                     objects.
+     *                                                     Only the FINAL attempt's results will be reported.
      *
      * @return nothing
      */
@@ -180,12 +190,16 @@ class ParallelJobLauncher
     {
         def utility = new gov.sandia.sems.spifi.Utility()
 
-        this._env.println "[SPiFI] DEBUGGING> params:\n" + params                                       // SCAFFOLDING
-        params.retry_conditions.each                                                                    // SCAFFOLDING
-        { rci->                                                                                         // SCAFFOLDING
-            this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.Stringify()}"           // SCAFFOLDING
-        }                                                                                               // SCAFFOLDING
+        this._env.println "[SPiFI] DEBUGGING> params:\n" + params                                                         // SCAFFOLDING
+        params.retry_conditions.each                                                                                      // SCAFFOLDING
+        { rci->                                                                                                           // SCAFFOLDING
+            this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.stringify()}"                             // SCAFFOLDING
+            this._env.println "[SPiFI] DEBUGGING> params.retry_condition:\n" +
+                              "[SPiFI] DEBUGGING>    retry_delay       = ${rci.retry_delay}\n" +
+                              "[SPiFI] DEBUGGING>    retry_delay_units = \"${rci.retry_delay_units}\"\n" +
+                              "[SPiFI] DEBUGGING>    retry_regex       = \"${rci.retry_regex}\"\n"
 
+        }                                                                                                                 // SCAFFOLDING
 
         // Check for required parameters
         if(!params.containsKey("label"))
@@ -212,9 +226,35 @@ class ParallelJobLauncher
         if(params.containsKey("dry_run_delay"))   { job.dry_run_delay   = params.dry_run_delay   }
         if(params.containsKey("monitor_node"))    { job.monitor_node    = params.monitor_node    }
 
+        // Process expected duration parameters
         if(params.containsKey("expected_duration_min"))   { job.expected_duration_min   = params.expected_duration_min   }
         if(params.containsKey("expected_duration_max"))   { job.expected_duration_max   = params.expected_duration_max   }
         if(params.containsKey("expected_duration_units")) { job.expected_duration_units = params.expected_duration_units }
+
+        // Process optional retry-conditions parameter(s)
+        if(params.containsKey("retry_lines_to_check"))
+        {
+            if(params.retry_lines_to_check < 0) { job.retry_lines_to_check = 0 }
+            else { job.retry_lines_to_check = params.retry_lines_to_check }
+        }
+        if(params.containsKey("retry_max_count"))                                                                                   // SCAFFOLDING
+        {
+            if(params.retry_max_count < 0)                        { job.retry_max_count = 0 }
+            else if(params.retry_max_count > job.retry_max_limit) { job.retry_max_count = job.retry_max_limit }
+            else                                                  { job.retry_max_count = params.retry_max_count }
+        }
+        if(params.containsKey("retry_conditions"))                                                                                  // SCAFFOLDING
+        {
+            // Validate the parameters
+            params.retry_conditions.each
+            { rci ->
+                assert rci instanceof gov.sandia.sems.spifi.DelayedRetryOnRegex
+            }
+            // Got here, so the retry_conditions parameter list is ok.
+            job.retry_conditions = params.retry_conditions
+        }
+
+
 
         // Validate parameter value(s)
         if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
@@ -229,6 +269,8 @@ class ParallelJobLauncher
         {
             throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob expected_duration_min >= expected_duration_max")
         }
+        // Note: don't need to check job.retry_conditions[i].retry_delay_units because this is checked by the DelayedRetry c'tor
+
 
         // normalize expected duration bounds to seconds.
         job.expected_duration_min   = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
@@ -249,7 +291,11 @@ class ParallelJobLauncher
                                      monitor_node:     job.monitor_node,
                                      expected_duration_min:   job.expected_duration_min,
                                      expected_duration_max:   job.expected_duration_max,
-                                     expected_duration_units: job.expected_duration_units
+                                     expected_duration_units: job.expected_duration_units,
+                                     retry_lines_to_check:    job.retry_lines_to_check,                                             // SCAFFOLDING
+                                     retry_max_limit:         job.retry_max_limit,                                                  // SCAFFOLDING
+                                     retry_max_count:         job.retry_max_count,                                                  // SCAFFOLDING
+                                     retry_conditions:        job.retry_conditions                                                  // SCAFFOLDING
                                    ]
     }
 
@@ -370,6 +416,17 @@ class ParallelJobLauncher
             {
                 strJobs += "[SPiFI]>               " + param + "\n"
             }
+            if(job.value.retry_conditions != null)                                                                                  // SCAFFOLDING
+            {
+                strJobs += "[SPiFI]>   - retry_lines_to_check    : ${job.value.retry_lines_to_check}\n"
+                strJobs += "[SPiFI]>   - retry_max_limit         : ${job.value.retry_max_limit}\n"
+                strJobs += "[SPiFI]>   - retry_max_count         : ${job.value.retry_max_count}\n"
+                strJobs += "[SPiFI]>   - retry_conditions        : \n"
+                for(cond in job.value.retry_conditions)
+                {
+                    strJobs += "[SPiFI]>               ${cond.stringify()}\n"                                                      // SCAFFOLDING
+                }
+            }
         }
         // Strip off trailing newline...
         strJobs = strJobs.replaceAll("\\s\$","")
@@ -417,10 +474,13 @@ class ParallelJobLauncher
                 }
             else
                 {
+                    //
+                    // Launch the job here
+                    //
                     // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
                     //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
                     //
-                    def status = this._env.build job        : job.value.jenkins_job_name,
+                    def status = this._env.build job       : job.value.jenkins_job_name,
                                                 parameters : job.value.parameters,
                                                 quietPeriod: job.value.quiet_period,
                                                 propagate  : job.value.propagate_error
@@ -437,11 +497,23 @@ class ParallelJobLauncher
                             (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
                         {
                             this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
-                                             "SPiFI>          Setting status to UNSTABLE"
+                                              "SPiFI>          Setting status to UNSTABLE"
 
                             jobStatus = "UNSTABLE"
                         }
                     }
+
+                    this._env.println "[EXPERIMENTAL]>"
+                    this._env.println "[EXPERIMENTAL]>"
+                    this._env.println "[EXPERIMENTAL]> Conditions tester result(s):"
+                    job.value.retry_conditions.each
+                    { rci ->
+                        Boolean rci_value = rci.testForRetryCondition( status )
+                        this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"
+                    }
+
+                    this._env.println "[EXPERIMENTAL]>"
+                    this._env.println "[EXPERIMENTAL]>"
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus
@@ -454,7 +526,7 @@ class ParallelJobLauncher
                     //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
                     // getLog() returns a string containing the log.
                     // getLog( int maxLines ) returns a List<String> object.
-                    //this._env.println "SPiFI> status isa ${status.getClass().getName()}"
+                    this._env.println "SPiFI> status isa ${status.getClass().getName()}"
                     //this._env.println "SPiFI> status.getRawBuild isa ${status.getRawBuild().getClass().getName()}"
                     //this._env.println "SPiFI> status.getRawBuild.getLog():\n////${status.getRawBuild().getLog()}\n////"
                     //this._env.println "SPiFI> status.getRawBuild.getLog(10):\n////${status.getRawBuild().getLog(10)}\n////"

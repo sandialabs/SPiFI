@@ -10,9 +10,9 @@
  */
 package gov.sandia.sems.spifi
 
+import gov.sandia.sems.spifi.interfaces.Printable
 
-
-class DelayedRetry
+abstract class DelayedRetry
 {
     // Class members
     public Integer retry_delay = 90
@@ -33,16 +33,19 @@ class DelayedRetry
         // Handle optional parameters
         if(params.containsKey("retry_delay"))
         {
+            assert params.retry_delay instanceof Integer
             this.retry_delay = params.retry_delay
         }
         if(params.containsKey("retry_delay_units"))
         {
+            assert params.retry_delay_units instanceof String
+            assert params.retry_delay_units in ["HOURS", "MINUTES", "SECONDS"]
             this.retry_delay_units = params.retry_delay_units
         }
     }
 
     // Helpers/Utility
-    String Stringify() { return "retry_delay: ${this.retry_delay}, retry_delay_units: ${this.retry_delay_units}" }
+    String stringify() { return "retry_delay: ${this.retry_delay}, retry_delay_units: \"${this.retry_delay_units}\"" }
 
 }   // class DelayedRetry
 
