@@ -10,7 +10,7 @@
  */
 package gov.sandia.sems.spifi
 
-import gov.sandia.sems.spifi.interfaces.Printable
+import gov.sandia.sems.spifi.interfaces.Printable as Printable
 
 abstract class DelayedRetry
 {
@@ -45,7 +45,7 @@ abstract class DelayedRetry
     }
 
     // Helpers/Utility
-    String stringify() { return "retry_delay: ${this.retry_delay}, retry_delay_units: \"${this.retry_delay_units}\"" }
+    String getDelayedRetryAsString() { return "retry_delay: ${this.retry_delay}, retry_delay_units: \"${this.retry_delay_units}\"" }
 
 }   // class DelayedRetry
 

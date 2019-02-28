@@ -10,15 +10,22 @@
  */
 package gov.sandia.sems.spifi
 
-import gov.sandia.sems.spifi.DelayedRetry
-import gov.sandia.sems.spifi.interfaces.JobRetry
-import gov.sandia.sems.spifi.interfaces.Printable
+// Import Java modules
+import java.util.regex.Matcher as Matcher
+
+// Import JenkinsCI modules
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper as jenkinsRunWrapper
+
+// Import SPiFI modules
+import gov.sandia.sems.spifi.DelayedRetry as DelayedRetry
+import gov.sandia.sems.spifi.interfaces.Printable as Printable
+import gov.sandia.sems.spifi.interfaces.ScanBuildLog as ScanBuildLog
 
 
 /**
  * Specialization of DelayedRetry to include a REGEX condition.
  */
-class DelayedRetryOnRegex extends DelayedRetry implements JobRetry, Printable
+class DelayedRetryOnRegex extends DelayedRetry implements ScanBuildLog, Printable
 {
     private static _env
     public String retry_regex = ""
@@ -50,23 +57,46 @@ class DelayedRetryOnRegex extends DelayedRetry implements JobRetry, Printable
     /**
      *
      */
-    Boolean testForRetryCondition( job_status )
+    Boolean scanBuildLog( Map params )
     {
-        // Validate paramter type
-        assert job_status instanceof org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
+        // Check Parameters
+        if(!params.containsKey("build_log"))
+            throw new Exception("[SPiFI]> INPUT ERROR: Missing required parameter 'build_log'")
+        else if(!params.build_log instanceof jenkinsRunWrapper )
+            throw new Exception("[SPiFI]> TYPE ERROR: Expected 'build_log' to be a: 'org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper'\n"+
+                                "[SPiFI]>             but got a:                       '${params.build_log.getClass().getName()}'")
+        def build_log = params.build_log
 
         // Local vars
         Boolean output = false
 
         // Test the job status results
-        this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() +++"
+        this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() ]------------------------------------------"
+
+        String __s = ""
+        build_log.each
+        { line ->
+            Boolean m = (line =~ /${this.retry_regex}/).getCount() > 0
+
+            __s += "[EXPERIMENTAL]>  "
+            if(m) __s += "+"
+            else  __s += "-"
+            __s += "  ${line}\n"
+        }
+        this._env.println __s
+
+
+        this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() ]------------------------------------------"
 
         return output
     }
 
 
     // Helpers/Utility
-    String stringify() { return "${super.stringify()}, retry_regex: \"${this.retry_regex}\"" }
+    String asString()
+    {
+        return "${this.getDelayedRetryAsString()}, retry_regex: \"${this.retry_regex}\""
+    }
 
 }   // class RetryDelayOnRegex
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /**
- * JobRetryInterface.groovy
+ * ScanBuildLog.groovy
  *
  * @author  William McLendon
  * @version 1.0
@@ -10,10 +10,10 @@ package gov.sandia.sems.spifi.interfaces
 
 
 
-interface JobRetry
+interface ScanBuildLog
 {
 
-    Boolean testForRetryCondition( job_status )
+    Boolean scanBuildLog( Map params )
 
-}   // interface JobRetry
+}   // interface ScanBuildLog
 

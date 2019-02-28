@@ -62,7 +62,7 @@ node("rhel7")
             println ">>> -------------------------"
             def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "foobar")
             println ">>> retry                   = ${retry}\n" +
-                    ">>> retry                   = ${retry.stringify()}\n" +
+                    ">>> retry                   = ${retry.asString()}\n" +
                     ">>> retry.retry_delay       = ${retry.retry_delay}\n" +
                     ">>> retry.retry_delay_units = ${retry.retry_delay_units}\n" +
                     ">>> retry.retry_regex       = ${retry.retry_regex}"
@@ -78,8 +78,8 @@ node("rhel7")
                                dry_run: false,
                                /* NEW */ retry_max_count: 5,
                                /* NEW */ retry_conditions: [
-                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay": 10, "retry_regex": "SUCCESS"),
-                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay_units": "MINUTES", "retry_regex": "proxy error")
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay": 10, "retry_regex": "WS-.*UP"),
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay_units": "MINUTES", "retry_regex": "EXIT_STATUS")
                                                  ]
                               )
 

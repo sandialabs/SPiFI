@@ -193,7 +193,7 @@ class ParallelJobLauncher
         this._env.println "[SPiFI] DEBUGGING> params:\n" + params                                                         // SCAFFOLDING
         params.retry_conditions.each                                                                                      // SCAFFOLDING
         { rci->                                                                                                           // SCAFFOLDING
-            this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.stringify()}"                             // SCAFFOLDING
+            this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.asString()}"                              // SCAFFOLDING
             this._env.println "[SPiFI] DEBUGGING> params.retry_condition:\n" +
                               "[SPiFI] DEBUGGING>    retry_delay       = ${rci.retry_delay}\n" +
                               "[SPiFI] DEBUGGING>    retry_delay_units = \"${rci.retry_delay_units}\"\n" +
@@ -424,7 +424,7 @@ class ParallelJobLauncher
                 strJobs += "[SPiFI]>   - retry_conditions        : \n"
                 for(cond in job.value.retry_conditions)
                 {
-                    strJobs += "[SPiFI]>               ${cond.stringify()}\n"                                                      // SCAFFOLDING
+                    strJobs += "[SPiFI]>               ${cond.asString()}\n"                                                        // SCAFFOLDING
                 }
             }
         }
@@ -466,8 +466,8 @@ class ParallelJobLauncher
                 if(job.value.dry_run)
                 {
                     this._env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
-                                     "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
-                                     "[SPiFI]> - Status: ${job.value.dry_run_status}"
+                                      "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
+                                      "[SPiFI]> - Status: ${job.value.dry_run_status}"
 
                     results[job.key]["status"] = job.value.dry_run_status
                     this._env.sleep job.value.dry_run_delay
@@ -480,10 +480,10 @@ class ParallelJobLauncher
                     // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
                     //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
                     //
-                    def status = this._env.build job       : job.value.jenkins_job_name,
-                                                parameters : job.value.parameters,
-                                                quietPeriod: job.value.quiet_period,
-                                                propagate  : job.value.propagate_error
+                    def status = this._env.build job        : job.value.jenkins_job_name,
+                                                 parameters : job.value.parameters,
+                                                 quietPeriod: job.value.quiet_period,
+                                                 propagate  : job.value.propagate_error
 
                     Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
                     String jobStatus = status.getResult()
@@ -503,17 +503,17 @@ class ParallelJobLauncher
                         }
                     }
 
-                    this._env.println "[EXPERIMENTAL]>"
+                    this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
                     this._env.println "[EXPERIMENTAL]>"
                     this._env.println "[EXPERIMENTAL]> Conditions tester result(s):"
+                    List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
                     job.value.retry_conditions.each
                     { rci ->
-                        Boolean rci_value = rci.testForRetryCondition( status )
+                        Boolean rci_value = rci.scanBuildLog( build_log: build_log )        // Scan the build log here
                         this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"
                     }
-
                     this._env.println "[EXPERIMENTAL]>"
-                    this._env.println "[EXPERIMENTAL]>"
+                    this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus
@@ -530,13 +530,13 @@ class ParallelJobLauncher
                     //this._env.println "SPiFI> status.getRawBuild isa ${status.getRawBuild().getClass().getName()}"
                     //this._env.println "SPiFI> status.getRawBuild.getLog():\n////${status.getRawBuild().getLog()}\n////"
                     //this._env.println "SPiFI> status.getRawBuild.getLog(10):\n////${status.getRawBuild().getLog(10)}\n////"
+                    /*
                     def log = status.getRawBuild().getLog(10)
                     log.each
                     {   _line ->
                         this._env.println "SPiFI> [${job.key}]: ${_line}"
                     }
-
-//                    results[job.key]["log"]      = status.getLog(100)       // EXPERIMENTAL
+                    */
                 }
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // Timeout

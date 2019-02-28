@@ -16,7 +16,7 @@ package gov.sandia.sems.spifi.interfaces
 interface Printable
 {
 
-    String stringify()
+    String asString()
 
 }   // interface Printable
 
