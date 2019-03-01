@@ -72,6 +72,7 @@ class DelayedRetryOnRegex extends DelayedRetry implements ScanBuildLog, Printabl
 
         // Test the job status results
         this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() ]------------------------------------------"
+        this._env.println "[EXPERIMENTAL]>      PATTERN = /${this.retry_regex}/"
 
         String __s = ""
         build_log.each
