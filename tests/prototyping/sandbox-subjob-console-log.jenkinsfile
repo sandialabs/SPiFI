@@ -72,7 +72,7 @@ node("rhel7")
                                job_name: "SPiFI_test_selectable_status",
                                timeout: 90,
                                timeout_unit: "SECONDS",
-                               parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                               parameters: [ (string(name:"EXIT_STATUS", value: "FAILURE")),
                                              (string(name:"SLEEP_TIME",  value: "3"))
                                            ],
                                dry_run: false,

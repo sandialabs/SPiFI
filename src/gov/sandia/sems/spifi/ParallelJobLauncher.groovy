@@ -506,12 +506,34 @@ class ParallelJobLauncher
                     this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
                     this._env.println "[EXPERIMENTAL]>"
                     this._env.println "[EXPERIMENTAL]> Conditions tester result(s):"
+
+                    // Get the console log from the sub-job as a List of Strings.
                     List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
-                    job.value.retry_conditions.each
+
+                    // Scan each 'condition' for a match
+                    Boolean retry_condition_found = job.value.retry_conditions.find
                     { rci ->
-                        Boolean rci_value = rci.scanBuildLog( build_log: build_log )        // Scan the build log here
-                        this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"
+                        if( rci.scanBuildLog( build_log: build_log) )
+                        {
+                            return true
+                        }
+                        return false
                     }
+                    retry_condition_found = retry_condition_found == true   // force value to be true || false
+
+                    this._env.println "[EXPERIMENTAL]>\n" +
+                                      "[EXPERIMENTAL]> retry_condition_found = ${retry_condition_found}\n" +
+                                      "[EXPERIMENTAL]>"
+
+                    // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
+                    //       engage the RETRY logic.
+
+//                    Boolean rci_value = false                                                                                     // SCAFFOLDING
+//                    job.value.retry_conditions.each                                                                               // SCAFFOLDING
+//                    { rci ->                                                                                                      // SCAFFOLDING
+//                        rci_value = rci.scanBuildLog( build_log: build_log )                // Scan the build log                 // SCAFFOLDING
+//                        this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"                                              // SCAFFOLDING
+//                    }                                                                                                             // SCAFFOLDING
                     this._env.println "[EXPERIMENTAL]>"
                     this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
 
@@ -544,17 +566,17 @@ class ParallelJobLauncher
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
             this._env.println "SPiFI> --------------------------------------------------------\n" +
-                             "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
-                             "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
-                             "SPiFI> Exception:\n${e}\n" +
-                             "SPiFI> --------------------------------------------------------"
+                              "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
+                              "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
+                              "SPiFI> Exception:\n${e}\n" +
+                              "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
         catch(e)
         {
             this._env.println "SPiFI> --------------------------------------------------------\n" +
-                             "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
-                             "SPiFI> --------------------------------------------------------"
+                              "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
+                              "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
 
