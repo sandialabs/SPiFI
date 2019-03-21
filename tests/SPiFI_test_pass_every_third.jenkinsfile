@@ -1,0 +1,142 @@
+#!/usr/bin/env groovy
+
+/**
+ * SPiFI_test_pass_every_third.jenkinsfile
+ *
+ * This jenkinsfile defines a pipeline job that is used for testing
+ * and debugging other pipelines.
+ *
+ * This job is designed to exit with a SUCCESS status every third time
+ * it's run and FAILURE otherwise.
+ *
+ */
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                              daysToKeepStr: '90',       numToKeepStr: '90')),
+    parameters([
+        string(defaultValue: 'RHEL7 || RHEL6 || master',
+               description: "Node restriction, default: 'RHEL7 || RHEL6 || master'",
+               name: 'NODE_RESTRICTION'),
+        string(defaultValue: '3',
+               description: "Set the length of the [FAILURE, ..., FAILURE, SUCCESS] sequence",
+               name: 'PARAM_THRESHOLD')
+    ])
+])
+
+
+
+String node_restriction = "RHEL7 || RHEL6 || master"
+
+Integer threshold = 3
+
+if(params.containsKey("NODE_RESTRICTION"))
+{
+  node_restriction = params.NODE_RESTRICTION
+}
+if(params.containsKey("PARAM_THRESHOLD"))
+{
+    try 
+    {
+        threshold = params.PARAM_THRESHOLD.toInteger()
+    }
+    catch(Exception e)
+    {
+        println "Error converting PARAM_THRESHOLD to Integer. Use default: ${threshold}"
+    }
+}
+
+
+
+node(node_restriction)
+{
+    timestamps()
+    {
+
+
+    stage('Load Artifact')
+    {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Load Artifact\n" +
+                "\u27A4"
+
+        copyArtifacts filter: 'counter.txt', 
+                      fingerprintArtifacts: true, 
+                      optional: true, 
+                      projectName: 'SPiFI_test_pass_every_third', 
+                      selector: lastCompleted()
+    }
+
+
+    stage('Evaluate')
+    {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Evaluate\n" +
+                "\u27A4"
+
+        String exitStatus = "FAILURE"
+
+        if( ! fileExists('counter.txt') )
+        {
+            println ">>> counter.txt exists   : NO\n" +
+                    ">>> counter value        : 1"
+
+            writeFile file: 'counter.txt', text: '1'
+        }
+        else
+        {
+            println ">>> counter.txt exists   : YES" 
+            def text = readFile "counter.txt"
+            Integer counter = 1
+            try
+            {
+                counter = text.toInteger()
+            } catch(Exception e) {
+                counter = 0
+            }
+            counter++
+            println ">>> counter value        : ${counter}"
+            
+            sh(script: 'rm counter.txt', returnStatus: true)
+            writeFile file: 'counter.txt', text: "${counter}"
+
+            if(counter >= threshold)
+            {
+                println ">>> counter >= threshold : YES"
+                sh(script: 'rm counter.txt', returnStatus: true)
+                exitStatus = "SUCCESS"
+            }
+
+        }
+
+        currentBuild.result=exitStatus
+        println ">>> set exit status      : ${exitStatus}"
+        //println ">>> EXIT_STATUS          : ${params.EXIT_STATUS}"
+
+    } // stage execute
+
+
+    stage('Save Artifact')
+    {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Save Artifact\n" +
+                "\u27A4"
+
+        archiveArtifacts allowEmptyArchive: true, 
+                         artifacts: 'counter.txt'
+    } // stage Save Artifact
+
+
+    stage('Clean Workspace')
+    {
+        println "\u27A4\n" +
+                "\u27A4 Stage: Clean Workspace\n" +
+                "\u27A4"
+
+        cleanWs()
+    } // stage Clean Workspace
+
+
+    } // timestamps
+
+}  // node
+

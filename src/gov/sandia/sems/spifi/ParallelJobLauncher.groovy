@@ -503,39 +503,43 @@ class ParallelJobLauncher
                         }
                     }
 
-                    this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
-                    this._env.println "[EXPERIMENTAL]>"
-                    this._env.println "[EXPERIMENTAL]> Conditions tester result(s):"
+                    // If the job didn't succeed, we should check status for a retry.                                               // SCAFFOLDING
+                    else if(jobStatus != "SUCCESS")                                                                                 // SCAFFOLDING
+                    {
+                        this._env.println "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
+                                          "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
+                                          "[EXPERIMENTAL]> Conditions tester result(s):"                                            // SCAFFOLDING
 
-                    // Get the console log from the sub-job as a List of Strings.
-                    List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
+                        // Get the console log from the sub-job as a List of Strings.
+                        List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
 
-                    // Scan each 'condition' for a match
-                    Boolean retry_condition_found = job.value.retry_conditions.find
-                    { rci ->
-                        if( rci.scanBuildLog( build_log: build_log) )
-                        {
-                            return true
+                        // Scan each 'condition' for a match
+                        Boolean retry_condition_found = job.value.retry_conditions.find
+                        { rci ->
+                            if( rci.scanBuildLog( build_log: build_log) )
+                            {
+                                return true
+                            }
+                            return false
                         }
-                        return false
-                    }
-                    retry_condition_found = retry_condition_found == true   // force value to be true || false
+                        retry_condition_found = retry_condition_found == true   // force value to be true || false
 
-                    this._env.println "[EXPERIMENTAL]>\n" +
-                                      "[EXPERIMENTAL]> retry_condition_found = ${retry_condition_found}\n" +
-                                      "[EXPERIMENTAL]>"
+                        this._env.println "[EXPERIMENTAL]>\n" +
+                                          "[EXPERIMENTAL]> retry_condition_found = ${retry_condition_found}\n" +
+                                          "[EXPERIMENTAL]>"
 
-                    // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
-                    //       engage the RETRY logic.
+                        // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
+                        //       engage the RETRY logic.
 
-//                    Boolean rci_value = false                                                                                     // SCAFFOLDING
-//                    job.value.retry_conditions.each                                                                               // SCAFFOLDING
-//                    { rci ->                                                                                                      // SCAFFOLDING
-//                        rci_value = rci.scanBuildLog( build_log: build_log )                // Scan the build log                 // SCAFFOLDING
-//                        this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"                                              // SCAFFOLDING
-//                    }                                                                                                             // SCAFFOLDING
-                    this._env.println "[EXPERIMENTAL]>"
-                    this._env.println "[EXPERIMENTAL]>"                                                                             // SCAFFOLDING
+//                      Boolean rci_value = false                                                                                   // SCAFFOLDING
+//                      job.value.retry_conditions.each                                                                             // SCAFFOLDING
+//                      { rci ->                                                                                                    // SCAFFOLDING
+//                          rci_value = rci.scanBuildLog( build_log: build_log )                // Scan the build log               // SCAFFOLDING
+//                          this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"                                            // SCAFFOLDING
+//                      }                                                                                                           // SCAFFOLDING
+                        this._env.println "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
+                                          "[EXPERIMENTAL]>"                                                                         // SCAFFOLDING
+                    }                                                                                                               // SCAFFOLDING
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus
@@ -544,21 +548,21 @@ class ParallelJobLauncher
                     results[job.key]["duration"] = duration_seconds
 
 
-                    // To get the console log from the status object you need to call status.getRawBuild().getLog()
-                    //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
-                    // getLog() returns a string containing the log.
-                    // getLog( int maxLines ) returns a List<String> object.
+                    // To get the console log from the status object you need to call status.getRawBuild().getLog()                 // SCAFFOLDING
+                    //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object                        // SCAFFOLDING
+                    // getLog() returns a string containing the log.                                                                // SCAFFOLDING
+                    // getLog( int maxLines ) returns a List<String> object.                                                        // SCAFFOLDING
                     this._env.println "SPiFI> status isa ${status.getClass().getName()}"
-                    //this._env.println "SPiFI> status.getRawBuild isa ${status.getRawBuild().getClass().getName()}"
-                    //this._env.println "SPiFI> status.getRawBuild.getLog():\n////${status.getRawBuild().getLog()}\n////"
-                    //this._env.println "SPiFI> status.getRawBuild.getLog(10):\n////${status.getRawBuild().getLog(10)}\n////"
-                    /*
-                    def log = status.getRawBuild().getLog(10)
-                    log.each
-                    {   _line ->
-                        this._env.println "SPiFI> [${job.key}]: ${_line}"
-                    }
-                    */
+                    //this._env.println "SPiFI> status.getRawBuild isa ${status.getRawBuild().getClass().getName()}"                // SCAFFOLDING
+                    //this._env.println "SPiFI> status.getRawBuild.getLog():\n////${status.getRawBuild().getLog()}\n////"           // SCAFFOLDING
+                    //this._env.println "SPiFI> status.getRawBuild.getLog(10):\n////${status.getRawBuild().getLog(10)}\n////"       // SCAFFOLDING
+                    /*                                                                                                              // SCAFFOLDING
+                    def log = status.getRawBuild().getLog(10)                                                                       // SCAFFOLDING
+                    log.each                                                                                                        // SCAFFOLDING
+                    {   _line ->                                                                                                    // SCAFFOLDING
+                        this._env.println "SPiFI> [${job.key}]: ${_line}"                                                           // SCAFFOLDING
+                    }                                                                                                               // SCAFFOLDING
+                    */                                                                                                              // SCAFFOLDING
                 }
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // Timeout
