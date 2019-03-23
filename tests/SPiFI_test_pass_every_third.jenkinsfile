@@ -8,6 +8,9 @@
  *
  * This job is designed to exit with a SUCCESS status every third time
  * it's run and FAILURE otherwise.
+ * The job will always run in the pattern: FAILURE, UNSTABLE, (FAILURE)*, SUCCESS
+ * depending on what the threshold value is.  Note: The minimum useful threshold
+ * setting is 3 since the first two will always be FAILURE, UNSTABLE
  *
  */
 properties([
@@ -43,6 +46,11 @@ if(params.containsKey("PARAM_THRESHOLD"))
     {
         println "Error converting PARAM_THRESHOLD to Integer. Use default: ${threshold}"
     }
+}
+
+if(threshold < 3)
+{
+    println "WARNING: Setting threshold < 3 will still result in the sequence: FAILURE, UNSTABLE, SUCCESS"
 }
 
 
@@ -99,7 +107,11 @@ node(node_restriction)
             sh(script: 'rm counter.txt', returnStatus: true)
             writeFile file: 'counter.txt', text: "${counter}"
 
-            if(counter >= threshold)
+            if(counter == 2)
+            {
+                exitStatus = "UNSTABLE"
+            }
+            else if(counter > 2 && counter >= threshold)
             {
                 println ">>> counter >= threshold : YES"
                 sh(script: 'rm counter.txt', returnStatus: true)
@@ -108,9 +120,13 @@ node(node_restriction)
 
         }
 
+        if( exitStatus != "SUCCESS" )
+        {
+            println ">>> SampleFailureMessage : TestingError_${exitStatus}"
+        }
+
         currentBuild.result=exitStatus
         println ">>> set exit status      : ${exitStatus}"
-        //println ">>> EXIT_STATUS          : ${params.EXIT_STATUS}"
 
     } // stage execute
 
