@@ -14,6 +14,7 @@
  *
  */
 properties([
+    disableConcurrentBuilds(),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
