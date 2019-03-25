@@ -472,8 +472,15 @@ class ParallelJobLauncher
                     results[job.key]["status"] = job.value.dry_run_status
                     this._env.sleep job.value.dry_run_delay
                 }
-            else
+                else
                 {
+                    // Deep copy results into a results_tmp var                                                                     // SCAFFOLDING
+                    def results_tmp = results.getClass().newInstance(results)                                                       // SCAFFOLDING
+
+                    this._env.println "[EXPERIMENTAL]> Number of attempts allowed = ${job.value.retry_max_limit}\n" +               // SCAFFOLDING
+                                      "[EXPERIMENTAL]> Lines of output to check   = ${job.value.retry_lines_to_check}"              // SCAFFOLDING
+
+
                     //
                     // Launch the job here
                     //
@@ -531,9 +538,14 @@ class ParallelJobLauncher
                         if(retry_condition_found)
                         {
                             msg += "[EXPERIMENTAL]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
+                            msg += "[EXPERIMENTAL]> retry delay             = ${retry_condition_matched.retry_delay}\n"
+                            msg += "[EXPERIMENTAL]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
                         }
                         msg += "[EXPERIMENTAL]>"
                         this._env.println "${msg}"
+
+                        this._env.sleep(time: retry_condition_matched.retry_delay,
+                                        unit: retry_condition_matched.retry_delay_units)
 
                         // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
                         //       engage the RETRY logic.
@@ -570,7 +582,8 @@ class ParallelJobLauncher
                         this._env.println "SPiFI> [${job.key}]: ${_line}"                                                           // SCAFFOLDING
                     }                                                                                                               // SCAFFOLDING
                     */                                                                                                              // SCAFFOLDING
-                }
+                }   // else not a dry run...
+
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // Timeout
         }      // Try

@@ -3,6 +3,7 @@
 @Library('SPiFI-DEV@experimental') _
 
 properties([
+    disableConcurrentBuilds(),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '',
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '365',
@@ -75,17 +76,17 @@ node("rhel7")
                                timeout: 90,
                                timeout_unit: "SECONDS",
                                parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
-                                             (string(name:"PARAM_THRESHOLD",  value: "4"))
+                                             (string(name:"PARAM_THRESHOLD",  value: "3"))
                                            ],
                                dry_run: false,
                                /* NEW */ retry_max_count: 5,
                                /* NEW */ retry_conditions: [
                                                     new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
-                                                                                                  "retry_delay": 10,
-                                                                                                  "retry_delay_units": "SECONDS",
+                                                                                                  "retry_delay": 1,
+                                                                                                  "retry_delay_units": "MINUTES",
                                                                                                   "retry_regex": "TestingError_UNSTABLE"),
                                                     new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
-                                                                                                  "retry_delay": 30,
+                                                                                                  "retry_delay": 10,
                                                                                                   "retry_delay_units": "SECONDS",
                                                                                                   "retry_regex": "TestingError_FAILURE")
                                                  ]
