@@ -59,15 +59,16 @@ node("rhel7")
             def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
             // def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
 
-            /*
+
             println ">>> -------------------------"
-            def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "foobar")
+            def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "My Retry Condition")
             println ">>> retry                   = ${retry}\n" +
                     ">>> retry                   = ${retry.asString()}\n" +
                     ">>> retry.retry_delay       = ${retry.retry_delay}\n" +
                     ">>> retry.retry_delay_units = ${retry.retry_delay_units}\n" +
                     ">>> retry.retry_regex       = ${retry.retry_regex}"
-            */
+            println ">>> -------------------------"
+
 
             launcher.appendJob(label: "T-1",
                                job_name: "SPiFI_test_pass_every_third",

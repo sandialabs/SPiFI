@@ -514,19 +514,26 @@ class ParallelJobLauncher
                         List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
 
                         // Scan each 'condition' for a match
-                        Boolean retry_condition_found = job.value.retry_conditions.find
+                        def     retry_condition_matched = null
+                        Boolean retry_condition_found   = job.value.retry_conditions.find
                         { rci ->
                             if( rci.scanBuildLog( build_log: build_log) )
                             {
+                                retry_condition_matched = rci
                                 return true
                             }
                             return false
                         }
                         retry_condition_found = retry_condition_found == true   // force value to be true || false
 
-                        this._env.println "[EXPERIMENTAL]>\n" +
-                                          "[EXPERIMENTAL]> retry_condition_found = ${retry_condition_found}\n" +
-                                          "[EXPERIMENTAL]>"
+                        String msg = "[EXPERIMENTAL]>\n" +
+                                     "[EXPERIMENTAL]> retry_condition_found   = ${retry_condition_found}\n"
+                        if(retry_condition_found)
+                        {
+                            msg += "[EXPERIMENTAL]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
+                        }
+                        msg += "[EXPERIMENTAL]>"
+                        this._env.println "${msg}"
 
                         // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
                         //       engage the RETRY logic.
