@@ -54,11 +54,12 @@ node("rhel7")
         }
         */
 
-        stage("Test ParallelJobLauncher")
+        stage("Retry-Test-1")
         {
             def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
             // def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
 
+            /*
             println ">>> -------------------------"
             def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "foobar")
             println ">>> retry                   = ${retry}\n" +
@@ -66,20 +67,26 @@ node("rhel7")
                     ">>> retry.retry_delay       = ${retry.retry_delay}\n" +
                     ">>> retry.retry_delay_units = ${retry.retry_delay_units}\n" +
                     ">>> retry.retry_regex       = ${retry.retry_regex}"
-
+            */
 
             launcher.appendJob(label: "T-1",
-                               job_name: "SPiFI_test_selectable_status",
+                               job_name: "SPiFI_test_pass_every_third",
                                timeout: 90,
                                timeout_unit: "SECONDS",
-                               parameters: [ (string(name:"EXIT_STATUS", value: "FAILURE")),
-                                             (string(name:"SLEEP_TIME",  value: "3"))
+                               parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                             (string(name:"PARAM_THRESHOLD",  value: "4"))
                                            ],
                                dry_run: false,
                                /* NEW */ retry_max_count: 5,
                                /* NEW */ retry_conditions: [
-                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay": 10, "retry_regex": "WS-.*UP"),
-                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_delay_units": "MINUTES", "retry_regex": "EXIT_STATUS")
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 10,
+                                                                                                  "retry_delay_units": "SECONDS",
+                                                                                                  "retry_regex": "TestingError_UNSTABLE"),
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 30,
+                                                                                                  "retry_delay_units": "SECONDS",
+                                                                                                  "retry_regex": "TestingError_FAILURE")
                                                  ]
                               )
 
