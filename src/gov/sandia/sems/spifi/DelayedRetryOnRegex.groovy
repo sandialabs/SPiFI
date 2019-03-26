@@ -68,26 +68,14 @@ class DelayedRetryOnRegex extends DelayedRetry implements ScanBuildLog, Printabl
             throw new Exception("[SPiFI]> INPUT ERROR: Missing required parameter 'build_log'")
         if( !params.build_log instanceof List<String> )
             throw new Exception("[SPiFI]> TYPE ERROR: Expected 'build_log' to be a List<String>.")
-        //else if(!params.build_log instanceof jenkinsRunWrapper )
-        //    throw new Exception("[SPiFI]> TYPE ERROR: Expected 'build_log' to be a: 'org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper'\n"+
-        //                        "[SPiFI]>             but got a:                       '${params.build_log.getClass().getName()}'")
+
         List<String> build_log = params.build_log
-
-//        // Local vars
-//        Boolean output = false
-
-        // Test the job status results
-//        this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() ]------------------------------------------"// SCAFFOLDING
-//        this._env.println "[EXPERIMENTAL]>      PATTERN = /${this.retry_regex}/"                                                    // SCAFFOLDING
 
         Boolean output = build_log.find
         { line ->
-//            this._env.println "[EXPERIMENTAL]> - ${line}"                                                                         // SCAFFOLDING
-
             // Check the line for matches to the regex
             if( (line =~ /${this.retry_regex}/).getCount() > 0 )
             {
-//              this._env.println "[EXPERIMENTAL]>   FOUND!"                                                                        // SCAFFOLDING
                 // Break the 'find' search if found
                 return true
             }
@@ -96,22 +84,6 @@ class DelayedRetryOnRegex extends DelayedRetry implements ScanBuildLog, Printabl
         }
         // output will be null if not true, so force it to true
         output = output == true
-
-        /* Closure using each
-        build_log.each
-        { line ->
-            // Check the line for matches to the regex
-            output = (line =~ /${this.retry_regex}/).getCount() > 0
-
-            __s += "[EXPERIMENTAL]>  "                                                                                              // SCAFFOLDING
-            if(output) __s += "+"                                                                                                   // SCAFFOLDING
-            else  __s += "-"                                                                                                        // SCAFFOLDING
-            __s += "  ${line}\n"                                                                                                    // SCAFFOLDING
-        }
-        */
-//        this._env.println __s                                                                                                     // SCAFFOLDING
-//        this._env.println "[EXPERIMENTAL]> output = ${output}"                                                                      // SCAFFOLDING
-//        this._env.println "[EXPERIMENTAL]> DelayedRetryOnRegex::testForRetryCondition() ]------------------------------------------"// SCAFFOLDING
 
         return output
     }

@@ -35,6 +35,10 @@ abstract class DelayedRetry
         {
             assert params.retry_delay instanceof Integer
             this.retry_delay = params.retry_delay
+            if(this.retry_delay < 0)
+            {
+                this.retry_delay = 0
+            }
         }
         if(params.containsKey("retry_delay_units"))
         {
