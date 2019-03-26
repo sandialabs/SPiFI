@@ -20,7 +20,7 @@ package gov.sandia.sems.spifi;
  */
 static def version()
 {
-    String spifi_version = "master"
+    String spifi_version = "v1.1.4"
     return spifi_version
 }
 

@@ -41,7 +41,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
-String branchName = "master"
+String branchName = "v1.1.4"
 
 
 // Load node restriction(s) from parameters
@@ -174,11 +174,11 @@ node(node_restriction)
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 //@Library('SPiFI') _     // Note: this must be const string, can't parameterize :/
-                @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@v1.1.4') _     // Note: this must be const string, can't parameterize :/
                 // @Library('SPiFI') _             // Default version for production
 
                 email_body += "<ol>\n"
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@master)</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@v1.1.4)</li>\n"
 
                 // Update branchName with spifi.Info.version() if possible
                 try
@@ -198,7 +198,7 @@ node(node_restriction)
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@master)</li></ol>\n"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@v1.1.4)</li></ol>\n"
                 stage_passed = false
             }
 
@@ -770,7 +770,7 @@ node(node_restriction)
                                    job_name: "SPiFI_test_pass_every_third",
                                    timeout: 6,
                                    timeout_unit: "MINUTES",
-                                   parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
                                                  (string(name:"PARAM_THRESHOLD",  value: "3"))
                                                ],
                                    dry_run: false,
@@ -848,7 +848,7 @@ node(node_restriction)
                                    job_name: "SPiFI_test_pass_every_third",
                                    timeout: 6,
                                    timeout_unit: "MINUTES",
-                                   parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
                                                  (string(name:"PARAM_THRESHOLD",  value: "5"))
                                                ],
                                    dry_run: false,
@@ -1212,7 +1212,6 @@ node(node_restriction)
                             userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052', 
                                                 url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
                         ])
-
 
                 def output = shell.execute(env: this,
                                            command: "SPiFI/tests/snlgitlab-clone-test.sh ${repository_url}",
