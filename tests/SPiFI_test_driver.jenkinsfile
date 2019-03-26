@@ -1138,27 +1138,33 @@ node(node_restriction)
                 // Delete the SPiFI directory if it's already there.
                 String stdout = sh(script: "rm -rf SPiFI", returnStdout: true)
 
-                git_spifi.clone(env: this,
-                                dir: "SPiFI",
-                                branch: branchName,
-                                url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
-                                credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
-                                retries: 2,
-                                retry_delay: 10,
-                                timeout: 90,
-                                timeout_units: "SECONDS",
-                                verbose: true
-                               )
+                stage_passed git_spifi.clone(env: this,
+                                             dir: "SPiFI",
+                                             branch: branchName,
+                                             url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
+                                             credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                             retries: 2,
+                                             retry_delay: 10,
+                                             timeout: 90,
+                                             timeout_units: "SECONDS",
+                                             verbose: true
+                                            )
+
+                if(!stage_passed)
+                {
+                    num_failures++
+                    currentBuild.result='FAILURE'
+                    email_body += "<li>FAILED: Git.clone() clone a copy of SPiFI</li>\n"
+                }
 
                 stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
-                email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
+                email_body += "<li>PASSED: Git.clone() clone a copy of SPiFI</li>\n"
             }
             catch(e)
             {
                 email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
                 println "ERROR: Git.clone() threw an exception:\n${e}"
-                stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
