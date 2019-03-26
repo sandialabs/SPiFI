@@ -34,7 +34,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
-String branchName = "experimental"
+String branchName = "master"
 
 
 // Load node restriction(s) from parameters
@@ -162,7 +162,7 @@ node(node_restriction)
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
                 //@Library('SPiFI') _     // Note: this must be const string, can't parameterize :/
-                @Library('SPiFI-DEV@experimental') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol>\n"
                 email_body += "  <li>PASSED: Load SPiFI Library (SPiFI)</li>\n"
