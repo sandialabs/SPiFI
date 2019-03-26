@@ -487,7 +487,7 @@ class ParallelJobLauncher
                     Integer   attempt_number = 0
                     Boolean   attempt_failed = true
                     Exception attempt_exception = null
-                    while( attempt_failed && attempt < job.value.retry_max_count )
+                    while( attempt_failed && attempt_number < job.value.retry_max_count )
                     {
 
                         attempt_number++
@@ -579,6 +579,11 @@ class ParallelJobLauncher
                         }   // else status != SUCCESS                                                                               // SCAFFOLDING
 
                     }   // While RETRIES
+
+                    this._env.println "[EXPERIMENTAL]>\n" +
+                                      "[EXPERIMENTAL]> Job final status = ${jobStatus}\n" +
+                                      "[EXPERIMENTAL]>"
+
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus

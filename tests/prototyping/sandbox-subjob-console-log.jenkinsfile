@@ -73,10 +73,10 @@ node("rhel7")
 
             launcher.appendJob(label: "T-1",
                                job_name: "SPiFI_test_pass_every_third",
-                               timeout: 90,
-                               timeout_unit: "SECONDS",
+                               timeout: 6,
+                               timeout_unit: "MINUTES",
                                parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
-                                             (string(name:"PARAM_THRESHOLD",  value: "3"))
+                                             (string(name:"PARAM_THRESHOLD",  value: "4"))
                                            ],
                                dry_run: false,
                                /* NEW */ retry_max_count: 5,
