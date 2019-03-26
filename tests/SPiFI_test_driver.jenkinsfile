@@ -1125,7 +1125,6 @@ node(node_restriction)
             println "\u27A4\n" +
                     "\u27A4 Stage: Git\n" +
                     "\u27A4"
-            boolean stage_passed = true
 
             email_body += "<H3>Stage: Test Git</H3>\n"
             email_body += "<ol>\n"
@@ -1138,23 +1137,33 @@ node(node_restriction)
                 // Delete the SPiFI directory if it's already there.
                 String stdout = sh(script: "rm -rf SPiFI", returnStdout: true)
 
-                stage_passed git_spifi.clone(env: this,
-                                             dir: "SPiFI",
-                                             branch: branchName,
-                                             url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
-                                             credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
-                                             retries: 2,
-                                             retry_delay: 10,
-                                             timeout: 90,
-                                             timeout_units: "SECONDS",
-                                             verbose: true
-                                            )
+                Boolean passed = git_spifi.clone(env: this,
+                                                 dir: "SPiFI",
+                                                 branch: branchName,
+                                                 url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
+                                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                                 retries: 2,
+                                                 retry_delay: 10,
+                                                 timeout: 90,
+                                                 timeout_units: "SECONDS",
+                                                 verbose: true
+                                                )
 
-                if(!stage_passed)
+                if(!passed)
                 {
                     num_failures++
                     currentBuild.result='FAILURE'
                     email_body += "<li>FAILED: Git.clone() clone a copy of SPiFI</li>\n"
+
+                    // If SPiFI Git failed, try cloning it directly b/c other stages need it.
+                    checkout([$class: 'GitSCM', 
+                              branches: [[name: '*/master']], 
+                              doGenerateSubmoduleConfigurations: false, 
+                              extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'] ], 
+                              submoduleCfg: [], 
+                              userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052', 
+                                                   url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
+                            ])
                 }
 
                 stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
