@@ -61,6 +61,11 @@ The full user guide can be found at
     - `retry_regex: String` contains the regular expression we're searching for. REQUIRED
     - `retry_delay: Integer` contains the retry delay amount to use if this expression is matched. Default: 90
     - `retry_delay_units: String` contains the units of the retry delay. Allowable: [SECONDS, MINUTES, HOURS] Default: SECONDS.
+- REMOVE PLUGIN DEPENDENCY: `gov.sandia.sems.spifi.Git()` no longer uses the Git plugin, which didn't work with timeouts.
+  we now just use the Jenkins `checkout()` function that comes with Jenkins.
+  - DEPRECATION: The only deprecation notice for this change is that the timeouts are always using MINUTES so we're removing
+    the `timeout_delay_units` parameter, which doesn't really change anything since it was ignored previously anyways. Nothing
+    will break if it's added however.
 
 
 
