@@ -1,0 +1,183 @@
+#!/usr/bin/env groovy
+
+@Library('SPiFI-DEV@experimental') _
+
+properties([
+    disableConcurrentBuilds(),
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '',
+                              artifactNumToKeepStr: '',
+                              daysToKeepStr: '365',
+                              numToKeepStr: '90'))
+])
+
+node("rhel7")
+{
+    timestamps()
+    {
+
+
+
+        stage("Clean Workspace")
+        {
+            cleanWs()
+        }
+
+
+
+        stage("Test-DelayedRetryOnRegex")
+        {
+            try
+            {
+            def retry = new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this, "retry_regex": "My Retry Condition")
+            println ">>> ----------------------------------------------------\n" +
+                    ">>> retry                   = ${retry}\n" +
+                    ">>> retry                   = ${retry.asString()}\n" +
+                    ">>> retry.retry_delay       = ${retry.retry_delay}\n" +
+                    ">>> retry.retry_delay_units = ${retry.retry_delay_units}\n" +
+                    ">>> retry.retry_regex       = ${retry.retry_regex}\n" +
+                    ">>> ----------------------------------------------------"
+            }
+            catch(e)
+            {
+                println ">>> An error occurred:\n${e}"
+            }
+        }
+
+
+
+        // Run a job without checking any retry conditions == SUCCESS
+        stage("Retry: SUCCESS (no conditions)")
+        {
+            def launcher    = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+            def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+
+            launcher.appendJob(label: "T0-1",
+                               job_name: "SPiFI_test_selectable_status",
+                               parameters: [ (string(name: "SLEEP_TIME", value: "5")) ],
+                               dry_run: false
+            )
+
+            launcher.printJobList()
+            def results = launcher.launchInParallel()
+            println ">>> Results:\n${results}"
+
+            def summary = launcher.getLastResultSummary()
+            def output  = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+            println ">>> summary table:\n${output}"
+        }
+
+
+
+        // Run a job without checking any retry conditions == FAILURE
+        // - should not check any output from subjob
+        stage("Retry: FAILURE (no conditions)")
+        {
+            def launcher    = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+            def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+
+            launcher.appendJob(label: "T0-1",
+                               job_name: "SPiFI_test_selectable_status",
+                               parameters: [ (string(name: "SLEEP_TIME",  value: "5")),
+                                             (string(name: "EXIT_STATUS", value: "FAILURE"))
+                                           ],
+                               dry_run: false
+            )
+
+            launcher.printJobList()
+            def results = launcher.launchInParallel()
+            println ">>> Results:\n${results}"
+
+            def summary = launcher.getLastResultSummary()
+            def output  = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+            println ">>> summary table:\n${output}"
+        }
+
+
+
+        // Run the retry-sequence:  [FAILURE, UNSTABLE, FAILURE, SUCCESS]
+        stage("Retry: SUCCESS (2 conditions)")
+        {
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+            // def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)    // OLD style
+
+            launcher.appendJob(label: "T1-1",
+                               job_name: "SPiFI_test_pass_every_third",
+                               timeout: 6,
+                               timeout_unit: "MINUTES",
+                               parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                             (string(name:"PARAM_THRESHOLD",  value: "3"))
+                                           ],
+                               dry_run: false,
+                               /* NEW */ retry_max_count: 5,
+                               /* NEW */ retry_conditions: [
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 1,
+                                                                                                  "retry_delay_units": "MINUTES",
+                                                                                                  "retry_regex": "TestingError_UNSTABLE"),
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 10,
+                                                                                                  "retry_delay_units": "SECONDS",
+                                                                                                  "retry_regex": "TestingError_FAILURE")
+                                                 ]
+                              )
+
+            launcher.printJobList()
+
+            def results = launcher.launchInParallel()
+
+            println ">>> Results:\n${results}"
+
+            def summary = launcher.getLastResultSummary()
+
+            def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+            def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+            println ">>> summary table:\n${output}"
+        }
+
+
+        // Run the retry-sequence but run out of retries before we get a SUCCESS
+        stage("Retry: FAILURE (2 conditions)")
+        {
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+            // def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)    // OLD style
+
+            launcher.appendJob(label: "T1-1",
+                               job_name: "SPiFI_test_pass_every_third",
+                               timeout: 6,
+                               timeout_unit: "MINUTES",
+                               parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                             (string(name:"PARAM_THRESHOLD",  value: "5"))      // SUCCESS on 5th run
+                                           ],
+                               dry_run: false,
+                               /* NEW */ retry_max_count: 2,
+                               /* NEW */ retry_conditions: [
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 1,
+                                                                                                  "retry_delay_units": "MINUTES",
+                                                                                                  "retry_regex": "TestingError_UNSTABLE"),
+                                                    new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                  "retry_delay": 10,
+                                                                                                  "retry_delay_units": "SECONDS",
+                                                                                                  "retry_regex": "TestingError_FAILURE")
+                                                 ]
+                              )
+
+            launcher.printJobList()
+
+            def results = launcher.launchInParallel()
+
+            println ">>> Results:\n${results}"
+
+            def summary = launcher.getLastResultSummary()
+
+            def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+            def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+            println ">>> summary table:\n${output}"
+        }   // end stage
+
+
+    }
+}
+
+
+

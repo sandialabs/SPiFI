@@ -1,0 +1,62 @@
+#!/usr/bin/env groovy
+/**
+ * Example jenkins file showing a sample structure of how to use retry()
+ */
+
+// BEGIN JOB PARAMETERS
+// END JOB PARAMETERS
+
+Integer num_retries = 2
+
+Boolean bad_condition = true
+
+
+// timestamps {   // ASCIC-Jenkins has no timestamps module installed?
+node()
+{
+
+    stage("Test")
+    {
+
+        // This is the "right" construct for cloning with retries... I think :$
+        try
+        {
+            retry(num_retries)
+            {
+                try
+                {
+                    println "RETRY_TEST> Attempt to do task!"
+
+                    // Do something, if it throws an exception then we enter retry logic...
+                    if(bad_condition)
+                    {
+                        throw new Exception("Something went wrong!")
+                    }
+
+                } // end try()
+                catch(e)
+                {
+                    // Catch the exception but we can retry it!
+                    println "RETRY_TEST> The task failed:\n${e}\n" +
+                            "RETRY_TEST> Retrying in 10 seconds."
+
+                    // throw in a 10 second delay
+                    sleep 10
+
+                    // Pass the error up to engage the retry logic (important!)
+                    throw e
+                } // end catch()
+            } // end retry()
+        } // end try()
+        catch(e)
+        {
+            // If we run out of retries and we still failed, then we get here and should mark the whole job status as 'FAILURE'
+            println "RETRY_TEST> All retries failed!\n${e}\n"
+            currentBuild.result="FAILURE"
+            return
+        } // end catch()
+
+    } // end stage Test
+
+} // end node()
+// } // end timestamps()

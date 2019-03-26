@@ -19,6 +19,8 @@
  */
 package gov.sandia.sems.spifi
 
+import gov.sandia.sems.spifi.DelayedRetry
+import gov.sandia.sems.spifi.DelayedRetryOnRegex
 import gov.sandia.sems.spifi.Utility
 
 
@@ -64,11 +66,19 @@ class ParallelJobLauncher
         Integer expected_duration_min   = 0
         Integer expected_duration_max   = 0
         String  expected_duration_units = "SECONDS"
+
+        // Job Retry Parameters.
+        Integer retry_lines_to_check = 200            // # of lines to pull from console log to check.
+        Integer retry_max_limit  = 99                 // Set a maximum # of allowable retries so things don't get too crazy.
+        Integer retry_max_count  = 0                  // Number of retries is for the job, regardless of the mix of 'matches'
+                                                      //  on retry-criteria.  Note: num_attempts == num_retries+1
+        List    retry_conditions = null               // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
+                                                      // - data members are:  retry_delay, retry_delay_units, retry_regex
     }
 
 
     // Member Variables
-    private static env
+    private static _env
     private Map<String,String> _jobList                   // The jobs + their parameters
     private Map<String,String> _lastResultSummary         // Status on the latest results
 
@@ -79,10 +89,30 @@ class ParallelJobLauncher
      * @param env [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
      *
      */
+    ParallelJobLauncher(Map params)
+    {
+        // Validate parameters
+        if(!params.containsKey("env"))
+        {
+            throw new Exception("[SPiFI]> Missing required parameter: 'env'")
+        }
+
+        // Set Parameter Default(s)
+        this._env = params.env
+        this._jobList = [:]
+        this._lastResultSummary = [:]
+    }
+
+    @Deprecated
     ParallelJobLauncher(env)
     {
+        this.println "[SPiFI]>\n" +
+                     "[SPiFI]> DEPRECATION NOTICE: ParallelJobLauncher(this) will be deprecated in 2.0.0\n" +
+                     "[SPiFI]> DEPRECATION NOTICE: -  Please use ParallelJobLauncher(\"env\": this)\n" +
+                     "[SPiFI]>"
+
         // Set Parameter Default(s)
-        this.env = env
+        this._env = env
         this._jobList = [:]
         this._lastResultSummary = [:]
     }
@@ -142,11 +172,34 @@ class ParallelJobLauncher
      * @param expected_duration_units [OPTIONAL] String  - Units of the expected time bounds.  Can be HOURS, MINUTES, or SECONDS.
      *                                                     Default: "SECONDS"
      *
+     * @param retry_max_count         [OPTIONAL] Integer - Maximum number of retries to attempt. Default: 0
+     *
+     * @param retry_lines_to_check    [OPTIONAL] Integer - If retry_conditions are provided, this is the # of lines from the end of
+     *                                                     the console used to scan for the presence of the retry condition.
+     *                                                     If this is 0 then it overrides retry checking.
+     *                                                     Default: 200
+     *
+     * @param retry_conditions        [OPTIONAL] List    - If provided, this is a List of retry conditions that if met, will trigger
+     *                                                     a re-run of the job. Currently this must be a list of DelayedRetryOnRegex
+     *                                                     objects.
+     *                                                     Only the FINAL attempt's results will be reported.
+     *
      * @return nothing
      */
     def appendJob(Map params)
     {
         def utility = new gov.sandia.sems.spifi.Utility()
+
+        // Optional Debugging messages
+        //this._env.println "[SPiFI] DEBUGGING> params:\n" + params
+        //params.retry_conditions.each
+        //{ rci->
+        //    this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.asString()}"
+        //    this._env.println "[SPiFI] DEBUGGING> params.retry_condition:\n" +
+        //                      "[SPiFI] DEBUGGING>    retry_delay       = ${rci.retry_delay}\n" +
+        //                      "[SPiFI] DEBUGGING>    retry_delay_units = \"${rci.retry_delay_units}\"\n" +
+        //                      "[SPiFI] DEBUGGING>    retry_regex       = \"${rci.retry_regex}\"\n"
+        //}
 
         // Check for required parameters
         if(!params.containsKey("label"))
@@ -173,9 +226,35 @@ class ParallelJobLauncher
         if(params.containsKey("dry_run_delay"))   { job.dry_run_delay   = params.dry_run_delay   }
         if(params.containsKey("monitor_node"))    { job.monitor_node    = params.monitor_node    }
 
+        // Process expected duration parameters
         if(params.containsKey("expected_duration_min"))   { job.expected_duration_min   = params.expected_duration_min   }
         if(params.containsKey("expected_duration_max"))   { job.expected_duration_max   = params.expected_duration_max   }
         if(params.containsKey("expected_duration_units")) { job.expected_duration_units = params.expected_duration_units }
+
+        // Process optional retry-conditions parameter(s)
+        if(params.containsKey("retry_lines_to_check"))
+        {
+            if(params.retry_lines_to_check < 0) { job.retry_lines_to_check = 0 }
+            else { job.retry_lines_to_check = params.retry_lines_to_check }
+        }
+        if(params.containsKey("retry_max_count"))
+        {
+            if(params.retry_max_count < 0)                        { job.retry_max_count = 0 }
+            else if(params.retry_max_count > job.retry_max_limit) { job.retry_max_count = job.retry_max_limit }
+            else                                                  { job.retry_max_count = params.retry_max_count }
+        }
+        if(params.containsKey("retry_conditions"))
+        {
+            // Validate the parameters
+            params.retry_conditions.each
+            { rci ->
+                assert rci instanceof gov.sandia.sems.spifi.DelayedRetryOnRegex
+            }
+            // Got here, so the retry_conditions parameter list is ok.
+            job.retry_conditions = params.retry_conditions
+        }
+
+
 
         // Validate parameter value(s)
         if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
@@ -190,13 +269,15 @@ class ParallelJobLauncher
         {
             throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob expected_duration_min >= expected_duration_max")
         }
+        // Note: don't need to check job.retry_conditions[i].retry_delay_units because this is checked by the DelayedRetry c'tor
+
 
         // normalize expected duration bounds to seconds.
         job.expected_duration_min   = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
         job.expected_duration_max   = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
         job.expected_duration_units = "SECONDS"  // set units AFTER they are normalized to seconds.
 
-        this.env.println "[SPiFI]> Append job ${job.label}"
+        this._env.println "[SPiFI]> Append job ${job.label}"
 
         this._jobList[job.label] = [ jenkins_job_name: job.job_name,
                                      parameters:       job.parameters,
@@ -210,7 +291,11 @@ class ParallelJobLauncher
                                      monitor_node:     job.monitor_node,
                                      expected_duration_min:   job.expected_duration_min,
                                      expected_duration_max:   job.expected_duration_max,
-                                     expected_duration_units: job.expected_duration_units
+                                     expected_duration_units: job.expected_duration_units,
+                                     retry_lines_to_check:    job.retry_lines_to_check,
+                                     retry_max_limit:         job.retry_max_limit,
+                                     retry_max_count:         job.retry_max_count,
+                                     retry_conditions:        job.retry_conditions
                                    ]
     }
 
@@ -266,7 +351,7 @@ class ParallelJobLauncher
         }
 
         // Launch the jobs in parallel
-        this.env.parallel builders
+        this._env.parallel builders
 
         // Update the result summary
         this._resetLastResultSummary()
@@ -275,7 +360,7 @@ class ParallelJobLauncher
             def r = _r
             this._updateLastResultSummary(r.value["status"])
 
-            this.env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
+            this._env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
         }
 
         return results
@@ -331,11 +416,22 @@ class ParallelJobLauncher
             {
                 strJobs += "[SPiFI]>               " + param + "\n"
             }
+            if(job.value.retry_conditions != null)                                                                                  // SCAFFOLDING
+            {
+                strJobs += "[SPiFI]>   - retry_lines_to_check    : ${job.value.retry_lines_to_check}\n"
+                strJobs += "[SPiFI]>   - retry_max_limit         : ${job.value.retry_max_limit}\n"
+                strJobs += "[SPiFI]>   - retry_max_count         : ${job.value.retry_max_count}\n"
+                strJobs += "[SPiFI]>   - retry_conditions        : \n"
+                for(cond in job.value.retry_conditions)
+                {
+                    strJobs += "[SPiFI]>               ${cond.asString()}\n"                                                        // SCAFFOLDING
+                }
+            }
         }
         // Strip off trailing newline...
         strJobs = strJobs.replaceAll("\\s\$","")
 
-        this.env.println "${strJobs}"
+        this._env.println "${strJobs}"
     }
 
 
@@ -363,70 +459,160 @@ class ParallelJobLauncher
         results[job.key]["duration"] = 0
 
         // Everything after this level is executed...
-        try 
+        try
         {
-            this.env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
+            this._env.timeout(time: job.value.timeout, unit: job.value.timeout_unit)
             {
                 if(job.value.dry_run)
                 {
-                    this.env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
-                                     "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
-                                     "[SPiFI]> - Status: ${job.value.dry_run_status}"
+                    this._env.println "[SPiFI]> ${job.value.jenkins_job_name} Execute in dry-run mode\n" +
+                                      "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
+                                      "[SPiFI]> - Status: ${job.value.dry_run_status}"
 
                     results[job.key]["status"] = job.value.dry_run_status
-                    this.env.sleep job.value.dry_run_delay
+                    this._env.sleep job.value.dry_run_delay
                 }
-            else
+                else
                 {
-                    // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
-                    //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
-                    //
-                    def status = this.env.build job        : job.value.jenkins_job_name,
-                                                parameters : job.value.parameters,
-                                                quietPeriod: job.value.quiet_period,
-                                                propagate  : job.value.propagate_error
+                    this._env.println "[SPiFI]> Number of attempts allowed = ${job.value.retry_max_count+1}\n" +
+                                      "[SPiFI]> Lines of output to check   = ${job.value.retry_lines_to_check}"
 
-                    Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
-                    String jobStatus = status.getResult()
-
-                    // If job was successful, check the execution time bounds.
-                    if(jobStatus=="SUCCESS")
+                    if(job.value.retry_conditions != null)
                     {
-                        // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
-                        //                        if we care about max duration and duration > max expected
-                        if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
-                            (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
-                        {
-                            this.env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
-                                             "SPiFI>          Setting status to UNSTABLE"
-
-                            jobStatus = "UNSTABLE"
-                        }
+                        this._env.println "[SPiFI]> Number of retry conditions to check: ${job.value.retry_conditions.size()}"
                     }
+                    else
+                    {
+                        this._env.println "[SPiFI]> Number of retry conditions to check: 0"
+                    }
+
+                    def       status = null
+                    String    jobStatus = ""
+                    Float     duration_seconds = 0.0
+
+                    Integer   attempt_number = 0
+                    Integer   attempt_limit  = job.value.retry_max_count + 1        // +1 because the *first* attempt isn't a retry
+                    Boolean   attempt_failed = true
+                    Exception attempt_exception = null
+                    while( attempt_failed && attempt_number < attempt_limit )
+                    {
+
+                        attempt_number++
+                        attempt_failed = false
+
+                        this._env.println "[SPiFI]> -------------------\n" +
+                                          "[SPiFI]> Attempt ${attempt_number} of ${attempt_limit}\n" +
+                                          "[SPiFI]> -------------------"
+
+                        //
+                        // Launch the job here
+                        //
+                        // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
+                        //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+                        //
+                        status = this._env.build job        : job.value.jenkins_job_name,
+                                                 parameters : job.value.parameters,
+                                                 quietPeriod: job.value.quiet_period,
+                                                 propagate  : job.value.propagate_error
+
+                        duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
+                        jobStatus        = status.getResult()
+
+                        // If job was successful, check the execution time bounds.
+                        if(jobStatus=="SUCCESS")
+                        {
+                            // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
+                            //                        if we care about max duration and duration > max expected
+                            if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
+                                (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
+                            {
+                                this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                                                  "SPiFI>          Setting status to UNSTABLE"
+
+                                jobStatus = "UNSTABLE"
+                            }
+                        }
+
+                        // If the job didn't succeed, we should check status for a retry.
+                        else if(jobStatus != "SUCCESS")
+                        {
+                            // Only scan the job results if we have retry-conditions
+                            if(job.value.retry_conditions != null)
+                            {
+                                this._env.println "[SPiFI]> Job status is not SUCCESS\n"
+
+                                // Get the console log from the sub-job as a List of Strings.
+                                List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
+
+                                // Scan each 'condition' for a match
+                                def     retry_condition_matched = null
+                                Boolean retry_condition_found   = job.value.retry_conditions.find
+                                { rci ->
+                                    if( rci.scanBuildLog( build_log: build_log) )
+                                    {
+                                        retry_condition_matched = rci
+                                        return true
+                                    }
+                                    return false
+                                }
+                                retry_condition_found = retry_condition_found == true   // force value to be true || false
+
+                                String msg = "[SPiFI]> retry_condition matched = ${retry_condition_found}\n"
+                                if(retry_condition_found)
+                                {
+                                    msg += "[SPiFI]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
+                                    msg += "[SPiFI]> retry delay             = ${retry_condition_matched.retry_delay}\n"
+                                    msg += "[SPiFI]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
+                                }
+                                this._env.println "${msg}"
+
+                                if(retry_condition_found && attempt_number < attempt_limit)
+                                {
+                                    attempt_failed = true
+
+                                    // Set the delay on a failure
+                                    this._env.sleep(time: retry_condition_matched.retry_delay,
+                                                    unit: retry_condition_matched.retry_delay_units)
+                                }
+
+                            }   // if retry_conditions != null
+                        }   // else status != SUCCESS
+                    }   // While retries on regex
+
+                    this._env.println "[SPiFI]> Final job status is ${jobStatus} after ${attempt_number} attempts."
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus
                     results[job.key]["id"]       = status.getId()
                     results[job.key]["url"]      = status.getAbsoluteUrl()
                     results[job.key]["duration"] = duration_seconds
-                }
-                this.env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
+
+
+                    // To get the console log from the status object you need to call status.getRawBuild().getLog()
+                    //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
+                    // getLog() returns a string containing the log.
+                    // getLog( int maxLines ) returns a List<String> object.
+                    // this._env.println "SPiFI> status isa ${status.getClass().getName()}"
+
+                }   // else not a dry run...
+
+                this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // Timeout
-        }      // Try 
+        }      // Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
-            this.env.println "SPiFI> --------------------------------------------------------\n" +
-                             "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
-                             "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
-                             "SPiFI> Exception:\n${e}\n" +
-                             "SPiFI> --------------------------------------------------------"
+            this._env.println "SPiFI> --------------------------------------------------------\n" +
+                              "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
+                              "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
+                              "SPiFI> Exception:\n${e}\n" +
+                              "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
         catch(e)
         {
-            this.env.println "SPiFI> --------------------------------------------------------\n" +
-                             "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
-                             "SPiFI> --------------------------------------------------------"
+            this._env.println "SPiFI> --------------------------------------------------------\n" +
+                              "SPiFI> ERROR: Unknown error occurred:\n${e}\n" +
+                              "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "FAILURE"
         }
 
@@ -444,7 +630,7 @@ class ParallelJobLauncher
     def _jobBodyWithMonitorNode(job)
     {
         def results = [:]
-        this.env.node(job.value.monitor_node)
+        this._env.node(job.value.monitor_node)
         {
             results << this._jobBody(job)
         }
