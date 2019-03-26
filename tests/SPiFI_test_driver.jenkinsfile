@@ -14,7 +14,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    pipelineTriggers([ cron('H 0 * * *') ]),
+    // pipelineTriggers([ cron('H 0 * * *') ]),
     parameters([
         booleanParam(name: 'CleanWorkspace', defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
@@ -22,7 +22,7 @@ properties([
                description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
         string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', description: ''),
+        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: ''),
     ])
 ])
 // pipeline trigger with SCM Polling (old)
@@ -34,7 +34,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
-String branchName = "v1.1.3"
+String branchName = "v1.1.4-rc1"
 
 
 // Load node restriction(s) from parameters
@@ -161,8 +161,8 @@ node(node_restriction)
                 //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
                 //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
 
-                @Library('SPiFI') _     // Note: this must be const string, can't parameterize :/
-                //@Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                //@Library('SPiFI') _     // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@v1.1.4-rc1') _     // Note: this must be const string, can't parameterize :/
 
                 email_body += "<ol>\n"
                 email_body += "  <li>PASSED: Load SPiFI Library (SPiFI)</li>\n"
@@ -565,7 +565,7 @@ node(node_restriction)
 
             def result_util = null
             try
-            {   
+            {
                 num_tests++
                 result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
                 email_body += "<li>PASSED: Instantiate</li>\n"
@@ -657,7 +657,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: false)
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
@@ -673,7 +673,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: true)
                 email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
@@ -707,7 +707,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: false)
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
@@ -723,7 +723,7 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, 
+                def output = result_util.genResultDetailTable(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: true)
                 email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
@@ -947,18 +947,18 @@ node(node_restriction)
             println "\u27A4\n" +
                     "\u27A4 Stage: Test HTMLUtility\n" +
                     "\u27A4"
-            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"                    
+            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"
 
             def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
 
             // Test generating an ordered list.
             List email_data = []
-            try 
+            try
             {
                 num_tests++
                 email_data.add("PASSED: HTMLUtility: Generate Ordered List")
                 email_body += htmlutil.generateList(data: email_data)
-            } 
+            }
             catch(ex)
             {
                 email_body += "<OL>\n"
@@ -971,13 +971,13 @@ node(node_restriction)
 
             // Test generating an unordered list
             email_data = []
-            try 
+            try
             {
                 num_tests++
                 email_data = []
                 email_data.add("PASSED: HTMLUtility: Generate Unordered List")
                 email_body += htmlutil.generateList(data: email_data, unordered_list: true)
-            } 
+            }
             catch(ex)
             {
                 email_body += "<OL>\n"
@@ -1023,7 +1023,7 @@ node(node_restriction)
                     status = "FAILURE"
                     currentBuild.result = "FAILURE"
                 }
-                
+
                 String email_body_summary = ""
                 email_body_summary += "<H1>Testing Summary</H1>\n" +
                                       "<H3>Overview</H3>\n" +
