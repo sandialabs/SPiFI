@@ -475,90 +475,110 @@ class ParallelJobLauncher
                 else
                 {
                     // Deep copy results into a results_tmp var                                                                     // SCAFFOLDING
-                    def results_tmp = results.getClass().newInstance(results)                                                       // SCAFFOLDING
+                    //def results_tmp = results.getClass().newInstance(results)                                                       // SCAFFOLDING
 
                     this._env.println "[EXPERIMENTAL]> Number of attempts allowed = ${job.value.retry_max_count}\n" +               // SCAFFOLDING
                                       "[EXPERIMENTAL]> Lines of output to check   = ${job.value.retry_lines_to_check}"              // SCAFFOLDING
 
+                    def       status = null
+                    String    jobStatus = ""
+                    Float     duration_seconds = 0.0
 
-                    //
-                    // Launch the job here
-                    //
-                    // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
-                    //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
-                    //
-                    def status = this._env.build job        : job.value.jenkins_job_name,
-                                                 parameters : job.value.parameters,
-                                                 quietPeriod: job.value.quiet_period,
-                                                 propagate  : job.value.propagate_error
-
-                    Float  duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
-                    String jobStatus = status.getResult()
-
-                    // If job was successful, check the execution time bounds.
-                    if(jobStatus=="SUCCESS")
+                    Integer   attempt_number = 0
+                    Boolean   attempt_failed = true
+                    Exception attempt_exception = null
+                    while( attempt_failed && attempt < job.value.retry_max_count )
                     {
-                        // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
-                        //                        if we care about max duration and duration > max expected
-                        if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
-                            (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
+
+                        attempt_number++
+                        attempt_failed = false
+
+                        //
+                        // Launch the job here
+                        //
+                        // Note: status is a org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper object
+                        //       http://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+                        //
+                        status = this._env.build job        : job.value.jenkins_job_name,
+                                                     parameters : job.value.parameters,
+                                                     quietPeriod: job.value.quiet_period,
+                                                     propagate  : job.value.propagate_error
+
+                        duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
+                        jobStatus        = status.getResult()
+
+                        // If job was successful, check the execution time bounds.
+                        if(jobStatus=="SUCCESS")
                         {
-                            this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
-                                              "SPiFI>          Setting status to UNSTABLE"
-
-                            jobStatus = "UNSTABLE"
-                        }
-                    }
-
-                    // If the job didn't succeed, we should check status for a retry.                                               // SCAFFOLDING
-                    else if(jobStatus != "SUCCESS")                                                                                 // SCAFFOLDING
-                    {
-                        this._env.println "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
-                                          "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
-                                          "[EXPERIMENTAL]> Conditions tester result(s):"                                            // SCAFFOLDING
-
-                        // Get the console log from the sub-job as a List of Strings.
-                        List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
-
-                        // Scan each 'condition' for a match
-                        def     retry_condition_matched = null
-                        Boolean retry_condition_found   = job.value.retry_conditions.find
-                        { rci ->
-                            if( rci.scanBuildLog( build_log: build_log) )
+                            // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
+                            //                        if we care about max duration and duration > max expected
+                            if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
+                                (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
                             {
-                                retry_condition_matched = rci
-                                return true
+                                this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                                                  "SPiFI>          Setting status to UNSTABLE"
+
+                                jobStatus = "UNSTABLE"
                             }
-                            return false
                         }
-                        retry_condition_found = retry_condition_found == true   // force value to be true || false
 
-                        String msg = "[EXPERIMENTAL]>\n" +
-                                     "[EXPERIMENTAL]> retry_condition_found   = ${retry_condition_found}\n"
-                        if(retry_condition_found)
+                        // If the job didn't succeed, we should check status for a retry.                                               // SCAFFOLDING
+                        else if(jobStatus != "SUCCESS")                                                                                 // SCAFFOLDING
                         {
-                            msg += "[EXPERIMENTAL]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
-                            msg += "[EXPERIMENTAL]> retry delay             = ${retry_condition_matched.retry_delay}\n"
-                            msg += "[EXPERIMENTAL]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
-                        }
-                        msg += "[EXPERIMENTAL]>"
-                        this._env.println "${msg}"
+                            this._env.println "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
+                                              "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
+                                              "[EXPERIMENTAL]> Conditions tester result(s):"                                            // SCAFFOLDING
 
-                        this._env.sleep(time: retry_condition_matched.retry_delay,
-                                        unit: retry_condition_matched.retry_delay_units)
+                            // Get the console log from the sub-job as a List of Strings.
+                            List<String> build_log = status.getRawBuild().getLog( job.value.retry_lines_to_check )
 
-                        // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
-                        //       engage the RETRY logic.
+                            // Scan each 'condition' for a match
+                            def     retry_condition_matched = null
+                            Boolean retry_condition_found   = job.value.retry_conditions.find
+                            { rci ->
+                                if( rci.scanBuildLog( build_log: build_log) )
+                                {
+                                    retry_condition_matched = rci
+                                    return true
+                                }
+                                return false
+                            }
+                            retry_condition_found = retry_condition_found == true   // force value to be true || false
 
-//                      Boolean rci_value = false                                                                                   // SCAFFOLDING
-//                      job.value.retry_conditions.each                                                                             // SCAFFOLDING
-//                      { rci ->                                                                                                    // SCAFFOLDING
-//                          rci_value = rci.scanBuildLog( build_log: build_log )                // Scan the build log               // SCAFFOLDING
-//                          this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"                                            // SCAFFOLDING
-//                      }                                                                                                           // SCAFFOLDING
-                        this._env.println "[EXPERIMENTAL]>\n" +                                                                     // SCAFFOLDING
-                                          "[EXPERIMENTAL]>"                                                                         // SCAFFOLDING
-                    }                                                                                                               // SCAFFOLDING
+                            String msg = "[EXPERIMENTAL]>\n" +
+                                         "[EXPERIMENTAL]> retry_condition_found   = ${retry_condition_found}\n"
+                            if(retry_condition_found)
+                            {
+                                msg += "[EXPERIMENTAL]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
+                                msg += "[EXPERIMENTAL]> retry delay             = ${retry_condition_matched.retry_delay}\n"
+                                msg += "[EXPERIMENTAL]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
+                            }
+                            msg += "[EXPERIMENTAL]>"
+                            this._env.println "${msg}"
+
+                            if(retry_condition_found && attempt_number < job.value.retry_max_count)
+                            {
+                                attempt_failed = true
+
+                                // Set the delay on a failure
+                                this._env.sleep(time: retry_condition_matched.retry_delay,
+                                                unit: retry_condition_matched.retry_delay_units)
+                            }
+
+                            // TODO: If the retry condition is found AND the test exited with a status that is not SUCCESS then we should
+                            //       engage the RETRY logic.
+
+    //                      Boolean rci_value = false                                                                               // SCAFFOLDING
+    //                      job.value.retry_conditions.each                                                                         // SCAFFOLDING
+    //                      { rci ->                                                                                                // SCAFFOLDING
+    //                          rci_value = rci.scanBuildLog( build_log: build_log )                // Scan the build log           // SCAFFOLDING
+    //                          this._env.println "[EXPERIMENTAL]> rci_value = ${rci_value}"                                        // SCAFFOLDING
+    //                      }                                                                                                       // SCAFFOLDING
+                            this._env.println "[EXPERIMENTAL]>\n" +                                                                 // SCAFFOLDING
+                                              "[EXPERIMENTAL]>"                                                                     // SCAFFOLDING
+                        }   // else status != SUCCESS                                                                               // SCAFFOLDING
+
+                    }   // While RETRIES
 
                     // Save selected parts of the result to the results
                     results[job.key]["status"]   = jobStatus
