@@ -100,13 +100,13 @@ node(node_restriction)
 
 
 
-        // Stage 1: Launch SPiFI_test_selectable_status job to make sure it works.
-        stage("1) Test Job Simulator Script")
+        // Stage: Launch SPiFI_test_selectable_status job to make sure it works.
+        stage("Test Job Simulator Script")
         {
             boolean stage_passed = true
 
             email_body += """
-                          <H3>Stage (1): Test Job Simulator Script</H3>
+                          <H3>Stage: Test Job Simulator Script</H3>
                           <ol>
                           """.stripIndent()
 
@@ -144,16 +144,16 @@ node(node_restriction)
                 return
             }
 
-        } // end stage (1)
+        } // end stage
 
 
 
-        // Stage 2: Try to load SPiFI
-        stage("2) Test Load SPiFI Library")
+        // Stage: Try to load SPiFI
+        stage("Test Load SPiFI Library")
         {
             boolean stage_passed = true
 
-            email_body += "<H3>Stage (2): Test Load SPiFI Library</H3>\n"
+            email_body += "<H3>Stage: Test Load SPiFI Library</H3>\n"
 
             try
             {
@@ -199,8 +199,8 @@ node(node_restriction)
 
 
 
-        // Stage 3: Parallel Job Launcher (dry-run mode jobs)
-        stage("3) Test Parallel Job Launcher (dry-run mode)")
+        // Stage: Parallel Job Launcher (dry-run mode jobs)
+        stage("Test Parallel Job Launcher (dry-run mode)")
         {
             boolean stage_passed = true
 
@@ -244,7 +244,7 @@ node(node_restriction)
                 results = launcher.launchInParallel()
                 println(">>> results: ${results}")
 
-                email_body += "<H3>Stage (3): Test Parallel Job Launcher (dry-run mode)</H3>\n"
+                email_body += "<H3>Stage: Test Parallel Job Launcher (dry-run mode)</H3>\n"
                 email_body += "<ol>\n"
                 exit_status_list.each
                 {   _exit_status ->
@@ -355,7 +355,7 @@ node(node_restriction)
             }
             */
 
-        }   // end stage 3
+        }   // end stage
 
 
 
@@ -363,10 +363,8 @@ node(node_restriction)
         def launcher_results = null
         def launcher_summary = null
 
-
-
-        // Stage 4: Parallel Job Launcher (real-run mode jobs)
-        stage("4) Test Parallel Job Launcher (real-run mode)")
+        // Stage: Parallel Job Launcher (real-run mode jobs)
+        stage("Test Parallel Job Launcher (real-run mode)")
         {
             boolean stage_passed = true
 
@@ -443,7 +441,7 @@ node(node_restriction)
 
                 println(">>> results: ${launcher_results}")
 
-                email_body += "<H3>Stage (4): Test Parallel Job Launcher (real-run mode)</H3>\n"
+                email_body += "<H3>Stage: Test Parallel Job Launcher (real-run mode)</H3>\n"
 
                 email_body += "<ol>\n"
                 exit_status_list.each
@@ -548,18 +546,19 @@ node(node_restriction)
                 return
             }
 
-        }   // End Stage 4
+        }   // End Stage
 
 
-        // Stage 5: ResultsUtility
-        stage("5) Test ResultsUtility")
+
+        // Stage: ResultsUtility (relies on Stage 4)
+        stage("Test ResultsUtility")
         {
             boolean stage_passed = true
 
             println launcher_summary
             println launcher_results
 
-            email_body += "<H3>Stage 5) Test Results Utility</H3>\n"
+            email_body += "<H3>Stage: Test Results Utility</H3>\n"
 
             email_body += "<ol>\n"
 
@@ -688,7 +687,6 @@ node(node_restriction)
 
 
 
-
             // Test Detail Table Generation (HTML)
             println ">>> Test Detail Table Generation (HTML, link_to_console: default)"
             try{
@@ -735,20 +733,189 @@ node(node_restriction)
                 email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
                 num_failures++
             }
+            email_body += "</ol>\n"
+        }  // End Stage
 
 
+
+        // Stage: Paralell Job Launcher Retries
+        stage("Test Parallel Job Launcher (retries)")
+        {
+            email_body += "<H3>Stage: Test Parallel Job Launcher (retries)</H3>\n"
+            email_body += "<OL>\n"
+
+            // Test Retries with SUCCESS w/ 2 conditions
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+
+                launcher.appendJob(label: "T-RETRIES-01-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "3"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 5,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 1,
+                                                                                                     "retry_delay_units": "MINUTES",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 10,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                // Adding a 2nd job that will SUCCEED with no retries.
+                launcher.appendJob(label: "T-RETRIES-01-B",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 2)
+                {
+                    println ">>> T-RETRIES-01 FAILED: Expected 2 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 2)
+                {
+                    println ">>> T-RETRIES-01 FAILED: Expected 2 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final SUCCESS</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
+
+            // Test Retries with FAILURE w/ 2 conditions on 3 attempts (i.e., retries=2)
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+
+                // Job will FAIL after 2 retries (3 attempts)
+                launcher.appendJob(label: "T-RETRIES-02-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "5"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 2,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 1,
+                                                                                                     "retry_delay_units": "MINUTES",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 10,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                // Adding a 2nd job that will SUCCEED with no retries.
+                launcher.appendJob(label: "T-RETRIES-02-B",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 2)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 2 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMFAILURE != 1)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 1 failure but got ${summary.NUMFAILUE}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 1)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 1 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final FAILURE</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final FAILURE</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
 
             email_body += "</ol>\n"
-        }  // End Stage 5
+
+        }   // End Stage
 
 
 
-        // Stage 6: Test org.sandia.sems.spifi.Shell
-        stage("6) Shell")
+        // Stage: Test org.sandia.sems.spifi.Shell
+        stage("Shell")
         {
             boolean stage_passed = true
 
-            email_body += "<H3>Stage (6): Test Shell</H3>\n"
+            email_body += "<H3>Stage: Test Shell</H3>\n"
 
             email_body += "<ol>\n"
 
@@ -833,19 +1000,19 @@ node(node_restriction)
 
             email_body += "</ol>\n"
 
-        } // End Stage 6
+        } // End Stage
 
 
 
-        // Stage 7: Test org.sandia.sems.spifi.Git
-        stage("7) Git")
+        // Stage: Git: Test org.sandia.sems.spifi.Git
+        stage("Git")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Git\n" +
                     "\u27A4"
             boolean stage_passed = true
 
-            email_body += "<H3>Stage (7): Test Git</H3>\n"
+            email_body += "<H3>Stage: Test Git</H3>\n"
             email_body += "<ol>\n"
             try
             {
@@ -882,17 +1049,18 @@ node(node_restriction)
 
             email_body += "</ol>\n"
 
-        } // End Stage 7
+        } // End Stage
 
 
-        // Stage 8: Test running a shell script that clones a repository that has the
-        //          Jenkins entity account as a member.
-        stage("8) Test Shell Script that Clones")
+
+        // Stage: Test running a shell script that clones a repository that has the
+        //        Jenkins entity account as a member.
+        stage("Test Shell Script that Clones")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Test Shell Script that Clones\n" +
                     "\u27A4"
-            email_body += "<H3>Stage (8): Test Clone from Script</H3>\n"
+            email_body += "<H3>Stage: Test Clone from Script</H3>\n"
             email_body += "<ol>\n"
 
             String repository_url = "git@gitlab-ex.sandia.gov:SEMS/sems-son-gitlab-test-repository.git"
@@ -939,15 +1107,17 @@ node(node_restriction)
                 println "ERROR: occurred in Shell():\n${e}"
             }
             email_body += "</ol>\n"
-        }
+        }  // End Stage
 
-        // Stage 9: Test HTMLUtility
-        stage("9) Test HTMLUtility")
+
+
+        // Stage: Test HTMLUtility
+        stage("Test HTMLUtility")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Test HTMLUtility\n" +
                     "\u27A4"
-            email_body += "<H3>Stage (9): Test HTMLUtility</H3>\n"
+            email_body += "<H3>Stage: Test HTMLUtility</H3>\n"
 
             def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
 
@@ -987,10 +1157,11 @@ node(node_restriction)
                 num_failures++
                 println "ERROR:\n${ex}\n"
             }
-        }
+        }  // End Stage
 
 
-        stage("10) Cleanup")
+
+        stage("Cleanup")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Cleanup\n" +
@@ -1002,11 +1173,12 @@ node(node_restriction)
                     deleteDir()
                 }
             }
-        }
+        }   // End Stage
 
 
-        // Stage 11: Summary (is that even necessary?)
-        stage("11) Email Summary")
+
+        // Stage: Summary (is that even necessary?)
+        stage("Email Summary")
         {
             println "\u27A4\n" +
                     "\u27A4 Stage: Summary\n" +
@@ -1051,7 +1223,9 @@ node(node_restriction)
                 sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
                 return
             }
-        }   // End Stage 11
+        }   // End Stage
+
+
 
     }   // timeout
 }   // node
