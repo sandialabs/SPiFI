@@ -592,7 +592,7 @@ class ParallelJobLauncher
                     //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
                     // getLog() returns a string containing the log.
                     // getLog( int maxLines ) returns a List<String> object.
-                    this._env.println "SPiFI> status isa ${status.getClass().getName()}"
+                    // this._env.println "SPiFI> status isa ${status.getClass().getName()}"
 
                 }   // else not a dry run...
 
