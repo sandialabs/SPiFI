@@ -477,7 +477,7 @@ class ParallelJobLauncher
                     // Deep copy results into a results_tmp var                                                                     // SCAFFOLDING
                     def results_tmp = results.getClass().newInstance(results)                                                       // SCAFFOLDING
 
-                    this._env.println "[EXPERIMENTAL]> Number of attempts allowed = ${job.value.retry_max_limit}\n" +               // SCAFFOLDING
+                    this._env.println "[EXPERIMENTAL]> Number of attempts allowed = ${job.value.retry_max_count}\n" +               // SCAFFOLDING
                                       "[EXPERIMENTAL]> Lines of output to check   = ${job.value.retry_lines_to_check}"              // SCAFFOLDING
 
 
