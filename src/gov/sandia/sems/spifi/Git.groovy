@@ -140,20 +140,21 @@ def clone(Map params)
                                         [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: timeout]
                                       ], 
                           submoduleCfg: [], 
-                          userRemoteConfigs: [[credentialsId: credentialsId, url: url ]]
+                          userRemoteConfigs: [ [credentialsId: credentialsId, url: url] ]
                         ])
             }
-            catch(e)
+            catch(ex)
             {
                 env.println "[SPiFI]> git failed to clone: ${url}\n" +
+                            "[SPiFI]> The error message is:\n${ex}\n" +
                             "[SPiFI]> retrying in ${retry_delay} seconds."
                 attempts++
                 sleep retry_delay
-                throw e
+                throw ex
             }
         }
     }
-    catch(e)
+    catch(ex)
     {
         env.println "[SPiFI]> git failed to clone: ${url}\n" +
                     "[SPiFI]> -  Attempts made: ${attempts}"
