@@ -28,7 +28,7 @@ properties([
                defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
                description: 'Default From email address.'),
         string(name: 'EMAIL_DEVOPS',
-               defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov',
+               defaultValue: 'wcmclen@sandia.gov',
                description: 'Recipient List (space delimited) for testing result emails.'),
     ])
 ])
