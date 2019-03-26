@@ -55,6 +55,10 @@ String email_body = ""
 List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
 
 
+// Global faiulre counter for use at the end of testing.
+Integer num_failures = 0
+Integer num_tests    = 0
+
 
 node(node_restriction)
 {
@@ -74,10 +78,6 @@ node(node_restriction)
     {
         emailDevOps = params.EMAIL_DEVOPS
     }
-
-    // Global faiulre counter for use at the end of testing.
-    Integer num_failures = 0
-    Integer num_tests    = 0
 
 
     // ----[ begin stage: Clean Workspace ]------------------------------------
@@ -1161,10 +1161,10 @@ node(node_restriction)
                 println "STDOUT:\n${stdout}"
                 email_body += "<li>PASSED: Git.clone() clone a copy of SPiFI</li>\n"
             }
-            catch(e)
+            catch(ex)
             {
                 email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
-                println "ERROR: Git.clone() threw an exception:\n${e}"
+                println "ERROR: Git.clone() threw an exception:\n${ex}"
                 num_failures++
                 currentBuild.result='FAILURE'
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
@@ -1401,5 +1401,5 @@ def sendEmailSummary(Map params)
          mimeType: 'text/html',
          subject:  params.subject,
          body:     __email_message
-    }
+}
 
