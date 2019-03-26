@@ -1154,10 +1154,12 @@ node(node_restriction)
                     num_failures++
                     email_body += "<li>FAILED: Git.clone() clone a copy of SPiFI</li>\n"
                 }
-
-                stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
-                println "STDOUT:\n${stdout}"
-                email_body += "<li>PASSED: Git.clone() clone a copy of SPiFI</li>\n"
+                else
+                {
+                    stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
+                    println "STDOUT:\n${stdout}"
+                    email_body += "<li>PASSED: Git.clone() clone a copy of SPiFI</li>\n"
+                }
             }
             catch(ex)
             {
