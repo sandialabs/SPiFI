@@ -48,6 +48,7 @@ package gov.sandia.sems.spifi;
  * @param timeout_units  [OPTIONAL] String  Units to use for the timeout.
  *                                          Allowed values are: {HOURS|MINUTES|SECONDS}.
  *                                          Default: MINUTES
+ *                                          DEPRECATED IN version 2.0.0
  * @param verbose        [OPTIONAL] Boolean Print out verbose information to the console.
  *                                          Default: false
  *
@@ -67,7 +68,7 @@ def clone(Map params)
     Integer retries       = 0
     Integer retry_delay   = 60
     Integer timeout       = 30
-    String  timeout_units = "MINUTES"
+    // String  timeout_units = "MINUTES"
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -90,10 +91,10 @@ def clone(Map params)
     if(params.containsKey("retries"))        retries = params.retries
     if(params.containsKey("retry_delay"))    retry_delay = params.retry_delay
     if(params.containsKey("timeout"))        timeout = params.timeout
-    if(params.containsKey("timeout_units"))  timeout_units = params.timeout_units
+    // if(params.containsKey("timeout_units"))  timeout_units = params.timeout_units                   // DEPRECATE in v2.0.0
 
     // Validate parameters
-    assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"
+    // assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"         // DEPRECATION: timeout_units
 
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)
@@ -106,10 +107,9 @@ def clone(Map params)
                     "[SPiFI]> -  retries       : ${retries}\n" +
                     "[SPiFI]> -  retry_delay   : ${retry_delay}\n" +
                     "[SPiFI]> -  timeout       : ${timeout}\n" +
-                    "[SPiFI]> -  timeout_units : ${timeout_units}"
-        env.println "[SPiFI]> Environment:\n" +
-                    "[SPiFI]> -  workspace: ${env.WORKSPACE}"
-        env.println "[SPiFI]> Raw Params:\n${params}"
+                    "[SPiFI]> Environment:\n" +
+                    "[SPiFI]> -  workspace: ${env.WORKSPACE}\n" +
+                    "[SPiFI]> Raw Params:\n${params}"
     }
 
     // Initialize output variables
@@ -122,6 +122,7 @@ def clone(Map params)
         {
             try
             {
+                /*
                 env.timeout(time: timeout, unit: timeout_units)
                 {
                     env.dir("${dir}")
@@ -130,6 +131,17 @@ def clone(Map params)
                         env.println "[SPiFI]> git successfully cloned: ${url}"
                     }
                 }
+                */
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: branch]], 
+                          doGenerateSubmoduleConfigurations: false, 
+                          extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: dir], 
+                                        [$class: 'CheckoutOption', timeout: timeout], 
+                                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: timeout]
+                                      ], 
+                          submoduleCfg: [], 
+                          userRemoteConfigs: [[credentialsId: credentialsId, url: url ]]
+                        ])
             }
             catch(e)
             {
