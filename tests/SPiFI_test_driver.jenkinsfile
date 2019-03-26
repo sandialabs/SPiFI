@@ -1152,7 +1152,6 @@ node(node_restriction)
                 if(!passed)
                 {
                     num_failures++
-                    currentBuild.result='FAILURE'
                     email_body += "<li>FAILED: Git.clone() clone a copy of SPiFI</li>\n"
                 }
 
