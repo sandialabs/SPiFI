@@ -15,13 +15,21 @@ properties([
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
     parameters([
-        booleanParam(name: 'CleanWorkspace', defaultValue: false,
+        booleanParam(name: 'CleanWorkspace',
+                     defaultValue: false,
                      description: '''Optionally clean the workspace before entering the pipeline.'''),
-        string(defaultValue: node_restriction,
-               description: "Node restriction, default: '${node_restriction}'",
-               name: 'NODE_RESTRICTION'),
-        string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov', description: ''),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" ),
+        string(name: 'EMAIL_REPLYTO',
+               defaultValue: 'wcmclen@sandia.gov',
+               description: 'Default Reply-To email address.'),
+        string(name: 'EMAIL_FROM',
+               defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
+               description: 'Default From email address.'),
+        string(name: 'EMAIL_DEVOPS',
+               defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov',
+               description: 'Recipient List (space delimited) for testing result emails.'),
     ])
 ])
 // pipeline trigger with SCM Polling (old)
@@ -52,10 +60,15 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+    String emailFrom    = "wcmclen@sandia.gov"
 
     if(params.containsKey("EMAIL_REPLYTO"))
     {
         emailReplyTo = params.EMAIL_REPLYTO
+    }
+    if(params.containsKey("EMAIL_FROM"))
+    {
+        emailFrom = params.EMAIL_FROM
     }
     if(params.containsKey("EMAIL_DEVOPS"))
     {
@@ -139,7 +152,7 @@ node(node_restriction)
             // Test desired result: SUCCESS
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -162,9 +175,10 @@ node(node_restriction)
 
                 //@Library('SPiFI') _     // Note: this must be const string, can't parameterize :/
                 @Library('SPiFI-DEV@master') _     // Note: this must be const string, can't parameterize :/
+                // @Library('SPiFI') _             // Default version for production
 
                 email_body += "<ol>\n"
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI)</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@master)</li>\n"
 
                 // Update branchName with spifi.Info.version() if possible
                 try
@@ -184,13 +198,13 @@ node(node_restriction)
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI)</li></ol>\n"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@master)</li></ol>\n"
                 stage_passed = false
             }
 
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -232,7 +246,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -266,7 +280,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -342,14 +356,14 @@ node(node_restriction)
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             /*
             if(!stage_passed)
             {
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
             */
@@ -429,7 +443,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -464,7 +478,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -541,7 +555,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -912,12 +926,16 @@ node(node_restriction)
         // Stage: Test org.sandia.sems.spifi.Shell
         stage("Shell")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Shell\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += "<H3>Stage: Test Shell</H3>\n"
 
             email_body += "<ol>\n"
 
+            // Test a basic Shell command
             try
             {
                 num_tests++
@@ -926,7 +944,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout : ${output.stdout}\n"
+                        "- console: ${output.console}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
             }
             catch(e)
@@ -936,6 +954,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test with retries
             try
             {
                 num_tests++
@@ -948,7 +967,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
-                        "- stdout:\n${output.stdout}\n"
+                        "- console:\n${output.console}\n"
                 if(output.status == 2 && output.retries == 2)
                 {
                     email_body += "<li>PASSED: Shell.execute() nonzero status retry failure</li>\n"
@@ -966,6 +985,7 @@ node(node_restriction)
                 println "ERROR occurred in Shell():\n${e}"
             }
 
+            // Test with retries and nonzero allowable status value
             try
             {
                 num_tests++
@@ -979,7 +999,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
-                        "- stdout:\n${output.stdout}\n"
+                        "- console:\n${output.console}\n"
                 if(output.status == 2 && output.retries==0)
                 {
                     email_body += "<li>PASSED: Shell.execute() nonzero status whitelisted</li>\n"
@@ -994,6 +1014,102 @@ node(node_restriction)
             {
                 email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
                 println "ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stderr"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stdout",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(!output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout+stderr"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           output_type: "stdout+stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:") && output.console.contains("total"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
                 num_failures++
             }
 
@@ -1019,6 +1135,9 @@ node(node_restriction)
 
                 def git_spifi = new gov.sandia.sems.spifi.Git()
 
+                // Delete the SPiFI directory if it's already there.
+                String stdout = sh(script: "rm -rf SPiFI", returnStdout: true)
+
                 git_spifi.clone(env: this,
                                 dir: "SPiFI",
                                 branch: branchName,
@@ -1031,7 +1150,7 @@ node(node_restriction)
                                 verbose: true
                                )
 
-                def stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
+                stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
                 println "STDOUT:\n${stdout}"
                 email_body += "<li>PASSED: Git.clone() cloned a repository</li>\n"
             }
@@ -1042,7 +1161,7 @@ node(node_restriction)
                 stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -1083,7 +1202,7 @@ node(node_restriction)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n" +
-                        "- stdout : ${output.stdout}\n"
+                        "- console: ${output.console}\n"
 
                 if(0 == output.status)
                 {
@@ -1210,6 +1329,7 @@ node(node_restriction)
 
                 mail to:       emailDevOps,
                      replyTo:  emailReplyTo,
+                     from:     emailFrom,
                      mimeType: "text/html",
                      subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
                      body:     email_body
@@ -1219,7 +1339,7 @@ node(node_restriction)
                 num_failures++
                 println ">>> ERROR:${e}"
                 email_body += "<H3>Stage (9): Email Summary</H3>\n"
-                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
         }   // End Stage
@@ -1245,10 +1365,11 @@ def sendEmailFailure(Map params)
 
     email_body = email_body_summary + params.body
 
-    sendEmailSummary(to:       params.to,
-                     reply_to: params.reply_to,
-                     subject:  "[SPiFI] Testing Summary FAILED",
-                     body:     email_body)
+    sendEmailSummary(to:         params.to,
+                     reply_to:   params.reply_to,
+                     email_from: params.from,
+                     subject:    "[SPiFI] Testing Summary FAILED",
+                     body:       email_body)
     currentBuild.result='FAILURE'
 }
 
@@ -1270,6 +1391,7 @@ def sendEmailSummary(Map params)
 
     mail to:       params.to,
          replyTo:  params.reply_to,
+         from:     params.from,
          mimeType: 'text/html',
          subject:  params.subject,
          body:     __email_message

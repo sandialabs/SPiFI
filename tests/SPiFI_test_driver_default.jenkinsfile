@@ -21,8 +21,9 @@ properties([
         string(defaultValue: node_restriction,
                description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
-        string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: ''),
-        string(name: 'EMAIL_DEVOPS', defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', description: ''),
+        string(name: 'EMAIL_REPLYTO', defaultValue: 'wcmclen@sandia.gov', description: 'Default Reply-To email address.'),
+        string(name: 'EMAIL_FROM',    defaultValue: 'wg-sems-admin@mailgate.sandia.gov', description: 'Default From email address.'),
+        string(name: 'EMAIL_DEVOPS',  defaultValue: 'wcmclen@sandia.gov dmvigi@sandia.gov bmpersc@sandia.gov', description: ''),
     ])
 ])
 // pipeline trigger with SCM Polling (old)
@@ -53,6 +54,7 @@ node(node_restriction)
 {
     String emailDevOps  = "wcmclen@sandia.gov"
     String emailReplyTo = "wcmclen@sandia.gov"
+    String emailFrom    = "wcmclen@sandia.gov"
 
     email_body += "<H3>Job Information</H3>\n" +
                   "<ul>\n" +
@@ -63,6 +65,10 @@ node(node_restriction)
     if(params.containsKey("EMAIL_REPLYTO"))
     {
         emailReplyTo = params.EMAIL_REPLYTO
+    }
+    if(params.containsKey("EMAIL_FROM"))
+    {
+        emailFrom = params.EMAIL_FROM
     }
     if(params.containsKey("EMAIL_DEVOPS"))
     {
@@ -145,7 +151,7 @@ node(node_restriction)
             // Test desired result: SUCCESS
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -192,7 +198,7 @@ node(node_restriction)
 
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -234,7 +240,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -268,7 +274,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: launcher.launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -344,14 +350,14 @@ node(node_restriction)
             catch(ex)
             {
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             /*
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
             */
@@ -422,7 +428,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- printJobList failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -457,7 +463,7 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -534,14 +540,14 @@ node(node_restriction)
             {
                 println "ERROR:\n${ex}"
                 println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
             /*
             if(!stage_passed)
             {
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
             */
@@ -791,7 +797,7 @@ node(node_restriction)
                 stage_passed = false
                 num_failures++
                 currentBuild.result='FAILURE'
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
 
@@ -887,6 +893,7 @@ node(node_restriction)
                 email_body += "<P>--<BR/>View output on <A HREF=\"${BUILD_URL}\">Jenkins</A>.</P>"
 
                 mail to:       emailDevOps,
+                     from:     emailFrom,
                      replyTo:  emailReplyTo,
                      mimeType: "text/html",
                      subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
@@ -896,7 +903,7 @@ node(node_restriction)
             {
                 println ">>> ERROR:${e}"
                 email_body += "<H3>Stage (9): Email Summary</H3>\n"
-                sendEmailFailureAndQuit(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                sendEmailFailureAndQuit(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
         }   // End Stage 10
@@ -906,12 +913,12 @@ node(node_restriction)
 
 
 
-//def sendEmailFailureAndQuit(String email_body)
 def sendEmailFailureAndQuit(Map params)
 {
     email_body = "<H1>FAILURE ENCOUNTERED!</H1>\n" + params.body
     sendEmailSummary(to:       params.to,
                      reply_to: params.reply_to,
+                     from:     params.from,
                      subject:  "[SPiFI] Testing Summary FAILED",
                      body:     email_body)
     currentBuild.result='FAILURE'
@@ -934,6 +941,7 @@ def sendEmailSummary(Map params)
     String __email_message = email_message.replace("{{MESSAGE_BODY}}", params.body)
 
     mail to:       params.to,
+         from:     params.from,
          replyTo:  params.reply_to,
          mimeType: 'text/html',
          subject:  params.subject,

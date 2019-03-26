@@ -20,45 +20,48 @@ import gov.sandia.sems.spifi.Utility
 
 
 /**
- * Execute a command and capture stdout and exit status.
+ * Execute a command and capture output and exit status.
  *
- * @param env            [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
- * @param command        [REQUIRED] String  - The command + arguments to run as a single string (i.e., "ls -l -t")
- * @param path           [OPTIONAL] String  - Path to the working directory, assumes a path relative to the currnet directory
- *                                            (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
- *                                            Default: Jenkins Workspace Root - `env.WORKSPACE`
- * @param retries        [OPTIONAL] Integer - Number of retries.
- *                                            Default: 0
- * @param retry_delay    [OPTIONAL] Integer - Retry delay (seconds).
- *                                            Default: 60
- * @param timeout        [OPTIONAL] Integer - Timeout for the job to execute. The default is 90 minutes.
- *                                            Default 90
- * @param timeout_units  [OPTIONAL] String    Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS}
- *                                            Default: "MINUTES"
- * @param verbose        [OPTIONAL] Boolean - If present and set to true, some extra debugging information will be printed.
- *                                            Default: false
- * @param dry_run        [OPTIONAL] Boolean - If true, then execute a 'dry run' mode operation.
- *                                            Print out info with a delay but don't execute.
- *                                            Default: false
- * @param dry_run_delay  [OPTIONAL] Integer - If dry_run is true, this is the delay (seconds) to append when running.
- *                                            Default: 5
- * @param dry_run_status [OPTIONAL] Integer - If dry_run is true, this is the exit status to be returned.
- *                                            Default: 0
- * @param dry_run_stdout [OPTIONAL] String  - If dry_run is true, this is the stdout that will be returned.
- *                                            Default: ""
- * @param status_values_ok [OPTIONAL] List  - List of Integers. This is a list of valid status values that will be
- *                                            ok, along with the standard 0 return status.
- *                                            (i.e., if the command returns any of these OR 0 then the command will not
- *                                            trigger a retry.)
- *                                            Default: []
+ * @param env              [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+ * @param command          [REQUIRED] String  - The command + arguments to run as a single string (i.e., "ls -l -t")
+ * @param path             [OPTIONAL] String  - Path to the working directory, assumes a path relative to the currnet directory
+ *                                              (Probably env.WORKSPACE unless this is called inside a dir(){ } block.)
+ *                                              Default: Jenkins Workspace Root - `env.WORKSPACE`
+ * @param retries          [OPTIONAL] Integer - Number of retries.
+ *                                              Default: 0
+ * @param retry_delay      [OPTIONAL] Integer - Retry delay (seconds).
+ *                                              Default: 60
+ * @param timeout          [OPTIONAL] Integer - Timeout for the job to execute. The default is 90 minutes.
+ *                                              Default 90
+ * @param timeout_units    [OPTIONAL] String    Timeout units for the job. Valid options are {SECONDS, MINUTES, HOURS}
+ *                                              Default: "MINUTES"
+ * @param verbose          [OPTIONAL] Boolean - If present and set to true, some extra debugging information will be printed.
+ *                                              Default: false
+ * @param dry_run          [OPTIONAL] Boolean - If true, then execute a 'dry run' mode operation.
+ *                                              Print out info with a delay but don't execute.
+ *                                              Default: false
+ * @param dry_run_delay    [OPTIONAL] Integer - If dry_run is true, this is the delay (seconds) to append when running.
+ *                                              Default: 5
+ * @param dry_run_status   [OPTIONAL] Integer - If dry_run is true, this is the exit status to be returned.
+ *                                              Default: 0
+ * @param dry_run_output   [OPTIONAL] String  - If dry_run is true, this is the output that will be returned.
+ *                                              Default: ""
+ * @param status_values_ok [OPTIONAL] List    - List of Integers. This is a list of valid status values that will be
+ *                                              ok, along with the standard 0 return status.
+ *                                              (i.e., if the command returns any of these OR 0 then the command will not
+ *                                              trigger a retry.)
+ *                                              Default: []
+ * @param output_type      [OPTIONAL] String  - Output Type, stdout, stderr, etc. to capture.
+ *                                              Options are: {stdout,stderr,stdout+stderr}
+ *                                              Default: stdout+stderr
  *
- * @return Map containing two keys: {stdout, status, retries} which contain the stdout and exit status of the command
+ * @return Map containing two keys: {console, status, retries} which contain the console output and exit status of the command
  *             that was run.
- *             If there were multiple retries due to nonzero exit status, then the output from the LAST run is returned.
+ *             If there were multiple retries due to nonzero exit status, then the console output from the LAST run is returned.
  *             and retries is set to the number of additional attempts.  Note, if successful on the first attempt this
  *             will be 0.
- *             If the last attempt results in an exception thrown then status = -1, stdout = ""
- *             If the routine is run in dry-run mode, then status = dry_run_status, stdout = dry_run_stdout.
+ *             If the last attempt results in an exception thrown then status = -1, console = ""
+ *             If the routine is run in dry-run mode, then status = dry_run_status, console = dry_run_output.
  */
 def execute(Map params)
 {
@@ -82,10 +85,13 @@ def execute(Map params)
     Boolean dry_run        = false
     Integer dry_run_delay  = 5
     Integer dry_run_status = 0
-    String  dry_run_stdout = ""
+    String  dry_run_output = ""
 
     // Valid Nonzero Status Values (i.e., these won't trigger a retry)
     List status_values_ok = [0]
+
+    // What kind of output do we capture?
+    String output_type = "stdout+stderr"
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -110,7 +116,7 @@ def execute(Map params)
     if(params.containsKey("dry_run"))        dry_run        = params.dry_run
     if(params.containsKey("dry_run_delay"))  dry_run_delay  = params.dry_run_delay
     if(params.containsKey("dry_run_status")) dry_run_status = params.dry_run_status
-    if(params.containsKey("dry_run_stdout")) dry_run_stdout = params.dry_run_stdout
+    if(params.containsKey("dry_run_output")) dry_run_output = params.dry_run_output
 
     // Process status value whitelist
     if(params.containsKey("status_values_ok"))
@@ -121,6 +127,22 @@ def execute(Map params)
         def i = status_values_ok.intersect(params.status_values_ok)
         status_values_ok = ((status_values_ok + params.status_values_ok)-i)+i
     }
+    // Set the output_type if a parameter is provided.
+    if(params.containsKey("output_type"))
+    {
+        if(params.output_type in ["stdout+stderr","stdout","stderr"])
+        {
+            output_type = params.output_type
+        }
+        else
+        {
+            env.println "[SPiFI]> ERROR: Invalid value given for parameter 'output_type' in gov.sandia.sems.spifi.Shell.execute()\n" +
+                        "[SPiFI]>        Allowed values: 'stdout+stderr', 'stdout', 'stderr'. \n" +
+                        "[SPiFI]>        Value entered : '${params.output_type}''"
+            throw new Exception("[SPiFI] ERROR: Invalid value given for parameter 'output_type' in gov.sandia.sems.spifi.Shell.execute()")
+        }
+    }
+
 
     // Validate parameters
     assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"
@@ -138,8 +160,9 @@ def execute(Map params)
                     "[SPiFI]> -  dry_run            : ${dry_run}\n" +
                     "[SPiFI]> -  dry_run_delay      : ${dry_run_delay}\n" +
                     "[SPiFI]> -  dry_run_status     : ${dry_run_status}\n" +
-                    "[SPiFI]> -  dry_run_stdout     : ${dry_run_stdout}\n" +
-                    "[SPiFI]> -  Valid Status Values: ${status_values_ok}"
+                    "[SPiFI]> -  dry_run_output     : ${dry_run_output}\n" +
+                    "[SPiFI]> -  Valid Status Values: ${status_values_ok}\n" +
+                    "[SPiFI]> -  output_type        : ${output_type}"
         env.println "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}"
         env.println "[SPiFI]> Raw Params:\n${params}"
@@ -151,7 +174,7 @@ def execute(Map params)
         env.sleep dry_run_delay
 
         output.status  = dry_run_status
-        output.stdout  = dry_run_stdout
+        output.console = dry_run_output
         output.retries = 0
 
         return output
@@ -160,8 +183,8 @@ def execute(Map params)
     // If not in dry-run mode, then we continue...
 
     // Initialize output variables
-    String  stdout = ""
-    Integer status = -1
+    String  console = ""
+    Integer status  = -1
     Integer retries_performed = 0
 
     // # of attempts is one more than number of retries (i.e., 0 retries means there should be 1 attempt only)
@@ -179,14 +202,25 @@ def execute(Map params)
             {
                 try
                 {
+                    // Set the redirect operator for output
+                    String redirect = "&>"
+                    if("stdout"==output_type)
+                    {
+                        redirect = ">"
+                    }
+                    else if("stderr"==output_type)
+                    {
+                        redirect = "2>"
+                    }
+
                     // Print / Echo the actual command
-                    env.println "[SPiFI]> Execute: ${command} &> ${temp_filename}"
+                    env.println "[SPiFI]> Execute: ${command} ${redirect} ${temp_filename}"
 
                     // Execute the command
-                    status = env.sh(script: "${command} &> ${temp_filename}", returnStatus: true)
+                    status = env.sh(script: "${command} ${redirect} ${temp_filename}", returnStatus: true)
 
                     // Read in the temp file and remove it.
-                    stdout = env.readFile(temp_filename).trim()
+                    console = env.readFile(temp_filename).trim()
 
                     // Delete the temp file
                     env.sh(script: "rm ${temp_filename}", returnStatus: true)
@@ -200,13 +234,13 @@ def execute(Map params)
                     {
                         env.println "[SPiFI]> Command Failed due to thrown exception\n" +
                                     "[SPiFI]> - status = ${status}\n" +
-                                    "[SPiFI]> - stdout:\n${stdout}\n" +
+                                    "[SPiFI]> - output:\n${console}\n" +
                                     "[SPiFI]> - exception:\n${e}\n" +
                                     "[SPiFI]> Retrying in ${retry_delay} seconds."
 
                         // Reset values
-                        status = -1
-                        stdout = ""
+                        console = ""
+                        status  = -1
                         retries_performed++
                         retry_exception = true
 
@@ -223,12 +257,12 @@ def execute(Map params)
             env.println "[SPiFI]> Command Failed due to exit status\n" +
                         "[SPiFI]> - valid status values = ${status_values_ok}\n" +
                         "[SPiFI]> - status = ${status}\n" +
-                        "[SPiFI]> - output:\n${stdout}\n" +
+                        "[SPiFI]> - output:\n${console}\n" +
                         "[SPiFI]> Retrying in ${retry_delay} seconds."
 
             // Reset values
-            stdout = ""
-            status = -1
+            console = ""
+            status  = -1
             retries_performed++
 
             // Sleep for retry delay (seconds)
@@ -243,12 +277,12 @@ def execute(Map params)
     env.println "[SPiFI]> Command returned:\n" +
                 "[SPiFI]> - retries: ${retries_performed}\n" +
                 "[SPiFI]> - status : ${status}\n" +
-                "[SPiFI]> - output :\n${stdout}\n"
+                "[SPiFI]> - output :\n${console}\n"
 
     // Save the results
-    output["status"]  = status
-    output["stdout"]  = stdout
-    output["retries"] = retries_performed
+    output.status  = status
+    output.console = console
+    output.retries = retries_performed
 
     return output
 }
