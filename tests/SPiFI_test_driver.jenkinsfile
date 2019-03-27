@@ -917,6 +917,77 @@ node(node_restriction)
                 return
             }   // end Test
 
+
+            // Run retries until we get a success to reset the counter on the job.
+            // This job can be removed if we ever add a 'reset' option to 
+            // SPiFI_test_pass_every_third
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+
+                // Job will FAIL after 2 retries (3 attempts)
+                launcher.appendJob(label: "T-RETRIES-03-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "1"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 99,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 5,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 5,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 1)
+                {
+                    println ">>> T-RETRIES-03 FAILED: Expected 1 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 1)
+                {
+                    println ">>> T-RETRIES-03 FAILED: Expected 1 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final SUCCESS</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
+
             email_body += "</ol>\n"
 
         }   // End Stage
