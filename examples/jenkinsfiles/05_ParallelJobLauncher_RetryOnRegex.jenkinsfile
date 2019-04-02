@@ -7,7 +7,7 @@
 node("master")
 {
     // Load the SPiFI library
-    @Library('SPiFI@v1.1.4') _
+    @Library('SPiFI') _
 
     // Pipeline Stage
     stage("MyStage")
@@ -39,7 +39,7 @@ node("master")
                           )
 
         // Adding a 2nd job that will SUCCEED with no retries.
-        launcher.appendJob(label: "T-RETRIES-01-B",
+        launcher.appendJob(label: "T-02",
                            job_name: "SPiFI_test_selectable_status",
                            timeout: 90,
                            timeout_unit: "SECONDS",
