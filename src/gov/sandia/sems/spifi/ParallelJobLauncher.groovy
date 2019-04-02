@@ -533,8 +533,8 @@ class ParallelJobLauncher
                             }
                         }
 
-                        // If the job didn't succeed, we should check status for a retry.
-                        else if(jobStatus != "SUCCESS")
+                        // Check job status for a retry IF the job returned FAILURE or UNSTABLE
+                        else if(jobStatus == "FAILURE" || jobStatus == "UNSTABLE")
                         {
                             // Only scan the job results if we have retry-conditions
                             if(job.value.retry_conditions != null)
