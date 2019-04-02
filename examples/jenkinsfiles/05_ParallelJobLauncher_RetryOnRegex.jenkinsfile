@@ -57,7 +57,9 @@ node("master")
         // Get the summary stats of the run
         def summary = launcher.getLastResultSummary()
 
-        println "Summary: ${summary}"
+        // Print out the results summary as a table to the console output
+        def results_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+        println results_util.genResultSummaryTable(summary: summary, format: "ASCII")
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
