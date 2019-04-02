@@ -217,7 +217,7 @@ node(node_restriction)
         {
             boolean stage_passed = true
 
-            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
 
             exit_status_list.each
             {   _exit_status ->
@@ -381,7 +381,7 @@ node(node_restriction)
         {
             boolean stage_passed = true
 
-            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
 
             // Add one job of each type to the list
             exit_status_list.each
@@ -764,7 +764,7 @@ node(node_restriction)
 
                 Boolean test_passed = true
 
-                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
 
                 launcher.appendJob(label: "T-RETRIES-01-A",
                                    job_name: "SPiFI_test_pass_every_third",
@@ -1094,14 +1094,14 @@ node(node_restriction)
                 num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
-                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
                                            output_type: "stderr",
                                            verbose: true)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                if(output.console.contains("ls: cannot access /adfasqpasqpasqpasqpasqp:"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stderr'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stderr'</li>\n"
@@ -1126,14 +1126,14 @@ node(node_restriction)
                 num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
-                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
                                            output_type: "stdout",
                                            verbose: true)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(!output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:"))
+                if(!output.console.contains("ls: cannot access /asqpasqpasqpasqpasqpasqp:"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stdout'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stdout'</li>\n"
@@ -1158,14 +1158,14 @@ node(node_restriction)
                 num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
-                                           command: "ls -l . /asdfasdfasdfasdfasdfasdf",
+                                           command: "ls -l . /asqpasqpasqpasqpasqpasqp",
                                            output_type: "stdout+stderr",
                                            verbose: true)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(output.console.contains("ls: cannot access /asdfasdfasdfasdfasdfasdf:") && output.console.contains("total"))
+                if(output.console.contains("ls: cannot access /asqpasqpasqpasqpasqpasqp:") && output.console.contains("total"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stdout+stderr'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stdout+stderr'</li>\n"
