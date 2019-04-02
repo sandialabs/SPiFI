@@ -27,7 +27,7 @@ node("master")
                                          (string(name:"PARAM_THRESHOLD",  value: "3"))
                                        ],
                            dry_run: false,
-                           retry_max_count: 5,
+                           retry_max_count: 10,
                            retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
                                                                                              "retry_delay": 1,
                                                                                              "retry_delay_units": "MINUTES",
@@ -56,6 +56,8 @@ node("master")
 
         // Get the summary stats of the run
         def summary = launcher.getLastResultSummary()
+
+        println "Summary: ${summary}"
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
