@@ -918,7 +918,7 @@ node(node_restriction)
 
 
             // Run retries until we get a success to reset the counter on the job.
-            // This job can be removed if we ever add a 'reset' option to 
+            // This job can be removed if we ever add a 'reset' option to
             // SPiFI_test_pass_every_third
             try
             {
@@ -1056,6 +1056,7 @@ node(node_restriction)
             }
 
             // Test with retries and nonzero allowable status value
+            println "\u27A4 Shell.execute() nonzero status whitelisted"
             try
             {
                 num_tests++
@@ -1088,6 +1089,7 @@ node(node_restriction)
             }
 
             // Test the output_option=="stderr"
+            println "\u27A4 Shell.execute() output_option='stderr'"
             try
             {
                 num_tests++
@@ -1100,7 +1102,7 @@ node(node_restriction)
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(output.console.contains("ls: cannot access /adfasqpasqpasqpasqpasqp:"))
+                if(output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stderr'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stderr'</li>\n"
@@ -1120,6 +1122,7 @@ node(node_restriction)
             }
 
             // Test the output_option=="stdout"
+            println "\u27A4 Shell.execute() output_option='stdout'"
             try
             {
                 num_tests++
@@ -1132,7 +1135,7 @@ node(node_restriction)
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(!output.console.contains("ls: cannot access /asqpasqpasqpasqpasqpasqp:"))
+                if(!output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stdout'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stdout'</li>\n"
@@ -1152,19 +1155,20 @@ node(node_restriction)
             }
 
             // Test the output_option=="stdout+stderr"
+            println "\u27A4 Shell.execute() output_option='stdout+stderr'"
             try
             {
                 num_tests++
                 def shell = new gov.sandia.sems.spifi.Shell()
                 def output = shell.execute(env: this,
-                                           command: "ls -l . /asqpasqpasqpasqpasqpasqp",
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
                                            output_type: "stdout+stderr",
                                            verbose: true)
                 println "Shell Output:\n" +
                         "- retries: ${output.retries}\n" +
                         "- status : ${output.status}\n"  +
                         "- console:\n${output.console}\n"
-                if(output.console.contains("ls: cannot access /asqpasqpasqpasqpasqpasqp:") && output.console.contains("total"))
+                if(output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:") && output.console.contains("total"))
                 {
                     println "\u27A4 PASSED: Shell.execute() output_option=='stdout+stderr'\n"
                     email_body += "<li>PASSED: Shell.execute() output_option=='stdout+stderr'</li>\n"
@@ -1243,7 +1247,7 @@ node(node_restriction)
 
             email_body += "</ol>\n"
 
-            // Cleanup the clone 
+            // Cleanup the clone
             dir("SPiFI")
             {
                 deleteDir()
@@ -1274,12 +1278,12 @@ node(node_restriction)
                 def shell = new gov.sandia.sems.spifi.Shell()
 
                 // SPiFI expects a checkout of SPiFI into $WORKSPACE/SPiFI/
-                checkout([$class: 'GitSCM', 
-                            branches: [[name: '*/master']], 
-                            doGenerateSubmoduleConfigurations: false, 
-                            extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'] ], 
-                            submoduleCfg: [], 
-                            userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052', 
+                checkout([$class: 'GitSCM',
+                            branches: [[name: '*/master']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'] ],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052',
                                                 url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
                         ])
 
