@@ -1,0 +1,1494 @@
+#!/usr/bin/env groovy
+/**
+ * SPiFI_test_driver.jenkinsfile
+ *
+ * Test the SPiFI library
+ */
+
+// Configure default node restrictions
+String node_restriction = "RHEL7 || RHEL6 || master"
+
+
+
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                              daysToKeepStr: '365',       numToKeepStr: '90')),
+    disableConcurrentBuilds(),
+    parameters([
+        booleanParam(name: 'CleanWorkspace',
+                     defaultValue: false,
+                     description: '''Optionally clean the workspace before entering the pipeline.'''),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" ),
+        string(name: 'EMAIL_REPLYTO',
+               defaultValue: 'wcmclen@sandia.gov',
+               description: 'Default Reply-To email address.'),
+        string(name: 'EMAIL_FROM',
+               defaultValue: 'wg-sems-admin@mailgate.sandia.gov',
+               description: 'Default From email address.'),
+        string(name: 'EMAIL_DEVOPS',
+               defaultValue: 'wcmclen@sandia.gov',
+               description: 'Recipient List (space delimited) for testing result emails.'),
+    ])
+])
+// pipeline trigger with SCM Polling (old)
+// pipelineTriggers([ cron('H 0 * * *'), pollSCM('H/15 7-20 * * *') ]),
+
+
+
+// Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
+String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
+
+// What is the branch name that we want to use
+String branchName = "UNKNOWN"
+
+
+// Load node restriction(s) from parameters
+if(params.containsKey("NODE_RESTRICTION"))
+{
+  node_restriction = params.NODE_RESTRICTION
+}
+
+// Misc global vars.
+String email_body = ""
+List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
+
+
+// Global faiulre counter for use at the end of testing.
+Integer num_failures = 0
+Integer num_tests    = 0
+
+
+node(node_restriction)
+{
+    String emailDevOps  = "wcmclen@sandia.gov"
+    String emailReplyTo = "wcmclen@sandia.gov"
+    String emailFrom    = "wcmclen@sandia.gov"
+
+    if(params.containsKey("EMAIL_REPLYTO"))
+    {
+        emailReplyTo = params.EMAIL_REPLYTO
+    }
+    if(params.containsKey("EMAIL_FROM"))
+    {
+        emailFrom = params.EMAIL_FROM
+    }
+    if(params.containsKey("EMAIL_DEVOPS"))
+    {
+        emailDevOps = params.EMAIL_DEVOPS
+    }
+
+
+    // ----[ begin stage: Clean Workspace ]------------------------------------
+    stage('Clean Workspace')
+    {
+        boolean doCleanWorkspace = false
+        println "\u27A4\n" +
+                "\u27A4 Stage: Clean Workspace\n" +
+                "\u27A4"
+        if(params.containsKey("CleanWorkspace"))
+        {
+            if(params.CleanWorkspace)
+            {
+                doCleanWorkspace = true
+            }
+        }
+        if(doCleanWorkspace)
+        {
+            cleanWs();
+            println "\u27A4 Workspace cleaned."
+        }
+        else
+        {
+            println "\u27A4 Workspace NOT cleaned."
+        }
+    }
+    // ----[ end stage: Clean Workspace ]--------------------------------------
+
+
+    timeout(time: 60, unit: "MINUTES")
+    {
+
+
+
+        // Stage: Launch SPiFI_test_selectable_status job to make sure it works.
+        stage("Test Job Simulator Script")
+        {
+            boolean stage_passed = true
+
+            email_body += """
+                          <H3>Stage: Test Job Simulator Script</H3>
+                          <ol>
+                          """.stripIndent()
+
+            exit_status_list.each
+            {   _desired_exit_status ->
+
+                println ">>> TEST: SPiFI_test_selectable_status [${_desired_exit_status}]"
+
+                status = build job        : "SPiFI_test_selectable_status",
+                               quietPeriod: 0,
+                               propagate  : false,
+                               parameters : [ (string(name:"SLEEP_TIME",  value: "1")),
+                                              (string(name:"EXIT_STATUS", value: "${_desired_exit_status}"))
+                                            ]
+
+                if(status.getResult() != "${_desired_exit_status}")
+                {
+                    println ">>> ERROR: SPiFI_test_selectable_status job gave incorrect result.\n" +
+                            ">>>        Expected: ${_desired_exit_status} but got ${status.getResult()}"
+
+                    email_body += "<li>FAILED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
+                    stage_passed = false
+                }
+                else
+                {
+                    email_body += "<li>PASSED: SPiFI_test_selectable_status( ${_desired_exit_status} )</li>\n"
+                }
+            }
+            email_body += "</ol>\n"
+
+            // Test desired result: SUCCESS
+            if(!stage_passed)
+            {
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+        } // end stage
+
+
+
+        // Stage: Try to load SPiFI
+        stage("Test Load SPiFI Library")
+        {
+            boolean stage_passed = true
+
+            email_body += "<H3>Stage: Test Load SPiFI Library</H3>\n"
+
+            try
+            {
+                // (didn't work :/)
+                //@Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
+                //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
+
+                @Library('SPiFI-1_1_4-RC') _        // Release candidate version
+
+                email_body += "<ol>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@v1.1.4)</li>\n"
+
+                // Update branchName with spifi.Info.version() if possible
+                try
+                {
+                    branchName = gov.sandia.sems.spifi.Info.version()
+                    email_body += "  <li>PASSED: Version Loaded: ${branchName}</li>\n"
+                    println ">>> Branch Loaded Version Info OK: ${branchName}"
+                }
+                catch(ex)
+                {
+                    println "An error occurred loading gov.sandia.sems.spifi.Info.version()\n${ex}"
+                    email_body += "  <li>FAILED: Version Loaded: ${branchName}</li>\n"
+                    println ">>> Branch Loaded Version Info FAILED: ${branchName}"
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@v1.1.4)</li></ol>\n"
+                stage_passed = false
+            }
+
+            if(!stage_passed)
+            {
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+        }
+
+
+
+        // Stage: Parallel Job Launcher (dry-run mode jobs)
+        stage("Test Parallel Job Launcher (dry-run mode)")
+        {
+            boolean stage_passed = true
+
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
+
+            exit_status_list.each
+            {   _exit_status ->
+
+                println ">>> LAUNCHER: APPEND(T-${_exit_status}-DRYRUN)"
+
+                launcher.appendJob(label: "T-${_exit_status}-DRYRUN",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ],
+                                    dry_run: true,
+                                    dry_run_status: "${_exit_status}",
+                                    dry_run_delay: 1
+                                  )
+            }
+
+            // Print out the list of jobs.
+            try
+            {
+                launcher.printJobList()
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: launcher.printJobList failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            // Launch the jobs in parallel
+            def results = null
+            try
+            {
+                results = launcher.launchInParallel()
+                println(">>> results: ${results}")
+
+                email_body += "<H3>Stage: Test Parallel Job Launcher (dry-run mode)</H3>\n"
+                email_body += "<ol>\n"
+                exit_status_list.each
+                {   _exit_status ->
+
+                    String test_name = "T-${_exit_status}-DRYRUN"
+
+                    if(results["${test_name}"].status == "${_exit_status}")
+                    {
+                       email_body += "<li>PASSED: ${test_name}</li>\n"
+                    }
+                    else
+                    {
+                       stage_passed = false
+                       email_body += "<li>FAILED: ${test_name}</li>\n"
+                    }
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: launcher.launchInParallel failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            // Check result summary
+            try
+            {
+                def summary = launcher.getLastResultSummary()
+                println ">>> SUMMARY: ${summary}"
+
+                email_body += "<H4>Launcher Summary</H4>\n"
+                email_body += "<ol>\n"
+                if(summary.NUMJOBS == 5)
+                {
+                    email_body += "<li>PASSED: NUMJOBS == 5</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMJOBS != 5 (got ${summary.NUMJOBS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMSUCCESS == 1)
+                {
+                    email_body += "<li>PASSED: NUMSUCCESS == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMSUCCESS != 1 (got ${summary.NUMSUCCESS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMFAILURE == 1)
+                {
+                    email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMFAILURE != 1 (got ${summary.NUMFAILURE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMUNSTABLE == 1)
+                {
+                    email_body += "<li>PASSED: NUMUNSTABLE == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMUNSTABLE != 1 (got ${summary.NUMUNSTABLE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMABORTED == 1)
+                {
+                    email_body += "<li>PASSED: NUMABORTED == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMABORTED != 1 (got ${summary.NUMABORTED})</li>\n"
+                    stage_passed = false
+                }
+
+                if(summary.NUMNOT_BUILT == 1)
+                {
+                    email_body += "<li>PASSED: NUMNOT_BUILT == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMNOT_BUILT != 1 (got ${summary.NUMNOT_BUILT})</li>\n"
+                    stage_passed = false
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            /*
+            if(!stage_passed)
+            {
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+            */
+
+        }   // end stage
+
+
+
+        // Create 2 vars to carry over to the email builder stage if stage 4 passes.
+        def launcher_results = null
+        def launcher_summary = null
+
+        // Stage: Parallel Job Launcher (real-run mode jobs)
+        stage("Test Parallel Job Launcher (real-run mode)")
+        {
+            boolean stage_passed = true
+
+            def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
+
+            // Add one job of each type to the list
+            exit_status_list.each
+            {   _exit_status ->
+
+                println ">>> LAUNCHER: APPEND(T-${_exit_status}-RUN)"
+
+                launcher.appendJob(label: "T-${_exit_status}-RUN",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "${_exit_status}")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+            }
+
+            // Add jobs that test expected_duration_min and expected_duration_max bounds
+            // Both should have their status reset to UNSTABLE
+            launcher.appendJob(label: "T-EXPECTED-DURATION-MIN-RUN",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 90,
+                                timeout_unit: "SECONDS",
+                                expected_duration_min: 1,
+                                expected_duration_units: "MINUTES",
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "12"))
+                                            ]
+                                )
+
+            launcher.appendJob(label: "T-EXPECTED-DURATION-MAX-RUN",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 90,
+                                timeout_unit: "SECONDS",
+                                expected_duration_max: 8,
+                                expected_duration_units: "SECONDS",
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "12"))
+                                            ]
+                                )
+
+            // This test should fail due to TIMEOUT
+            launcher.appendJob(label: "T-TIMEOUT-TEST",
+                                job_name: "SPiFI_test_selectable_status",
+                                timeout: 5,
+                                timeout_unit: "SECONDS",
+                                parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
+                                              (string(name:"SLEEP_TIME",  value: "10"))
+                                            ]
+                                )
+
+
+            // Print out the list of jobs.
+            try
+            {
+                launcher.printJobList()
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- printJobList failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            // Launch the jobs in parallel
+            try
+            {
+                launcher_results = launcher.launchInParallel()
+
+                println(">>> results: ${launcher_results}")
+
+                email_body += "<H3>Stage: Test Parallel Job Launcher (real-run mode)</H3>\n"
+
+                email_body += "<ol>\n"
+                exit_status_list.each
+                {   _exit_status ->
+
+                    String test_name = "T-${_exit_status}-RUN"
+
+                    if(launcher_results["${test_name}"].status == "${_exit_status}")
+                    {
+                       email_body += "<li>PASSED: ${test_name}</li>\n"
+                    }
+                    else
+                    {
+                       stage_passed = false
+                       email_body += "<li>FAILED: ${test_name}</li>\n"
+                    }
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- launchInParallel failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            // Check result summary
+            try
+            {
+                launcher_summary = launcher.getLastResultSummary()
+                println ">>> SUMMARY: ${launcher_summary}"
+
+                email_body += "<H4>Launcher Summary</H4>\n"
+                email_body += "<ol>\n"
+                if(launcher_summary.NUMJOBS == 8)
+                {
+                    email_body += "<li>PASSED: NUMJOBS == 8</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMJOBS != 8 (got ${launcher_summary.NUMJOBS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMSUCCESS == 1)
+                {
+                    email_body += "<li>PASSED: NUMSUCCESS == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMSUCCESS != 1 (got ${launcher_summary.NUMSUCCESS})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMFAILURE == 2)
+                {
+                    email_body += "<li>PASSED: NUMFAILURE == 2</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMFAILURE != 2 (got ${launcher_summary.NUMFAILURE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMUNSTABLE == 3)
+                {
+                    email_body += "<li>PASSED: NUMUNSTABLE == 3</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMUNSTABLE != 3 (got ${launcher_summary.NUMUNSTABLE})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMABORTED == 1)
+                {
+                    email_body += "<li>PASSED: NUMABORTED == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMABORTED != 1 (got ${launcher_summary.NUMABORTED})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMNOT_BUILT == 1)
+                {
+                    email_body += "<li>PASSED: NUMNOT_BUILT == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMNOT_BUILT != 1 (got ${launcher_summary.NUMNOT_BUILT})</li>\n"
+                    stage_passed = false
+                }
+                email_body += "</ol>\n"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                println ">>> ERROR: parallelJobLauncher -- check last result summary failed"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+        }   // End Stage
+
+
+
+        // Stage: ResultsUtility (relies on Stage 4)
+        stage("Test ResultsUtility")
+        {
+            boolean stage_passed = true
+
+            println launcher_summary
+            println launcher_results
+
+            email_body += "<H3>Stage: Test Results Utility</H3>\n"
+
+            email_body += "<ol>\n"
+
+            def result_util = null
+            try
+            {
+                num_tests++
+                result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                email_body += "<li>PASSED: Instantiate</li>\n"
+            }
+            catch(ex)
+            {
+                email_body += "<li>FAILED: Instantiate</li>\n"
+                println ">>> ERROR:\n${ex}"
+                num_failures++
+            }
+
+            // Test Summary Table Generation (ASCII)
+            println ">>> Test Summary Table Generation (ASCII)"
+            try{
+                num_tests++
+                def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
+                email_body += "<li>PASSED: genResultSummaryTable (ASCII)</li>\n"
+                println ">>> summary table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (ASCII)</li>\n"
+                num_failures++
+            }
+
+            // Test Summary Table Generation (Markdown)
+            println ">>> Test Summary Table Generation (MARKDOWN)"
+            try{
+                num_tests++
+                def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
+                email_body += "<li>PASSED: genResultSummaryTable (MARKDOWN)</li>\n"
+                println ">>> summary table Markdown:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (MARKDOWN)</li>\n"
+                num_failures++
+            }
+
+            // Test Summary Table Generation (HTML)
+            println ">>> Test Summary Table Generation (HTML)"
+            try{
+                num_tests++
+                def output = result_util.genResultSummaryTable(summary: launcher_summary, format: "HTML")
+                email_body += "<li>PASSED: genResultSummaryTable (HTML)</li>\n"
+                println ">>> summary table HTML:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultSummaryTable (HTML)</li>\n"
+                num_failures++
+            }
+
+            // Test Detail Table Generation (ASCII)
+            println ">>> Test Detail Table Generation (ASCII)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results, format: "ASCII")
+                email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (ASCII)</li>\n"
+                num_failures++
+            }
+
+
+
+            // Test Detail Table Generation (MARKDOWN)
+            println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: default)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
+                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
+                num_failures++
+            }
+
+            println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results,
+                                                              format: "MARKDOWN",
+                                                              link_to_console: false)
+                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
+                num_failures++
+            }
+
+            println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results,
+                                                              format: "MARKDOWN",
+                                                              link_to_console: true)
+                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
+                num_failures++
+            }
+
+
+
+            // Test Detail Table Generation (HTML)
+            println ">>> Test Detail Table Generation (HTML, link_to_console: default)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results, format: "HTML")
+                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
+                num_failures++
+            }
+
+            println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results,
+                                                              format: "HTML",
+                                                              link_to_console: false)
+                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
+                num_failures++
+            }
+
+            println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
+            try{
+                num_tests++
+                def output = result_util.genResultDetailTable(results: launcher_results,
+                                                              format: "HTML",
+                                                              link_to_console: true)
+                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
+                println ">>> details table ascii:\n${output}"
+            }
+            catch(ex)
+            {
+                println "ERROR:\n${ex}"
+                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
+                num_failures++
+            }
+            email_body += "</ol>\n"
+        }  // End Stage
+
+
+
+        // Stage: Paralell Job Launcher Retries
+        stage("Test Parallel Job Launcher (retries)")
+        {
+            email_body += "<H3>Stage: Test Parallel Job Launcher (retries)</H3>\n"
+            email_body += "<OL>\n"
+
+            // Test Retries with SUCCESS w/ 2 conditions
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
+
+                launcher.appendJob(label: "T-RETRIES-01-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "3"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 5,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 1,
+                                                                                                     "retry_delay_units": "MINUTES",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 10,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                // Adding a 2nd job that will SUCCEED with no retries.
+                launcher.appendJob(label: "T-RETRIES-01-B",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 2)
+                {
+                    println ">>> T-RETRIES-01 FAILED: Expected 2 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 2)
+                {
+                    println ">>> T-RETRIES-01 FAILED: Expected 2 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final SUCCESS</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
+
+            // Test Retries with FAILURE w/ 2 conditions on 3 attempts (i.e., retries=2)
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+
+                // Job will FAIL after 2 retries (3 attempts)
+                launcher.appendJob(label: "T-RETRIES-02-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "5"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 2,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 1,
+                                                                                                     "retry_delay_units": "MINUTES",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 10,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                // Adding a 2nd job that will SUCCEED with no retries.
+                launcher.appendJob(label: "T-RETRIES-02-B",
+                                   job_name: "SPiFI_test_selectable_status",
+                                   timeout: 90,
+                                   timeout_unit: "SECONDS",
+                                   parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                                 (string(name:"SLEEP_TIME", value: "1"))
+                                               ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 2)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 2 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMFAILURE != 1)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 1 failure but got ${summary.NUMFAILUE}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 1)
+                {
+                    println ">>> T-RETRIES-02 FAILED: Expected 1 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final FAILURE</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final FAILURE</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
+
+
+            // Run retries until we get a success to reset the counter on the job.
+            // This job can be removed if we ever add a 'reset' option to
+            // SPiFI_test_pass_every_third
+            try
+            {
+                num_tests++
+
+                Boolean test_passed = true
+
+                def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher("env": this)
+
+                // Job will FAIL after 2 retries (3 attempts)
+                launcher.appendJob(label: "T-RETRIES-03-A",
+                                   job_name: "SPiFI_test_pass_every_third",
+                                   timeout: 6,
+                                   timeout_unit: "MINUTES",
+                                   parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
+                                                 (string(name:"PARAM_THRESHOLD",  value: "1"))
+                                               ],
+                                   dry_run: false,
+                                   retry_max_count: 99,
+                                   retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 5,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_UNSTABLE"),
+                                                       new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                                     "retry_delay": 5,
+                                                                                                     "retry_delay_units": "SECONDS",
+                                                                                                     "retry_regex": "TestingError_FAILURE")
+                                                     ]
+                                  )
+
+                launcher.printJobList()
+
+                def results = launcher.launchInParallel()
+                println ">>> Results:\n${results}"
+
+                def summary = launcher.getLastResultSummary()
+                def result_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+                def output = result_util.genResultSummaryTable(summary: summary, format: "ASCII")
+                println ">>> summary table:\n${output}"
+
+                if(summary.NUMJOBS != 1)
+                {
+                    println ">>> T-RETRIES-03 FAILED: Expected 1 jobs but got ${summary.NUMJOBS}"
+                    test_passed = false
+                }
+                if(summary.NUMSUCCESS != 1)
+                {
+                    println ">>> T-RETRIES-03 FAILED: Expected 1 success but got ${summary.NUMSUCCESS}"
+                    test_passed = false
+                }
+                if(test_passed)
+                {
+                    email_body += "<li>PASSED: Retries w/ final SUCCESS</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
+                    num_failures++
+                }
+            }
+            catch(ex)
+            {
+                println ">>> An Error occurred in ParallelJobLauncher w/ Retries on T-RETRIES-01"
+                println ">>> ERROR:\n${ex}"
+                sendEmailFailure(to: emailDevOps, reply_to: emailReplyTo, body: email_body)
+                return
+            }   // end Test
+
+            email_body += "</ol>\n"
+
+        }   // End Stage
+
+
+
+        // Stage: Test org.sandia.sems.spifi.Shell
+        stage("Shell")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Shell\n" +
+                    "\u27A4"
+            boolean stage_passed = true
+
+            email_body += "<H3>Stage: Test Shell</H3>\n"
+
+            email_body += "<ol>\n"
+
+            // Test a basic Shell command
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this, command: "ls -l -tr", verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
+                        "- console: ${output.console}\n"
+                email_body += "<li>PASSED: Shell.execute()</li>\n"
+            }
+            catch(e)
+            {
+                num_failures++
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+
+            // Test with retries
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls /aksfosuayfoausydfoy123123123",
+                                           retries: 2,
+                                           retry_delay: 2,
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.status == 2 && output.retries == 2)
+                {
+                    email_body += "<li>PASSED: Shell.execute() nonzero status retry failure</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                num_failures++
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+            }
+
+            // Test with retries and nonzero allowable status value
+            println "\u27A4 Shell.execute() nonzero status whitelisted"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls /aksfosuayfoausydfoy123123123",
+                                           retries: 2,
+                                           retry_delay: 2,
+                                           status_values_ok: [2],
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.status == 2 && output.retries==0)
+                {
+                    email_body += "<li>PASSED: Shell.execute() nonzero status whitelisted</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: Shell.execute() nonzero status whitelisted</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stderr"
+            println "\u27A4 Shell.execute() output_option='stderr'"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
+                                           output_type: "stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout"
+            println "\u27A4 Shell.execute() output_option='stdout'"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
+                                           output_type: "stdout",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(!output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            // Test the output_option=="stdout+stderr"
+            println "\u27A4 Shell.execute() output_option='stdout+stderr'"
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+                def output = shell.execute(env: this,
+                                           command: "ls -l . /asfasqpasqpasqpasqpasqp",
+                                           output_type: "stdout+stderr",
+                                           verbose: true)
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n"  +
+                        "- console:\n${output.console}\n"
+                if(output.console.contains("ls: cannot access /asfasqpasqpasqpasqpasqp:") && output.console.contains("total"))
+                {
+                    println "\u27A4 PASSED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>PASSED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                }
+                else
+                {
+                    println "\u27A4 FAILED: Shell.execute() output_option=='stdout+stderr'\n"
+                    email_body += "<li>FAILED: Shell.execute() output_option=='stdout+stderr'</li>\n"
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "\u27A4 ERROR occurred in Shell():\n${e}"
+                num_failures++
+            }
+
+            email_body += "</ol>\n"
+
+        } // End Stage
+
+
+
+        // Stage: Git: Test org.sandia.sems.spifi.Git
+        stage("Git")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Git\n" +
+                    "\u27A4"
+
+            email_body += "<H3>Stage: Test Git</H3>\n"
+            email_body += "<ol>\n"
+            try
+            {
+                num_tests++
+
+                def git_spifi = new gov.sandia.sems.spifi.Git()
+
+                // Delete the SPiFI directory if it's already there.
+                String stdout = sh(script: "rm -rf SPiFI", returnStdout: true)
+
+                Boolean passed = git_spifi.clone(env: this,
+                                                 dir: "SPiFI",
+                                                 branch: branchName,
+                                                 url: "git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git",
+                                                 credentialsId: "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052",
+                                                 retries: 2,
+                                                 retry_delay: 10,
+                                                 timeout: 90,
+                                                 timeout_units: "SECONDS",
+                                                 verbose: true
+                                                )
+
+                if(!passed)
+                {
+                    num_failures++
+                    email_body += "<li>FAILED: Git.clone() clone a copy of SPiFI</li>\n"
+                }
+                else
+                {
+                    stdout = sh(script: "ls -ltr SPiFI/", returnStdout: true)
+                    println "STDOUT:\n${stdout}"
+                    email_body += "<li>PASSED: Git.clone() clone a copy of SPiFI</li>\n"
+                }
+            }
+            catch(ex)
+            {
+                email_body += "<li>FAILED: Git.clone() threw an exception</li>\n"
+                println "ERROR: Git.clone() threw an exception:\n${ex}"
+                num_failures++
+                currentBuild.result='FAILURE'
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+
+            email_body += "</ol>\n"
+
+            // Cleanup the clone
+            dir("SPiFI")
+            {
+                deleteDir()
+            }
+
+        } // End Stage
+
+
+
+        // Stage: Test running a shell script that clones a repository that has the
+        //        Jenkins entity account as a member.
+        stage("Test Shell Script that Clones")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Shell Script that Clones\n" +
+                    "\u27A4"
+            email_body += "<H3>Stage: Test Clone from Script</H3>\n"
+            email_body += "<ol>\n"
+
+            String repository_url = "git@gitlab-ex.sandia.gov:SEMS/sems-son-gitlab-test-repository.git"
+            //String credentials_id = "80984bf0-0cb7-47ca-bf7a-892919ea7f34"
+            //String repository_url = "git@gitlab.sandia.gov:SEMS/sems-snl-gitlab-test-repository.git"
+            //String credentials_id = "0aacc0f3-7e90-4b0f-9eda-068f1d6ce052"
+
+            try
+            {
+                num_tests++
+                def shell = new gov.sandia.sems.spifi.Shell()
+
+                // SPiFI expects a checkout of SPiFI into $WORKSPACE/SPiFI/
+                checkout([$class: 'GitSCM',
+                            branches: [[name: '*/master']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'] ],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052',
+                                                url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
+                        ])
+
+                def output = shell.execute(env: this,
+                                           command: "SPiFI/tests/snlgitlab-clone-test.sh ${repository_url}",
+                                           retries: 2,
+                                           retry_delay: 10,
+                                           timeout: 2,
+                                           timeout_units: "MINUTES",
+                                           verbose: true)
+
+                println "Shell Output:\n" +
+                        "- retries: ${output.retries}\n" +
+                        "- status : ${output.status}\n" +
+                        "- console: ${output.console}\n"
+
+                if(0 == output.status)
+                {
+                    email_body += "<li>PASSED: Test Shell Script that clones a private repository.</li>\n"
+                }
+                else
+                {
+                    println "ERROR: nonzero exit status returned."
+                    email_body += "<li>FAILED: Test Shell Script that clones a private repository.\n"
+                    email_body += "</li>\n"
+                    currentBuild.result='FAILURE'
+                    num_failures++
+                }
+            }
+            catch(e)
+            {
+                num_failures++
+                currentBuild.result='FAILURE'
+                email_body += "<li>FAILED: Shell.execute() threw an exception</li>\n"
+                println "ERROR: occurred in Shell():\n${e}"
+            }
+            email_body += "</ol>\n"
+        }  // End Stage
+
+
+
+        // Stage: Test HTMLUtility
+        stage("Test HTMLUtility")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test HTMLUtility\n" +
+                    "\u27A4"
+            email_body += "<H3>Stage: Test HTMLUtility</H3>\n"
+
+            def htmlutil = new gov.sandia.sems.spifi.HTMLUtility(env: this)
+
+            // Test generating an ordered list.
+            List email_data = []
+            try
+            {
+                num_tests++
+                email_data.add("PASSED: HTMLUtility: Generate Ordered List")
+                email_body += htmlutil.generateList(data: email_data)
+            }
+            catch(ex)
+            {
+                email_body += "<OL>\n"
+                email_body += "    <LI>FAILED: HTMLUtility: Generate Ordered List</LI>\n"
+                email_body += "</OL>\n"
+                currentBuild.result='FAILURE'
+                num_failures++
+                println "ERROR:\n${ex}\n"
+            }
+
+            // Test generating an unordered list
+            email_data = []
+            try
+            {
+                num_tests++
+                email_data = []
+                email_data.add("PASSED: HTMLUtility: Generate Unordered List")
+                email_body += htmlutil.generateList(data: email_data, unordered_list: true)
+            }
+            catch(ex)
+            {
+                email_body += "<OL>\n"
+                email_body += "    <LI>FAILED: HTMLUtility: Generate Unordered List</LI>\n"
+                email_body += "</OL>\n"
+                currentBuild.result='FAILURE'
+                num_failures++
+                println "ERROR:\n${ex}\n"
+            }
+        }  // End Stage
+
+
+
+        stage("Cleanup")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Cleanup\n" +
+                    "\u27A4"
+            if(fileExists("SPiFI"))
+            {
+                dir("SPiFI")
+                {
+                    deleteDir()
+                }
+            }
+        }   // End Stage
+
+
+
+        // Stage: Summary (is that even necessary?)
+        stage("Email Summary")
+        {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Summary\n" +
+                    "\u27A4"
+
+            // Final test is to try and send email using SPiFI EmailMessage class
+            // if it fails then send the usual email.
+            try
+            {
+                num_tests++
+                String status = "SUCCESS"
+                if(0 != num_failures)
+                {
+                    status = "FAILURE"
+                    currentBuild.result = "FAILURE"
+                }
+
+                String email_body_summary = ""
+                email_body_summary += "<H1>Testing Summary</H1>\n" +
+                                      "<H3>Overview</H3>\n" +
+                                      "<ol>\n" +
+                                      "  <li>Final Status: ${status}</li>\n" +
+                                      "  <li>Num Tests   : ${num_tests}</li>\n" +
+                                      "  <li>Num Failures: ${num_failures}</li>\n" +
+                                      "  <li>Job node    : ${NODE_NAME}</li>\n" +
+                                      "</ol>\n"
+                email_body = email_body_summary + email_body
+
+                email_body += "<P>--<BR/>View output on <A HREF=\"${BUILD_URL}\">Jenkins</A>.</P>"
+
+                mail to:       emailDevOps,
+                     replyTo:  emailReplyTo,
+                     from:     emailFrom,
+                     mimeType: "text/html",
+                     subject:  "[SPiFI] Testing Summary ${status} for ${branchName} on ${jenkins_site}",
+                     body:     email_body
+            }
+            catch(e)
+            {
+                num_failures++
+                println ">>> ERROR:${e}"
+                email_body += "<H3>Stage (9): Email Summary</H3>\n"
+                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
+                return
+            }
+        }   // End Stage
+
+
+
+    }   // timeout
+}   // node
+
+
+
+def sendEmailFailure(Map params)
+{
+    String email_body_summary = ""
+    email_body_summary += "<H1>Testing Summary</H1>\n" +
+                          "<H3>Overview</H3>\n" +
+                          "<ol>\n" +
+                          "  <li>Final Status: FAILURE</li>\n" +
+                          "  <li>Num Tests   : ${num_tests}</li>\n" +
+                          "  <li>Num Failures: ${num_failures}</li>\n" +
+                          "  <li>Job node    : ${NODE_NAME}</li>\n" +
+                          "</ol>\n"
+
+    email_body = email_body_summary + params.body
+
+    sendEmailSummary(to:         params.to,
+                     reply_to:   params.reply_to,
+                     email_from: params.from,
+                     subject:    "[SPiFI] Testing Summary FAILED",
+                     body:       email_body)
+    currentBuild.result='FAILURE'
+}
+
+
+
+def sendEmailSummary(Map params)
+{
+    String email_message = """
+                           <HTML>
+                           <HEAD>
+                           </HEAD>
+                           <BODY>
+                           {{MESSAGE_BODY}}
+                           </BODY>
+                           </HTML>
+                           """.stripIndent()
+
+    String __email_message = email_message.replace("{{MESSAGE_BODY}}", params.body)
+
+    mail to:       params.to,
+         replyTo:  params.reply_to,
+         from:     params.from,
+         mimeType: 'text/html',
+         subject:  params.subject,
+         body:     __email_message
+}
+
