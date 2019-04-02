@@ -7,7 +7,7 @@
 node("master")
 {
     // Load the SPiFI library
-    @Library('SPiFI') _
+    @Library('SPiFI-DEV@v1.1.4') _
 
     // Pipeline Stage
     stage("MyStage")
