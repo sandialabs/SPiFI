@@ -31,7 +31,8 @@ node("master")
                            retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
                                                                                              "retry_delay": 1,
                                                                                              "retry_delay_units": "MINUTES",
-                                                                                             "retry_regex": "TestingError_UNSTABLE"),                                                         new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                             "retry_regex": "TestingError_UNSTABLE"),                                                         
+                                               new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
                                                                                              "retry_delay": 10,
                                                                                              "retry_delay_units": "SECONDS",
                                                                                              "retry_regex": "TestingError_FAILURE")
