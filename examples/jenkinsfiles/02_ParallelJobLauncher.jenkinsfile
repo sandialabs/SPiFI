@@ -30,7 +30,7 @@ node()
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
-        if(summary.NUMTESTS != summary.NUMSUCCESS)
+        if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
             currentBuild.result = 'FAILURE'
             return
