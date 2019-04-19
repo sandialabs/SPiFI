@@ -8,14 +8,13 @@ properties([
         logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
     ),
     disableConcurrentBuilds(),
-    pipelineTriggers([cron('0 23 * * *')]),
     parameters([ booleanParam(name: 'DryRun', defaultValue: true,
                               description: '''dry-run mode: echo commands but don't run anything'''),
                  booleanParam(name: 'CleanWorkspace', defaultValue: false,
                               description: '''Optionally clean the workspace before entering the pipeline.'''),
-                 stringParam(name: 'EmailReplyTo', defaultValue: "dmvigi@sandia.gov",
+                 stringParam(name: 'EmailReplyTo', defaultValue: "wcmclen@sandia.gov",
                              description: '''Reply-To email address for generated status messages.'''),
-                 stringParam(name: 'EmailDevOps',  defaultValue: "wcmclen@sandia.gov dmvigi@sandia.gov",
+                 stringParam(name: 'EmailDevOps',  defaultValue: "wcmclen@sandia.gov",
                              description: '''Email list for dev-ops team.  Separate multiple email addresses using spaces.''')
                ])
 ])
@@ -28,8 +27,9 @@ properties([
 //   where the parameter won't exist.
 Boolean do_clean_workspace = false
 Boolean do_dry_run = true
-String email_devops = "email1@foo.org email2@foo.org"
-String email_replyto   = "email3@foo.org"
+
+String email_devops  = "wcmclen@sandia.gov"
+String email_replyto = "wcmclen@sandia.gov"
 
 // If the parameter exists, set the values.
 if(params.containsKey("DryRun"))
@@ -113,10 +113,10 @@ node("master")
     stage("Notify")
     {
         // Set up email subject and prepend a header to the email based on status.
-        String email_subject = "My Test Results: SUCCESS"
+        String email_subject = "[SPiFI] Example 04 PJL MultiStageEmail: SUCCESS"
         if("SUCCESS" != pipeline_status)
         {
-            email_subject = "My Test Results: FAILURE"
+            email_subject = "[SPiFI] Example 04 PJL MultiStageEmail: FAILURE"
             email_body = "<H1>Testing Result: FAILURE</H1>\n" + email_body
         }
         else
