@@ -14,7 +14,7 @@ node()
         // Add some jobs to run
         launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
         launcher.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
-        launcher.appendJob(label: "Job-3", job_name: "YE_ANOTHER_JENKINS_JOB")
+        launcher.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
 
         // Pretty Print the list of jobs to console output
         launcher.printJobList()
@@ -39,6 +39,7 @@ node()
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
+            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
             currentBuild.result = 'FAILURE'
             return
         }
