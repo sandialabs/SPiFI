@@ -68,6 +68,7 @@ node("master")
     } // end Stage: cleanup
 
 
+
     // Do some work
     stage("Run Tests")
     {
@@ -77,7 +78,7 @@ node("master")
         // Add some jobs to run
         launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
         launcher.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
-        launcher.appendJob(label: "Job-3", job_name: "YE_ANOTHER_JENKINS_JOB")
+        launcher.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
 
         // Pretty Print the list of jobs to console output
         launcher.printJobList()
@@ -105,16 +106,12 @@ node("master")
         // If all jobs didn't pass, update the pipeline_status var
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
+            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
             pipeline_status = 'FAILURE'
         }
     }  // end stage: Run Tests
 
-    // BEGIN HACK
-    // - This is a hack, the jobs this pipeline tries to launch probably don't exist, 
-    //   but for internal testing purposes, I don't want to fail the job so this just
-    //   forces the job result to be a 'SUCCESS'.
-    pipeline_status = 'SUCCESS'
-    // END HACK
+
 
     // Email the results to DevOPS
     stage("Notify")
