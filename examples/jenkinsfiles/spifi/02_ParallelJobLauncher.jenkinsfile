@@ -4,8 +4,8 @@
  */
 node()
 {
-    // Load the SPiFI library, v1.0.0
-    @Library('SPiFI@v1.0.0') _
+    // Load the SPiFI library
+    @Library('SPiFI') _
 
 
     // Pipeline Stage
