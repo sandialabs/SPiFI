@@ -12,9 +12,9 @@ properties([
                               description: '''dry-run mode: echo commands but don't run anything'''),
                  booleanParam(name: 'CleanWorkspace', defaultValue: false,
                               description: '''Optionally clean the workspace before entering the pipeline.'''),
-                 stringParam(name: 'EmailReplyTo', defaultValue: "wcmclen@sandia.gov",
+                 stringParam(name: 'EMAIL_REPLYTO', defaultValue: "wcmclen@sandia.gov",
                              description: '''Reply-To email address for generated status messages.'''),
-                 stringParam(name: 'EmailDevOps',  defaultValue: "wcmclen@sandia.gov",
+                 stringParam(name: 'EMAIL_DEVOPS',  defaultValue: "wcmclen@sandia.gov",
                              description: '''Email list for dev-ops team.  Separate multiple email addresses using spaces.''')
                ])
 ])
@@ -36,13 +36,13 @@ if(params.containsKey("DryRun"))
 {
     do_dry_run = params.DryRun;
 }
-if(params.containsKey("EmailReplyTo"))
+if(params.containsKey("EMAIL_REPLYTO"))
 {
-    email_replyto = params.EmailReplyTo
+    email_replyto = params.EMAIL_REPLYTO
 }
-if(params.containsKey("EmailDevOps"))
+if(params.containsKey("EMAIL_DEVOPS"))
 {
-    email_devops = params.EmailDevOps
+    email_devops = params.EMAIL_DEVOPS
 }
 if(params.containsKey("CleanWorkspace"))
 {
