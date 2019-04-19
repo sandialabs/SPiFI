@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
-// Load the SPiFI library, v1.0.0
-@Library('SPiFI@v1.0.0') _
+// Load the SPiFI library
+@Library('SPiFI') _
 
 node()
 {
@@ -27,7 +27,6 @@ node()
 
         // Print out ASCII tables of the run.
         def results_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
-
 
         // Print out the summary table to the Jenkins console (i.e., NUMJOBS, NUMSUCCESS, NUMFAILURE, etc.)
         println results_util.genResultSummaryTable(format: "ASCII", summary: summary)
