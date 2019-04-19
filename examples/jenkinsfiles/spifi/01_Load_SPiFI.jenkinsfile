@@ -4,8 +4,16 @@
  */
 node()
 {
-    // Load the SPiFI library, v1.0.0
-    @Library('SPiFI@v1.0.0') _
+    // Load the SPiFI library
+    @Library('SPiFI') _
+
+    // This command would load the branch of SPiFI named "v1.0.0" if 
+    // Jenkins is configured to allow specific branches or tags to be
+    // loaded.
+    // @Library('SPiFI@v1.0.0') _
+
+    // Print out the library version of SPiFI
+    println "Loaded SPiFI version: ${gov.sandia.sems.spifi.Info.version()}"
 
 }
 
