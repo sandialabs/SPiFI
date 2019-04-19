@@ -72,7 +72,7 @@ node("master")
     stage("Run Tests")
     {
         // Instantiate a ParallelJobLauncher
-        def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+        def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
 
         // Add some jobs to run
         launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
