@@ -1,0 +1,74 @@
+#!/usr/bin/env groovy
+/**
+ * Example pipeline demonstrating use of the Locakble Resources plugin.
+ *
+ * This job will recursively call itself, incrementing PARAM_CALLDEPTH by 1
+ * until it hits the limit at PARAM_MAXDEPTH. 
+ * 
+ * Each time the job is called it first tries to grab a lock on the resource
+ * named 'lblBlocker001' and will block until it can grab it. Once it has the
+ * lock, it will call itself in a non-blocking manner and then wait 30 secons
+ * before releasing the lock.
+ *
+ * The expected behavior of this job is that only 2 occurrences of this job will
+ * be active at any time with the 2nd job blocked waiting on the 1st job to release
+ * its lock on the resource.
+ *
+ * Note: By placing the `node() { }` block *inside* the `lock() { ... }` Jenkins 
+ *       will not attempt to grab any executors for the blocked job.
+ *
+ * Dependencies:
+ * - Lockable Resources plugin
+ *
+ */
+properties(
+    [
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30')),
+        parameters(
+            [string(name: 'PARAM_CALLDEPTH', defaultValue: '1', trim: true, description: 'Current call depth.'),
+             string(name: 'PARAM_MAXDEPTH',  defaultValue: '4', trim: true, description: 'Maximum call depth.'),
+            ]
+        )
+    ]
+)
+
+Integer callDepthLimit = 3
+Integer callDepth = 1
+if(params.containsKey("PARAM_CALLDEPTH"))
+{
+    callDepth = params.PARAM_CALLDEPTH as Integer
+}
+if(params.containsKey("PARAM_MAXDEPTH"))
+{
+    callDepthLimit = params.PARAM_MAXDEPTH as Integer
+}
+
+
+// Lock resource: 'libBlocker001'
+lock(resource: "lblBlocker001")
+{
+    node()
+    {
+        stage("myjob")
+        {
+            println "Execute\n" +
+                    "-- Call Depth = ${callDepth}\n" +
+                    "-- Max Depth  = ${callDepthLimit}"
+            if(callDepth <= callDepthLimit)
+            {
+                build job: "${env.JOB_NAME}",
+                      parameters: [string(name: "PARAM_CALLDEPTH", value: "${callDepth+1}")],
+                      propagate: false,     // don't propagate error to this pipeline
+                      wait: false           // don't wait for job to finish
+            }
+            else
+            {
+                println "Will not launch ${env.JOB_NAME} because call depth > ${callDepthLimit}."
+            }
+            sleep time: 30, unit: "SECONDS"
+        }   // end stage myjob
+    }   // end node()
+}   // end lock resource 'lblBlocker001'
+
+
+
