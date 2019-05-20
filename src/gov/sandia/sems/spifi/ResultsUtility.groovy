@@ -403,13 +403,14 @@ class ResultsUtility implements Serializable
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f}", duration)
-            if (r != params.results.values().last())
+            //if (r != params.results.values().last())
+            if (r != params.results[-1])
                 output += ", "
         }
         output += "]}"
 
         // beautify the json so it's more human readable
-        output = groovy.json.JsonOutput.prettyPrint(output)
+        // output = groovy.json.JsonOutput.prettyPrint(output)
         return output
     }
 
