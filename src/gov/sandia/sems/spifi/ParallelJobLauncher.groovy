@@ -597,8 +597,13 @@ class ParallelJobLauncher
                 }   // else not a dry run...
 
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
-            }  // Timeout
-        }      // Try
+            }  // End Timeout
+
+            // TODO: See if we can identify the job build id and url, etc. even when jobs timeout... 
+            //       maybe launch in non-blocking mode, get the info, and then block on results?  
+            //       (if this is possible in Jenkins' groovy).
+
+        }      // End Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
             this._env.println "SPiFI> --------------------------------------------------------\n" +

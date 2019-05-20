@@ -404,7 +404,7 @@ class ResultsUtility implements Serializable
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f}", duration)
             //if (r != params.results.values().last())
-            if (r != params.results[-1])
+            if ( !(r.id == params.results[-1].id && r.name == params.results[-1].name) )
                 output += ", "
         }
         output += "]}"
