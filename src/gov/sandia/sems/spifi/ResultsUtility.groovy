@@ -402,7 +402,7 @@ class ResultsUtility implements Serializable
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f}", duration)
-            if (r != params.results.last())
+            if (r != params.results.values().last())
                 output += ", "
         }
         output += "]}"
