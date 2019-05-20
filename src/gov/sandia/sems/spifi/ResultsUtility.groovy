@@ -399,7 +399,7 @@ class ResultsUtility implements Serializable
             Float duration = r.value.duration
             output += "{"
             output += "\"name\": \"${r.value.job}\", "
-            output += sprintf("\"id\": \"%i\", ", r.value.id)
+            output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f}", duration)
             if (r != params.results.last())
