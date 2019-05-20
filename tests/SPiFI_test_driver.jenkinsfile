@@ -83,10 +83,11 @@ node(node_restriction)
     // ----[ begin stage: Clean Workspace ]------------------------------------
     stage('Clean Workspace')
     {
-        boolean doCleanWorkspace = false
         println "\u27A4\n" +
                 "\u27A4 Stage: Clean Workspace\n" +
                 "\u27A4"
+
+        boolean doCleanWorkspace = false
         if(params.containsKey("CleanWorkspace"))
         {
             if(params.CleanWorkspace)
@@ -115,6 +116,9 @@ node(node_restriction)
         // Stage: Launch SPiFI_test_selectable_status job to make sure it works.
         stage("Test Job Simulator Script")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Job Simulator Script\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += """
@@ -163,6 +167,9 @@ node(node_restriction)
         // Stage: Try to load SPiFI
         stage("Test Load SPiFI Library")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Load SPiFI Library\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             email_body += "<H3>Stage: Test Load SPiFI Library</H3>\n"
@@ -214,6 +221,9 @@ node(node_restriction)
         // Stage: Parallel Job Launcher (dry-run mode jobs)
         stage("Test Parallel Job Launcher (dry-run mode)")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Parallel Job Launcher (dry-run mode)\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
@@ -378,6 +388,9 @@ node(node_restriction)
         // Stage: Parallel Job Launcher (real-run mode jobs)
         stage("Test Parallel Job Launcher (real-run mode)")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Parallel Job Launcher (real-run mode)\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(env: this)
@@ -565,6 +578,9 @@ node(node_restriction)
         // Stage: ResultsUtility (relies on Stage 4)
         stage("Test ResultsUtility")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test ResultsUtility\n" +
+                    "\u27A4"
             boolean stage_passed = true
 
             println launcher_summary
@@ -770,6 +786,9 @@ node(node_restriction)
         // Stage: Paralell Job Launcher Retries
         stage("Test Parallel Job Launcher (retries)")
         {
+            println "\u27A4\n" +
+                    "\u27A4 Stage: Test Parallel Job Launcher (retries)\n" +
+                    "\u27A4"
             email_body += "<H3>Stage: Test Parallel Job Launcher (retries)</H3>\n"
             email_body += "<OL>\n"
 
