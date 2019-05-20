@@ -583,8 +583,8 @@ node(node_restriction)
                     "\u27A4"
             boolean stage_passed = true
 
-            println launcher_summary
-            println launcher_results
+            println "launcher_summary:\n" + launcher_summary
+            println "launcher_results:\n" + launcher_results
 
             email_body += "<H3>Stage: Test Results Utility</H3>\n"
 
