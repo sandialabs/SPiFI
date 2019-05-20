@@ -15,6 +15,7 @@
  */
 package gov.sandia.sems.spifi;
 
+import groovy.json.*
 
 
 /**
@@ -406,6 +407,9 @@ class ResultsUtility implements Serializable
                 output += ", "
         }
         output += "]}"
+
+        // beautify the json so it's more human readable
+        output = groovy.json.JsonOutput.prettyPrint(output)
         return output
     }
 
