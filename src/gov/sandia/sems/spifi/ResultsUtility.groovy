@@ -404,7 +404,13 @@ class ResultsUtility implements Serializable
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f}", duration)
             //if (r != params.results.values().last())
-            if ( !(r.id == params.results[-1].id && r.name == params.results[-1].name) )
+            this._env.println "SPiFI-DEBUG]> r isa " + r.getClass().getName() + "\n" +
+                              "SPiFI-DEBUG]> r   : " + r
+            this._env.println "SPiFI-DEBUG]> r.getKey()  : " + r.getKey()
+            this._env.println "SPiFI-DEBUG]> r.getValue(): " + r.getValue()
+
+            //if ( !(r.id == params.results[-1].id && r.name == params.results[-1].name) )
+            if ( r != params.results[-1] )
                 output += ", "
         }
         output += "]}"
