@@ -99,15 +99,15 @@ class ResultsUtility implements Serializable
 
 
     /**
-     * Generate a pretty printable list of results by job from the results output
-     * of ParallelJobLauncher.launchInParallel()
+     * Generate a list of results by job from the results output of
+     * ParallelJobLauncher.launchInParallel()
      *
      * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
      *
      * @param results         [REQUIRED] Map     - Results from a call to
      *                                             ParallelJobLauncher.launchInParallel()
      * @param format          [OPTIONAL] String  - Type of output table to generate.
-     *                                             Must be one of: [ ASCII | HTML | MARKDOWN ]
+     *                                             Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
      *                                             Default: ASCII
      * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML 
      *                                             and Markdown will be to the console
@@ -148,6 +148,9 @@ class ResultsUtility implements Serializable
                 break
             case "ASCII":
                 output += this._genResultDetailTableASCII(params)
+                break
+            case "JSONL":
+                output += this._genResultDetailTableJSONL(params)
                 break
             default:
                 output += this._genResultDetailTableASCII(params)
@@ -366,6 +369,43 @@ class ResultsUtility implements Serializable
 
             output += sprintf("   %-9s   |   %-8.2f   |   %-70s\n", [r.value.status, duration, job_name])
         }
+        return output
+    }
+
+
+    /**
+     * Private method.  Format a string containing results from the ParallelJobLauncher
+     * detailed results in JSONL format.
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @return String containing the formatted results
+     */
+    def _genResultDetailTableJSONL(params)
+    {
+        def timestamp = new Date()
+        String output = "{"
+        output += "\"datestamp\": \"" +
+          timestamp.format("yyyy-MM-dd") + "\", "
+        output += "\"timestamp\": \"" +
+          timestamp.format("HH:mm:ss") + "\", "
+        output += "\"jobs\": ["
+        params.results.each
+        {   r ->
+            assert r.value.containsKey("job")
+            assert r.value.containsKey("id")
+            assert r.value.containsKey("status")
+            assert r.value.containsKey("duration")
+            Float duration = r.value.duration
+            output += "{"
+            output += "\"name\": \"${r.value.job}\", "
+            output += sprintf("\"id\": \"%i\", ", r.value.id)
+            output += "\"status\": \"${r.value.status}\", "
+            output += sprintf("\"duration\": %.2f}", duration)
+            if (r != params.results.last())
+                output += ", "
+        }
+        output += "]}"
         return output
     }
 
