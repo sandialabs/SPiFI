@@ -110,6 +110,79 @@ class ResultsUtility implements Serializable
      * @param format          [OPTIONAL] String  - Type of output table to generate.
      *                                             Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
      *                                             Default: ASCII
+     * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML
+     *                                             and Markdown will be to the console
+     *                                             output on Jenkins.  If false, the
+     *                                             links will point at the job itself.
+     *                                             Default: false
+     * @param beautify        [OPTIONAL] Boolean - Toggle beautification of the output to make it more
+     *                                             human-readable.  This option is only used when 
+     *                                             format is set to one of: [ JSONL ]
+     *                                             Default: false
+     *
+     * @return String containing the Detail table for results that can be inserted into
+     *                the console log, email, etc.
+     *
+     */
+    def genResultDetails(Map params)
+    {
+        // If format isn't provided, make it ASCII
+        if(!params.containsKey("format"))
+        {
+            params["format"] = "ASCII"
+        }
+        // Set link_to_console if it's not already set.
+        if(!params.containsKey("link_to_console"))
+        {
+            params["link_to_console"] = false
+        }
+        // If unspecified, set the beautify parameter to false.
+        if(!params.containsKey("beautify"))
+        {
+            params["beautify"] = false
+        }
+
+        // Check required param: results
+        assert params.containsKey("results")
+
+        String output = ""
+
+        switch(params.format)
+        {
+            case "HTML":
+                output += this._genResultDetailTableHTML(params)
+                break
+            case "MARKDOWN":
+                output += this._genResultDetailTableMarkdown(params)
+                break
+            case "ASCII":
+                output += this._genResultDetailTableASCII(params)
+                break
+            case "JSONL":
+                output += this._genResultDetailTableJSONL(params)
+                break
+            default:
+                output += this._genResultDetailTableASCII(params)
+                break
+        }
+        return output
+    }
+
+
+
+
+    /**
+     * *** DEPRECATED ***
+     * Generate a list of results by job from the results output of
+     * ParallelJobLauncher.launchInParallel()
+     *
+     * @see gov.sandia.sems.spifi.ParallelJobLauncher::launchInParallel()
+     *
+     * @param results         [REQUIRED] Map     - Results from a call to
+     *                                             ParallelJobLauncher.launchInParallel()
+     * @param format          [OPTIONAL] String  - Type of output table to generate.
+     *                                             Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
+     *                                             Default: ASCII
      * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML 
      *                                             and Markdown will be to the console
      *                                             output on Jenkins.  If false, the 
@@ -122,6 +195,11 @@ class ResultsUtility implements Serializable
      */
     def genResultDetailTable(Map params)
     {
+        this._env.println "SPiFI]> DEPRECATION NOTICE BEGIN\n" +
+                          "SPiFI]>   ResultsUtility::genResultDetailTable() is deprecated, use\n" +
+                          "SPiFI]>   ResultsUtility::genResultDetails() instead.\n" +
+                          "SPiFI]> DEPRECATION NOTICE END"
+
         // If format isn't provided, make it ASCII
         if(!params.containsKey("format"))
         {
@@ -416,8 +494,11 @@ class ResultsUtility implements Serializable
         }
         output += "]}"
 
-        // beautify the json so it's more human readable
-        // output = groovy.json.JsonOutput.prettyPrint(output)
+        // Optionally, beautify the json so it's more human readable
+        if(params.beautify)
+        {
+            output = groovy.json.JsonOutput.prettyPrint(output)
+        }
         return output
     }
 
