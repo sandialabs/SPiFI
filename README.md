@@ -37,6 +37,15 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master : 2019-05-20
+- DEPRECATION: `ResultsUtility::genResultDetailTable()` replaced with `ResultsUtility::genResultDetails()`
+- FEATURE: Adds JSONL option to `ResultsUtility::genResultDetails()`
+- FEATURE: Add optional Boolean parameter `beautify` to `ResultsUtility::genResultDetails()`
+  - Only used by JSONL format currently.
+  - Default is false.
+  - If set to true, it tries to beautify the output to make it more human readable.
+  - Is NOT available to `ResultsUtility::genResultDetailTable()` since that is going away.
+
 #### v1.1.4 : 2019-03-26
 - DEPRECATION: ParallelJobLauncher constructor with signature `ParallelJobLauncher(env)` will be replaced by a variant that uses
   a Map parameter to be consistent with the other classes and functions in SPiFI.  Use the form: `ParallelJobLauncher(env: <env>)`
