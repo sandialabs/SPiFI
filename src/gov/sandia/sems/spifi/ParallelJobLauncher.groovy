@@ -106,10 +106,10 @@ class ParallelJobLauncher
     @Deprecated
     ParallelJobLauncher(env)
     {
-        this.println "[SPiFI]>\n" +
-                     "[SPiFI]> DEPRECATION NOTICE: ParallelJobLauncher(this) will be deprecated in 2.0.0\n" +
-                     "[SPiFI]> DEPRECATION NOTICE: -  Please use ParallelJobLauncher(\"env\": this)\n" +
-                     "[SPiFI]>"
+        this.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                     "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher(this) will be deprecated in 2.0.0\n" +
+                     "[SPiFI DEPRECATION NOTICE]> -  Please use ParallelJobLauncher(\"env\": this)\n" +
+                     "[SPiFI DEPRECATION NOTICE]>"
 
         // Set Parameter Default(s)
         this._env = env

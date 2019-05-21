@@ -195,10 +195,10 @@ class ResultsUtility implements Serializable
      */
     def genResultDetailTable(Map params)
     {
-        this._env.println "SPiFI]> DEPRECATION NOTICE BEGIN\n" +
-                          "SPiFI]>   ResultsUtility::genResultDetailTable() is deprecated, use\n" +
-                          "SPiFI]>   ResultsUtility::genResultDetails() instead.\n" +
-                          "SPiFI]> DEPRECATION NOTICE END"
+        this._env.println "SPiFI DEPRECATION NOTICE]>\n" +
+                          "SPiFI DEPRECATION NOTICE]> ResultsUtility::genResultDetailTable() is deprecated, use\n" +
+                          "SPiFI DEPRECATION NOTICE]> ResultsUtility::genResultDetails() instead.\n" +
+                          "SPiFI DEPRECATION NOTICE]>"
 
         // If format isn't provided, make it ASCII
         if(!params.containsKey("format"))
