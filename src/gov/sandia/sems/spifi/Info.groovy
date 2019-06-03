@@ -31,7 +31,7 @@ static def version()
  *
  * @return Integer containing the version 'major' number.
  */
-static Integer def version_major()
+static def version_major()
 {
     Integer spifi_major = 1
     return  spifi_major
@@ -44,7 +44,7 @@ static Integer def version_major()
  *
  * @return Integer containing the version 'minor' number.
  */
-static Integer def version_minor()
+static def version_minor()
 {
     Integer spifi_minor = 2
     return  spifi_minor
@@ -57,7 +57,7 @@ static Integer def version_minor()
  *
  * @return Integer containing the version 'patch' number.
  */
-static Integer def version_patch()
+static def version_patch()
 {
     Integer spifi_patch = 0
     return  spifi_patch

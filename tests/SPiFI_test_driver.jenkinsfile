@@ -226,8 +226,9 @@ node(node_restriction)
 
 
         // BEGIN DEPRECATED TESTS ==================================================================================================
+        /*  (Commenting out because of Jenkins error "Method code too large")
         // Parallel Job Launcher is Deprecated and will be removed in version 2.0.0
-        if(gov.sandia.sems.spifi.Info.major() < 2)
+        if(gov.sandia.sems.spifi.Info.version_major() < 2)
         {
 
         // Stage: Parallel Job Launcher (dry-run mode jobs)
@@ -380,15 +381,6 @@ node(node_restriction)
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
-
-            /*
-            if(!stage_passed)
-            {
-                sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
-                return
-            }
-            */
-
         }   // end stage
 
 
@@ -1056,10 +1048,10 @@ node(node_restriction)
         launcher_results = null
         launcher_summary = null
 
-        }   // end if major version < 2
+        }   // end if major version < 2                         */
         // END DEPRECATED TESTS ====================================================================================================
 
-        if(gov.sandia.sems.spifi.Info.major() >= 1 && gov.sandia.sems.spifi.Info.minor() >= 2)
+        if(gov.sandia.sems.spifi.Info.version_major() >= 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2)
         {
 
         // Stage: Job Launcher (dry-run mode jobs)
