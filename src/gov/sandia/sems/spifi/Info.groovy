@@ -16,13 +16,13 @@ package gov.sandia.sems.spifi;
 /**
  * Return the current version of SPiFI
  * - In reality this should be the current branch name, but release branches
- *   are formatted as v[major].[minor].[patch] per Semantic Versioning.
+ *   are formatted as `v[major].[minor].[patch]` and use Semantic Versioning.
  *
  * @return String containing the version number
  */
 static def version()
 {
-    String spifi_version = "master"
+    String spifi_version = "v1.2.0"
     return spifi_version
 }
 
