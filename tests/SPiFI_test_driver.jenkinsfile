@@ -189,6 +189,20 @@ node(node_restriction)
                 spifi_version = gov.sandia.sems.spifi.Info.version()
                 email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@${spifi_version})</li>\n"
 
+                try
+                {
+                    num_tests++
+                    email_body += "  <li>PASSED: SPiFI Major Version: ${gov.sandia.sems.spifi.Info.version_major()}</li>\n"
+                    email_body += "  <li>PASSED: SPiFI Minor Version: ${gov.sandia.sems.spifi.Info.version_minor()}</li>\n"
+                    email_body += "  <li>PASSED: SPiFI Patch Version: ${gov.sandia.sems.spifi.Info.version_patch()}</li>\n"
+                }
+                catch(ex)
+                {
+                    num_failures++
+                    println "An error occurred calling gov.sandia.sems.spifi.Info.version_[major|minor|patch]()\n${ex}"
+                    email_body += "  <li>FAILED: calling version_[major|minor|patch]() functions</li>\n"
+                }
+
                 // Update branchName with spifi.Info.version() if possible
                 try
                 {
