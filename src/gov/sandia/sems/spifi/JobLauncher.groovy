@@ -42,7 +42,7 @@ import gov.sandia.sems.spifi.Utility
  *
  * Usage Pattern from a Jenkins Pipeline:
  *
- *     def launcher = gov.sandia.sems.spifi.ParallelJobLaucher(this)
+ *     def launcher = gov.sandia.sems.spifi.JobLauncher(this)
  *     launcher.appendJob("Job 1", "JENKINS_JOB_ALPHA")
  *     launcher.appendJob("Job 2", "JENKINS_JOB_BRAVO")
  *     launcher.appendJob("Job 2", "JENKINS_JOB_CHARLIE")
