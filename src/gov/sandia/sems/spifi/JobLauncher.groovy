@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /**
- * ParallelJobLauncher.groovy
+ * JobLauncher.groovy
  *
  * Class to handle organizing and launching Jenkins jobs in parallel with convenience
  * features to specify a 'dry-run' mode which prints out the job it would have launched
@@ -12,8 +12,14 @@
  * 'monitor nodes' as a 'best practice' but in our experience the monitor node consumes
  * an executor from a build slave which can become problematic when launching many jobs.)
  *
+ * Roadmap
+ * -------
+ * - [ ] : Add multiple run modes for JobLauncher: [Sequential, Parallel]
+ * - [ ] : Add a Dependency order run mode (essentially a DAG)
+ * - [ ] : Enhance DAG mode to allow conditions on dependency edges to dictate execution.
+ *
  * @author  William McLendon
- * @version 1.0
+ * @version 1.2
  * @since   2018-04-04
  *
  */
@@ -36,7 +42,7 @@ import gov.sandia.sems.spifi.Utility
  *
  * Usage Pattern from a Jenkins Pipeline:
  *
- *     def launcher = gov.sandia.sems.spifi.ParallelJobLaucher(this)
+ *     def launcher = gov.sandia.sems.spifi.JobLauncher(this)
  *     launcher.appendJob("Job 1", "JENKINS_JOB_ALPHA")
  *     launcher.appendJob("Job 2", "JENKINS_JOB_BRAVO")
  *     launcher.appendJob("Job 2", "JENKINS_JOB_CHARLIE")
@@ -45,8 +51,7 @@ import gov.sandia.sems.spifi.Utility
  *     launcher.clearJobs()
  *
  */
-@Deprecated
-class ParallelJobLauncher
+class JobLauncher
 {
     // helper subclass for dynamic parameters on appendJob
     class _parameters
@@ -70,10 +75,10 @@ class ParallelJobLauncher
 
         // Job Retry Parameters.
         Integer retry_lines_to_check = 200            // # of lines to pull from console log to check.
-        Integer retry_max_limit  = 99                 // Set a maximum # of allowable retries so things don't get too crazy.
-        Integer retry_max_count  = 0                  // Number of retries is for the job, regardless of the mix of 'matches'
+        Integer retry_max_limit      = 99             // Set a maximum # of allowable retries so things don't get too crazy.
+        Integer retry_max_count      = 0              // Number of retries is for the job, regardless of the mix of 'matches'
                                                       //  on retry-criteria.  Note: num_attempts == num_retries+1
-        List    retry_conditions = null               // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
+        List    retry_conditions     = null           // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
                                                       // - data members are:  retry_delay, retry_delay_units, retry_regex
     }
 
@@ -90,7 +95,7 @@ class ParallelJobLauncher
      * @param env [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
      *
      */
-    ParallelJobLauncher(Map params)
+    JobLauncher(Map params)
     {
         // Validate parameters
         if(!params.containsKey("env"))
@@ -102,39 +107,20 @@ class ParallelJobLauncher
         this._env = params.env
         this._jobList = [:]
         this._lastResultSummary = [:]
-
-        // DEPRECATION NOTICE
-        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
-                          "[SPiFI DEPRECATION NOTICE]>"
     }
 
     @Deprecated
-    ParallelJobLauncher(env)
+    JobLauncher(env)
     {
+        this.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                     "[SPiFI DEPRECATION NOTICE]> JobLauncher(this) will be deprecated in 2.0.0\n" +
+                     "[SPiFI DEPRECATION NOTICE]> -  Please use JobLauncher(\"env\": this)\n" +
+                     "[SPiFI DEPRECATION NOTICE]>"
+
         // Set Parameter Default(s)
         this._env = env
         this._jobList = [:]
         this._lastResultSummary = [:]
-
-        // DEPRECATION NOTICE
-        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
-                          "[SPiFI DEPRECATION NOTICE]>"
-        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher(this) constructor is deprecated.\n" +
-                          "[SPiFI DEPRECATION NOTICE]> -  Please use ParallelJobLauncher(\"env\": this)\n" +
-                          "[SPiFI DEPRECATION NOTICE]>"
     }
 
 
@@ -208,16 +194,6 @@ class ParallelJobLauncher
      */
     def appendJob(Map params)
     {
-        // DEPRECATION NOTICE
-        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
-                          "[SPiFI DEPRECATION NOTICE]>"
-
         def utility = new gov.sandia.sems.spifi.Utility()
 
         // Optional Debugging messages
@@ -234,11 +210,11 @@ class ParallelJobLauncher
         // Check for required parameters
         if(!params.containsKey("label"))
         {
-            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob missing required parameter: label")
+            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob missing required parameter: label")
         }
         if(!params.containsKey("job_name"))
         {
-            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob missing required parameter: job_name")
+            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob missing required parameter: job_name")
         }
 
         def job = new _parameters()
@@ -289,15 +265,15 @@ class ParallelJobLauncher
         // Validate parameter value(s)
         if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
         {
-            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob invalid parameter timeout_unit provided: ${job.timeout_unit}")
+            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter timeout_unit provided: ${job.timeout_unit}")
         }
         if( !("SECONDS"==job.expected_duration_units || "MINUTES"==job.expected_duration_units || "HOURS"==job.expected_duration_units) )
         {
-            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob invalid parameter expected_duration_units provided: ${job.timeout_unit}")
+            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter expected_duration_units provided: ${job.timeout_unit}")
         }
         if(job.expected_duration_max > 0 && job.expected_duration_min >= job.expected_duration_max)
         {
-            throw new Exception("gov.sandia.sems.spifi.ParallelJobLauncher::appendJob expected_duration_min >= expected_duration_max")
+            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob expected_duration_min >= expected_duration_max")
         }
         // Note: don't need to check job.retry_conditions[i].retry_delay_units because this is checked by the DelayedRetry c'tor
 
@@ -309,16 +285,16 @@ class ParallelJobLauncher
 
         this._env.println "[SPiFI]> Append job ${job.label}"
 
-        this._jobList[job.label] = [ jenkins_job_name: job.job_name,
-                                     parameters:       job.parameters,
-                                     quiet_period:     job.quiet_period,
-                                     timeout:          job.timeout,
-                                     timeout_unit:     job.timeout_unit,
-                                     propagate_error:  job.propagate_error,
-                                     dry_run:          job.dry_run,
-                                     dry_run_status:   job.dry_run_status,
-                                     dry_run_delay:    job.dry_run_delay,
-                                     monitor_node:     job.monitor_node,
+        this._jobList[job.label] = [ jenkins_job_name:        job.job_name,
+                                     parameters:              job.parameters,
+                                     quiet_period:            job.quiet_period,
+                                     timeout:                 job.timeout,
+                                     timeout_unit:            job.timeout_unit,
+                                     propagate_error:         job.propagate_error,
+                                     dry_run:                 job.dry_run,
+                                     dry_run_status:          job.dry_run_status,
+                                     dry_run_delay:           job.dry_run_delay,
+                                     monitor_node:            job.monitor_node,
                                      expected_duration_min:   job.expected_duration_min,
                                      expected_duration_max:   job.expected_duration_max,
                                      expected_duration_units: job.expected_duration_units,
@@ -359,15 +335,6 @@ class ParallelJobLauncher
      */
     def launchInParallel()
     {
-        // DEPRECATION NOTICE
-        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
-                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
-                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
-                          "[SPiFI DEPRECATION NOTICE]>"
-
         def builders = [:]
         def results  = [:]
 
@@ -626,7 +593,6 @@ class ParallelJobLauncher
                     results[job.key]["url"]      = status.getAbsoluteUrl()
                     results[job.key]["duration"] = duration_seconds
 
-
                     // To get the console log from the status object you need to call status.getRawBuild().getLog()
                     //  status.getRawBuild() returns a org.jenkinsci.plugins.workflow.job.WorkflowRun object
                     // getLog() returns a string containing the log.
@@ -730,5 +696,5 @@ class ParallelJobLauncher
         this._lastResultSummary[statusKey] += 1
     }
 
-}  // class parallelJobLauncher
+}  // class JobLauncher
 
