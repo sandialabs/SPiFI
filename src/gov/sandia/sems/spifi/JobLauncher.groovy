@@ -604,7 +604,7 @@ class JobLauncher
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // End Timeout
 
-            // TODO: See if we can identify the job build id and url, etc. even when jobs timeout...
+            // todo: See if we can identify the job build id and url, etc. even when jobs timeout...
             //       maybe launch in non-blocking mode, get the info, and then block on results?
             //       (if this is possible in Jenkins' groovy).
 

@@ -45,6 +45,7 @@ import gov.sandia.sems.spifi.Utility
  *     launcher.clearJobs()
  *
  */
+@Deprecated
 class ParallelJobLauncher
 {
     // helper subclass for dynamic parameters on appendJob
@@ -101,20 +102,39 @@ class ParallelJobLauncher
         this._env = params.env
         this._jobList = [:]
         this._lastResultSummary = [:]
+
+        // DEPRECATION NOTICE
+        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
+                          "[SPiFI DEPRECATION NOTICE]>"
     }
 
     @Deprecated
     ParallelJobLauncher(env)
     {
-        this.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                     "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher(this) will be deprecated in 2.0.0\n" +
-                     "[SPiFI DEPRECATION NOTICE]> -  Please use ParallelJobLauncher(\"env\": this)\n" +
-                     "[SPiFI DEPRECATION NOTICE]>"
-
         // Set Parameter Default(s)
         this._env = env
         this._jobList = [:]
         this._lastResultSummary = [:]
+
+        // DEPRECATION NOTICE
+        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
+                          "[SPiFI DEPRECATION NOTICE]>"
+        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher(this) constructor is deprecated.\n" +
+                          "[SPiFI DEPRECATION NOTICE]> -  Please use ParallelJobLauncher(\"env\": this)\n" +
+                          "[SPiFI DEPRECATION NOTICE]>"
     }
 
 
@@ -188,6 +208,16 @@ class ParallelJobLauncher
      */
     def appendJob(Map params)
     {
+        // DEPRECATION NOTICE
+        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - No new development will be made on ParallelJobLauncher after 1.2.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
+                          "[SPiFI DEPRECATION NOTICE]>"
+
         def utility = new gov.sandia.sems.spifi.Utility()
 
         // Optional Debugging messages
@@ -329,6 +359,15 @@ class ParallelJobLauncher
      */
     def launchInParallel()
     {
+        // DEPRECATION NOTICE
+        this._env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                          "[SPiFI DEPRECATION NOTICE]> ParallelJobLauncher will be deprecated in 2.0.0\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - It is replaced by the JobLauncher class, which is\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   available as of version 1.2.0.\n" +
+                          "[SPiFI DEPRECATION NOTICE]> - To switch, simply change 'ParallelJobLauncher' to 'JobLauncher'\n" +
+                          "[SPiFI DEPRECATION NOTICE]>   in your scripts" +
+                          "[SPiFI DEPRECATION NOTICE]>"
+
         def builders = [:]
         def results  = [:]
 
@@ -599,8 +638,8 @@ class ParallelJobLauncher
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // End Timeout
 
-            // TODO: See if we can identify the job build id and url, etc. even when jobs timeout... 
-            //       maybe launch in non-blocking mode, get the info, and then block on results?  
+            // todo: See if we can identify the job build id and url, etc. even when jobs timeout...
+            //       maybe launch in non-blocking mode, get the info, and then block on results?
             //       (if this is possible in Jenkins' groovy).
 
         }      // End Try
