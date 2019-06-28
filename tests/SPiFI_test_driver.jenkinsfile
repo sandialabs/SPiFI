@@ -767,7 +767,7 @@ node(node_restriction)
 
                 launcher.appendJob(label: "T-RETRIES-01-A",
                                    job_name: "SPiFI_test_pass_every_third",
-                                   timeout: 6,
+                                   timeout: 60,
                                    timeout_unit: "MINUTES",
                                    parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
                                                  (string(name:"PARAM_THRESHOLD",  value: "3"))
@@ -788,7 +788,7 @@ node(node_restriction)
                 // Adding a 2nd job that will SUCCEED with no retries.
                 launcher.appendJob(label: "T-RETRIES-01-B",
                                    job_name: "SPiFI_test_selectable_status",
-                                   timeout: 90,
+                                   timeout: 3600,
                                    timeout_unit: "SECONDS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
                                                  (string(name:"SLEEP_TIME", value: "1"))
@@ -845,7 +845,7 @@ node(node_restriction)
                 // Job will FAIL after 2 retries (3 attempts)
                 launcher.appendJob(label: "T-RETRIES-02-A",
                                    job_name: "SPiFI_test_pass_every_third",
-                                   timeout: 6,
+                                   timeout: 60,
                                    timeout_unit: "MINUTES",
                                    parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
                                                  (string(name:"PARAM_THRESHOLD",  value: "5"))
@@ -866,8 +866,8 @@ node(node_restriction)
                 // Adding a 2nd job that will SUCCEED with no retries.
                 launcher.appendJob(label: "T-RETRIES-02-B",
                                    job_name: "SPiFI_test_selectable_status",
-                                   timeout: 90,
-                                   timeout_unit: "SECONDS",
+                                   timeout: 1,
+                                   timeout_unit: "HOURS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
                                                  (string(name:"SLEEP_TIME", value: "1"))
                                                ]
@@ -931,7 +931,7 @@ node(node_restriction)
                 // Job will FAIL after 2 retries (3 attempts)
                 launcher.appendJob(label: "T-RETRIES-03-A",
                                    job_name: "SPiFI_test_pass_every_third",
-                                   timeout: 6,
+                                   timeout: 60,
                                    timeout_unit: "MINUTES",
                                    parameters: [ (string(name:"NODE_RESTRICTION", value: node_restriction)),
                                                  (string(name:"PARAM_THRESHOLD",  value: "1"))
