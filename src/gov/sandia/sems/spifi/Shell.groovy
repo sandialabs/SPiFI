@@ -62,6 +62,7 @@ import gov.sandia.sems.spifi.Utility
  *             will be 0.
  *             If the last attempt results in an exception thrown then status = -1, console = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, console = dry_run_output.
+ *             DEPRECATION NOTICE: the 'stdout' is still provided but will go away in version 2.0, please use 'console' instead.
  */
 def execute(Map params)
 {
@@ -112,6 +113,7 @@ def execute(Map params)
     if(params.containsKey("retry_delay"))    retry_delay = params.retry_delay
     if(params.containsKey("timeout"))        timeout = params.timeout
     if(params.containsKey("timeout_units"))  timeout_units = params.timeout_units
+
     // Set dry-run parameters
     if(params.containsKey("dry_run"))        dry_run        = params.dry_run
     if(params.containsKey("dry_run_delay"))  dry_run_delay  = params.dry_run_delay
@@ -176,6 +178,14 @@ def execute(Map params)
         output.status  = dry_run_status
         output.console = dry_run_output
         output.retries = 0
+        // BEGIN DEPRECATION
+        output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
+                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                         dry_run_output +
+                         "\n" +
+                         "*** SPiFI DEPRECATION WARNING ***\n" +
+                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+        // END DEPRECATION
 
         return output
     }
@@ -195,32 +205,66 @@ def execute(Map params)
         Boolean retry_exception = false
 
         String temp_filename = "__output_" + utility.randomString(30) + ".txt"
+        if(params.containsKey("verbose") && params.verbose == true)
+        {
+            env.println "[SPiFI]> -  temp_file: ${temp_filename}"
+        }
 
         env.timeout(time: timeout, unit: timeout_units)
         {
+            // Error out if the path doesn't actually exist.
+            if( !fileExists("${path}") )
+            {
+                env.println "[SPiFI]> ERROR with Shell() command, ${path} does not exist!"
+                output.status  = 1
+                output.console = "An error occurred: ${path} provided to SPiFI Shell::execute() does not exist."
+                output.retries = 0
+                // BEGIN DEPRECATION
+                output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
+                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                                 output.console +
+                                 "\n" +
+                                 "*** SPiFI DEPRECATION WARNING ***\n" +
+                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+                // END DEPRECATION
+                return output
+            }
+
             env.dir("${path}")
             {
                 try
                 {
                     // Set the redirect operator for output
-                    String redirect = "&>"
+                    String redirect1 = "1>"
+                    String redirect2 = "2>&1"
                     if("stdout"==output_type)
                     {
-                        redirect = ">"
+                        redirect1 = "1>"
+                        redirect2 = ""
                     }
                     else if("stderr"==output_type)
                     {
-                        redirect = "2>"
+                        redirect1 = "2>"
+                        redirect2 = ""
                     }
 
                     // Print / Echo the actual command
-                    env.println "[SPiFI]> Execute: ${command} ${redirect} ${temp_filename}"
+                    env.println "[SPiFI]>\n" +
+                                "[SPiFI]> Execute: ${command} ${redirect1} ${temp_filename} ${redirect2}\n" +
+                                "[SPiFI]>"
 
                     // Execute the command
-                    status = env.sh(script: "${command} ${redirect} ${temp_filename}", returnStatus: true)
+                    status = env.sh(script: "${command} ${redirect1} ${temp_filename} ${redirect2}", returnStatus: true)
 
                     // Read in the temp file and remove it.
                     console = env.readFile(temp_filename).trim()
+
+                    // If in verbose mode, print out the console output we loaded in.
+                    if(params.containsKey("verbose") && params.verbose == true)
+                    {
+                        env.println "[SPiFI]> temp_file: ${temp_filename}"
+                        env.println "[SPiFI]> console output:\n${console}"
+                    }
 
                     // Delete the temp file
                     env.sh(script: "rm ${temp_filename}", returnStatus: true)
@@ -283,6 +327,15 @@ def execute(Map params)
     output.status  = status
     output.console = console
     output.retries = retries_performed
+    // BEGIN DEPRECATION
+    output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" +
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n\n" +
+                     output.console + 
+                     "\n" +
+                     "*** SPiFI DEPRECATION WARNING ***\n" +
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+
+    // END DEPRECATION
 
     return output
 }
