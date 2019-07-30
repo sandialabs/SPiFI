@@ -1756,8 +1756,8 @@ node(node_restriction)
                 // Adding a 2nd job that will SUCCEED with no retries.
                 launcher.appendJob(label: "T-RETRIES-02-B",
                                    job_name: "SPiFI_test_selectable_status",
-                                   timeout: 1,
-                                   timeout_unit: "HOURS",
+                                   timeout: 3600,
+                                   timeout_unit: "SECONDS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
                                                  (string(name:"SLEEP_TIME", value: "1"))
                                                ]
