@@ -329,7 +329,7 @@ def execute(Map params)
     output.retries = retries_performed
     // BEGIN DEPRECATION
     output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" +
-                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n\n" +
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
                      output.console + 
                      "\n" +
                      "*** SPiFI DEPRECATION WARNING ***\n" +
