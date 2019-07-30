@@ -205,7 +205,7 @@ node(node_restriction)
                 // Update branchName with spifi.Info.version() if possible
                 try
                 {
-                    branchName    = spifi_version
+                    branchName  = "v${spifi_version}"
                     email_body += "  <li>PASSED: Version Loaded: ${spifi_version}</li>\n"
                     println ">>> Branch Loaded Version Info OK: ${spifi_version}"
                 }
