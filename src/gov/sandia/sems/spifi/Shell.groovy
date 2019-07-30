@@ -178,9 +178,11 @@ def execute(Map params)
         output.console = dry_run_output
         output.retries = 0
         // BEGIN DEPRECATION
-        output.stdout  = "***SPiFI DEPRECATION WARNING***\n" + 
+        output.stdout  = "\n***SPiFI DEPRECATION WARNING***\n" + 
                          "*** switch to output.console for console output before version 2.0 in Shell::execute()\n" +
-                         dry_run_output 
+                         dry_run_output +
+                         "\n***SPiFI DEPRECATION WARNING***\n" + 
+                         "*** switch to output.console for console output before version 2.0 in Shell::execute()\n"
         // END DEPRECATION
 
         return output
@@ -292,7 +294,9 @@ def execute(Map params)
     // BEGIN DEPRECATION
     output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" + 
                      "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                     output.console
+                     output.console +
+                     "\n***SPiFI DEPRECATION WARNING***\n" + 
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute()\n"
     // END DEPRECATION
 
     return output
