@@ -205,7 +205,10 @@ node(node_restriction)
                 // Update branchName with spifi.Info.version() if possible
                 try
                 {
-                    branchName    = spifi_version
+                    // Note: spifi_version from Info post 1.2.1 will use just the version numbers and will
+                    //       not provide the branchname. For released version testing we should use this:
+                    branchName  = "v${spifi_version}"
+                    branchName  = spifi_version         // <--- comment this line out when testing released versions
                     email_body += "  <li>PASSED: Version Loaded: ${spifi_version}</li>\n"
                     println ">>> Branch Loaded Version Info OK: ${spifi_version}"
                 }
