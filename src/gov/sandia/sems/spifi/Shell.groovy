@@ -62,6 +62,7 @@ import gov.sandia.sems.spifi.Utility
  *             will be 0.
  *             If the last attempt results in an exception thrown then status = -1, console = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, console = dry_run_output.
+ *             DEPRECATION NOTICE: the 'stdout' is still provided but will go away in version 2.0, please use 'console' instead.
  */
 def execute(Map params)
 {
@@ -177,6 +178,11 @@ def execute(Map params)
         output.status  = dry_run_status
         output.console = dry_run_output
         output.retries = 0
+        // BEGIN DEPRECATION
+        output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
+                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                         dry_run_output
+        // END DEPRECATION
 
         return output
     }
@@ -210,6 +216,11 @@ def execute(Map params)
                 output.status  = 1
                 output.console = "An error occurred: ${path} provided to SPiFI Shell::execute() does not exist."
                 output.retries = 0
+                // BEGIN DEPRECATION
+                output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
+                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                                 output.console
+                // END DEPRECATION
                 return output
             }
 
@@ -310,6 +321,11 @@ def execute(Map params)
     output.status  = status
     output.console = console
     output.retries = retries_performed
+    // BEGIN DEPRECATION
+    output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" +
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                     output.console
+    // END DEPRECATION
 
     return output
 }
