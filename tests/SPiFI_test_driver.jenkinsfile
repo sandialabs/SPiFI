@@ -1757,7 +1757,7 @@ node(node_restriction)
                 launcher.appendJob(label: "T-RETRIES-02-B",
                                    job_name: "SPiFI_test_selectable_status",
                                    timeout: 1,
-                                   timeout_unit: "HOURSS",
+                                   timeout_unit: "HOURS",
                                    parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
                                                  (string(name:"SLEEP_TIME", value: "1"))
                                                ]
