@@ -215,19 +215,19 @@ def execute(Map params)
             // Error out if the path doesn't actually exist.
             if( !fileExists("${path}") )
             {
-                env.println "[SPiFI]> ERROR with Shell() command, ${path} does not exist!"
-                output.status  = 1
-                output.console = "An error occurred: ${path} provided to SPiFI Shell::execute() does not exist."
-                output.retries = 0
+                env.println "[SPiFI]> WARNING in Shell::execute(): ${path} does not exist!"
+                //output.status  = 1
+                //output.console = "An error occurred: ${path} provided to SPiFI Shell::execute() does not exist."
+                //output.retries = 0
                 // BEGIN DEPRECATION
-                output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
-                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                                 output.console +
-                                 "\n" +
-                                 "*** SPiFI DEPRECATION WARNING ***\n" +
-                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+                //output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
+                //                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
+                //                 output.console +
+                //                 "\n" +
+                //                 "*** SPiFI DEPRECATION WARNING ***\n" +
+                //                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
                 // END DEPRECATION
-                return output
+                //return output
             }
 
             env.dir("${path}")
