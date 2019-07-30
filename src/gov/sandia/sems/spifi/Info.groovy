@@ -5,7 +5,7 @@
  * Information function to get current version number, etc.
  *
  * @author  William McLendon
- * @version 1.2.0
+ * @version 1.2.1
  * @since   2018-06-06
  *
  */
@@ -22,7 +22,7 @@ package gov.sandia.sems.spifi;
  */
 static def version()
 {
-    String spifi_version = "master"
+    String spifi_version = "1.2.1"
     return spifi_version
 }
 
@@ -61,7 +61,7 @@ static def version_minor()
  */
 static def version_patch()
 {
-    Integer spifi_patch = 0
+    Integer spifi_patch = 1
     return  spifi_patch
 }
 

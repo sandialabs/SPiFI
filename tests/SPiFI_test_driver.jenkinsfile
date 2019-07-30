@@ -182,7 +182,7 @@ node(node_restriction)
 
                 branchName = "master"               // Keep this in symc with the version number we're trying to load.
 
-                @Library('SPiFI-DEV@master') _      // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@1.2.1') _       // Note: this must be const string, can't parameterize :/
                 //@Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
