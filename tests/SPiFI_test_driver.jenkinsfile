@@ -2180,8 +2180,6 @@ node(node_restriction)
                 //            userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052',
                 //                                url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
                 //        ])
-               
-                
                 checkout changelog: false, 
                          poll: false, 
                          scm: [$class: 'GitSCM', 
