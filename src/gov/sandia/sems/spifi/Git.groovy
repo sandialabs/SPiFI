@@ -45,10 +45,11 @@ package gov.sandia.sems.spifi;
  *                                          up using the default, which is 10 minutes. Fixing this is a high priority
  *                                          for SPiFI development.
  *                                          Default: 30
+ *                                          TODO: Determine what the timeout units are for GitSCM (Minutes?)
  * @param timeout_units  [OPTIONAL] String  Units to use for the timeout.
  *                                          Allowed values are: {HOURS|MINUTES|SECONDS}.
  *                                          Default: MINUTES
- *                                          DEPRECATED IN version 2.0.0
+ *                                          DEPRECATED IN version 2.0.0 due to changeover to GitSCM in 1.1.4
  * @param verbose        [OPTIONAL] Boolean Print out verbose information to the console.
  *                                          Default: false
  *
@@ -123,6 +124,7 @@ def clone(Map params)
             try
             {
                 /*
+                // DEPRECATED / REPLACED by GitSCM
                 env.timeout(time: timeout, unit: timeout_units)
                 {
                     env.dir("${dir}")
