@@ -191,6 +191,7 @@ node(node_restriction)
                 try
                 {
                     num_tests++
+                    email_body += "  <li>PASSED: SPiFI Version      : ${gov.sandia.sems.spifi.Info.version()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Major Version: ${gov.sandia.sems.spifi.Info.version_major()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Minor Version: ${gov.sandia.sems.spifi.Info.version_minor()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Patch Version: ${gov.sandia.sems.spifi.Info.version_patch()}</li>\n"

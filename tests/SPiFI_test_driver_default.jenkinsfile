@@ -186,11 +186,13 @@ node(node_restriction)
                 @Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI)</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library @Library(SPiFI) _</li>\n"
+
 
                 try
                 {
                     num_tests++
+                    email_body += "  <li>PASSED: SPiFI Version      : ${gov.sandia.sems.spifi.Info.version()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Major Version: ${gov.sandia.sems.spifi.Info.version_major()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Minor Version: ${gov.sandia.sems.spifi.Info.version_minor()}</li>\n"
                     email_body += "  <li>PASSED: SPiFI Patch Version: ${gov.sandia.sems.spifi.Info.version_patch()}</li>\n"
