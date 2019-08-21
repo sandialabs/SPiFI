@@ -186,7 +186,7 @@ node(node_restriction)
                 @Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI)</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI@${spifi_version})</li>\n"
 
                 try
                 {
