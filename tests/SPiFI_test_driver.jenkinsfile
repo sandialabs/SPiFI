@@ -217,6 +217,8 @@ node(node_restriction)
                     println ">>> Branch Loaded Version Info FAILED: ${spifi_version}"
                 }
                 email_body += "</ol>\n"
+
+                spifi_version = null
             }
             catch(ex)
             {
@@ -1219,6 +1221,9 @@ node(node_restriction)
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
+
+            launcher = null
+
         }   // end stage
 
 
@@ -1407,6 +1412,8 @@ node(node_restriction)
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
+
+            launcher = null
 
         }   // End Stage
 
@@ -1634,6 +1641,9 @@ node(node_restriction)
                 num_failures++
             }
             email_body += "</ol>\n"
+
+            result_util = null
+
         }  // End Stage
 
 
@@ -1715,6 +1725,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
                     num_failures++
                 }
+
+                launcher = null
+
             }
             catch(ex)
             {
@@ -1798,6 +1811,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Retries w/ final FAILURE</li>\n"
                     num_failures++
                 }
+
+                launcher = null
+
             }
             catch(ex)
             {
@@ -1869,6 +1885,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Retries w/ final SUCCESS</li>\n"
                     num_failures++
                 }
+
+                launcher = null
+
             }
             catch(ex)
             {
@@ -1908,6 +1927,9 @@ node(node_restriction)
                         "- status : ${output.status}\n" +
                         "- console: ${output.console}\n"
                 email_body += "<li>PASSED: Shell.execute()</li>\n"
+
+                shell = null
+
             }
             catch(e)
             {
@@ -1939,6 +1961,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Shell.execute() nonzero status retry failure</li>\n"
                     num_failures++
                 }
+
+                shell = null
+
             }
             catch(e)
             {
@@ -1972,6 +1997,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Shell.execute() nonzero status whitelisted</li>\n"
                     num_failures++
                 }
+
+                // cleanup
+                shell = null
             }
             catch(e)
             {
@@ -2005,6 +2033,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Shell.execute() output_option=='stderr'</li>\n"
                     num_failures++
                 }
+
+                // cleanup
+                shell = null
             }
             catch(e)
             {
@@ -2038,6 +2069,9 @@ node(node_restriction)
                     email_body += "<li>FAILED: Shell.execute() output_option=='stdout'</li>\n"
                     num_failures++
                 }
+
+                // cleanup
+                shell = null
             }
             catch(e)
             {
