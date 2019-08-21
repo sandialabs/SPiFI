@@ -43,6 +43,12 @@ if(params.containsKey("PARAM_MAXDEPTH"))
     callDepthLimit = params.PARAM_MAXDEPTH as Integer
 }
 
+// Set an absolute cap on how deep the call can go.
+if(callDepthLimit > 10)
+{
+    callDepthLimit=10
+}
+
 
 // Lock resource: 'libBlocker001'
 lock(resource: "lblBlocker001")
@@ -56,6 +62,8 @@ lock(resource: "lblBlocker001")
                     "-- Max Depth  = ${callDepthLimit}"
             if(callDepth <= callDepthLimit)
             {
+                sleep time: 5, unit: "SECONDS"
+
                 build job: "${env.JOB_NAME}",
                       parameters: [string(name: "PARAM_CALLDEPTH", value: "${callDepth+1}")],
                       propagate: false,     // don't propagate error to this pipeline
@@ -68,7 +76,7 @@ lock(resource: "lblBlocker001")
             sleep time: 30, unit: "SECONDS"
         }   // end stage myjob
     }   // end node()
-}   // end lock resource 'lblBlocker001'
+}   // end lock resource 'lblBlocker001' (this should release the lock)
 
 
 
