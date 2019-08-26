@@ -12,8 +12,8 @@ node("master")
     // Pipeline Stage
     stage("MyStage")
     {
-        // Instantiate a ParallelJobLauncher
-        def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+        // Instantiate a JobLauncher
+        def launcher = new gov.sandia.sems.spifi.JobLauncher(this)
 
         // Run SPiFI_test_pass_every_third job (this will run the sequence FAILURE, UNSTABLE, FAILURE*, SUCCESS
         // based on the PARAM_THRESHOLD parameter which dictates which run in the sequence will be the SUCCESS
