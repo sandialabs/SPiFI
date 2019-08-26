@@ -11,8 +11,8 @@ node()
     // Pipeline Stage
     stage("Stage 1")
     {
-        // Instantiate a ParallelJobLauncher
-        def launcher = new gov.sandia.sems.spifi.ParallelJobLauncher(this)
+        // Instantiate a JobLauncher
+        def launcher = new gov.sandia.sems.spifi.JobLauncher(this)
 
         // Add some jobs to run
         launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
