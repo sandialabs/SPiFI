@@ -176,7 +176,7 @@ node(node_restriction)
                 @Library('SPiFI-1_1_4-RC') _        // Release candidate version
 
                 email_body += "<ol>\n"
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@v1.1.4)</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-1_1_4-RC)</li>\n"
 
                 // Update branchName with spifi.Info.version() if possible
                 try
