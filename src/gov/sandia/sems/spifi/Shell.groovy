@@ -55,7 +55,7 @@ import gov.sandia.sems.spifi.Utility
  *                                              Options are: {stdout,stderr,stdout+stderr}
  *                                              Default: stdout+stderr
  *
- * @return Map containing two keys: {console, status, retries} which contain the console output and exit status of the command
+ * @return Map containing the keys: {console, status, retries} which contain the console output and exit status of the command
  *             that was run.
  *             If there were multiple retries due to nonzero exit status, then the console output from the LAST run is returned.
  *             and retries is set to the number of additional attempts.  Note, if successful on the first attempt this
