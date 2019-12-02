@@ -1,0 +1,30 @@
+#!/usr/bin/env groovy
+
+node()
+{
+    stage("Stage 1")
+    {
+        sh 'exit 0'
+    }
+    stage("Stage 2")
+    {
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
+        {
+            sh 'exit 1'
+        }
+    }
+    stage("Stage 3")
+    {
+        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE')
+        {
+            println "Got Here A"
+            sh 'exit 1'
+            println "Got Here B"
+        }
+        println "Got Here C"
+    }
+    stage("Stage 4")
+    {
+        sh 'exit 0'
+    }
+}
