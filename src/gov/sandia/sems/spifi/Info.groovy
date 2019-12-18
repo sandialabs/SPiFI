@@ -61,7 +61,7 @@ static def version_minor()
  */
 static def version_patch()
 {
-    Integer spifi_patch = 1
+    Integer spifi_patch = 2
     return  spifi_patch
 }
 
