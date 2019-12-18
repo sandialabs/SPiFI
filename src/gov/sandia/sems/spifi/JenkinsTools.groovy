@@ -2,7 +2,7 @@
 /**
  * JenkinsTools.groovy
  *
- * Provides some helper functions for some common Jenkins actions
+ * Provides some helper functions for common Jenkins items and tools
  *
  * Jenkins Pipeline Usage:
  *

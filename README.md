@@ -37,6 +37,11 @@ The full user guide can be found at
 
 ### Change Log
 
+#### v1.2.2 : 2019-12-18
+- FEATURE: Add `JenkinsTools` source file
+  - New function: `checked_get_parameter()` - provides a convenience wrapper for dealing with Jenkins
+    parameters provided to jobs.
+
 #### master : 2019-05-20
 - DEPRECATION: `ResultsUtility::genResultDetailTable()` replaced with `ResultsUtility::genResultDetails()`
 - FEATURE: Adds JSONL option to `ResultsUtility::genResultDetails()`
