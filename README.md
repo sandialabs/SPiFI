@@ -42,6 +42,9 @@ The full user guide can be found at
   - New function: `checked_get_parameter()` - provides a convenience wrapper for dealing with Jenkins
     parameters provided to jobs.
 
+#### v1.2.0 : 
+- DEPRECATION: class `ParallelJobLauncher` is changed to `JobLauncher`
+
 #### master : 2019-05-20
 - DEPRECATION: `ResultsUtility::genResultDetailTable()` replaced with `ResultsUtility::genResultDetails()`
 - FEATURE: Adds JSONL option to `ResultsUtility::genResultDetails()`
