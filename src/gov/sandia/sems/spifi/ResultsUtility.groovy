@@ -557,7 +557,9 @@ class ResultsUtility implements Serializable
                 link += "/console"
             }
 
-            output += sprintf("| %10s | %12s |", [r.value.status, r.value.duration])
+            Float duration = r.value.duration
+
+            output += sprintf("| %10s | %-12.2f |", [r.value.status, duration])
             if(r.value.dry_run == true)
             {
                 output += sprintf(" %s #dry-run |", r.value.job)
