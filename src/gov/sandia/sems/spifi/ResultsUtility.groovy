@@ -538,8 +538,8 @@ class ResultsUtility implements Serializable
     {
         // this._env.println "[SPiFI-DEBUG]> Entering ResultsUtility::_genResultDetailTableMarkdown(params)"
         String output = """
-                        | Status   | Duration (s) | Job Name |
-                        |:--------:|:------------:| -------- |
+                        | Status     | Duration (s) | Job Name |
+                        |:----------:|:------------:| -------- |
                         """.stripIndent()
         params.results.each
         {   r ->
@@ -557,7 +557,7 @@ class ResultsUtility implements Serializable
                 link += "/console"
             }
 
-            output += sprintf("| %s | %s |", [r.value.status, r.value.duration])
+            output += sprintf("| %10s | %12s |", [r.value.status, r.value.duration])
             if(r.value.dry_run == true)
             {
                 output += sprintf(" %s #dry-run |", r.value.job)
