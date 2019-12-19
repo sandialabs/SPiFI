@@ -37,6 +37,18 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master : 2019-12-19
+- ISSUE #23: Address issue where aborted dry-run jobs report 0 time for duration and provided
+             a bogus link.
+  - FEATURE: Add `dry_run` entry to the `Map` returned by `JobLauncher.launchInParallel()`
+             as a boolean value to capture whether or not the build was in DRY-RUN mode.
+  - FEATURE: If in `dry_run` mode, the `duration` entry returned by `JobLauncher.launchInParallel()`
+             will reflect the value of `dry_run_delay`.
+- STYLE: Minor tweaks to ResultsUtility
+  - Don't add a link to HTML, Markdown entries if the job was run in dry run and indicate it
+    was a dry-run by formatting the usual build-id (`#<build_id>`) to show dry-run as `#dry_run`.
+- Features will appear in version 1.2.3 or later.
+
 #### v1.2.2 : 2019-12-18
 - FEATURE: Add `JenkinsTools` source file
   - New function: `checked_get_parameter()` - provides a convenience wrapper for dealing with Jenkins
