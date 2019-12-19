@@ -379,6 +379,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("status")
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
+            assert r.value.containsKey("dry_run")
 
             String link = r.value.url
             if(params.link_to_console) 
@@ -390,9 +391,16 @@ class ResultsUtility implements Serializable
                          <tr {{CLASS}}>
                              <td>${r.value.status}</td>
                              <td>${r.value.duration}</td>
-                             <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>
-                         </tr>
                          """.stripIndent()
+            if(r.value.dry_run == true)
+            {
+                msg += "    <td>${r.value.job} #dry-run</td>\n"
+            } 
+            else
+            {
+                msg += "    <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>\n"
+            }
+            msg += "</tr>"
 
             switch(r.value.status)
             {
@@ -441,8 +449,17 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("status")
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
+            assert r.value.containsKey("dry_run")
 
-            String job_name = "${r.value.job} #${r.value.id}"
+            String job_name = "${r.value.job} #"
+            if(r.value.dry_run == true)
+            {
+                job_name += "dry-run"
+            }
+            else
+            {
+                job_name += "${r.value.id}"
+            }
 
             Float duration = r.value.duration
 
@@ -475,12 +492,18 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("id")
             assert r.value.containsKey("status")
             assert r.value.containsKey("duration")
+            assert r.value.containsKey("url")
+            assert r.value.containsKey("dry_run")
+
             Float duration = r.value.duration
             output += "{"
             output += "\"name\": \"${r.value.job}\", "
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
-            output += sprintf("\"duration\": %.2f}", duration)
+            output += sprintf("\"duration\": %.2f,", duration)
+            output += "\"dry_run\": \"${r.value.dry_run}\","
+            output += "\"url\": \"${r.value.url}\""
+            output += "}"
 
             //this._env.println "SPiFI-DEBUG]> params.results isa: " + params.results.getClass().getName()
             //this._env.println "SPiFI-DEBUG]> r isa: " + r.getClass().getName()
@@ -526,6 +549,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("status")
             assert r.value.containsKey("duration")
             assert r.value.containsKey("url")
+            assert r.value.containsKey("dry_run")
 
             String link = r.value.url
             if(params.link_to_console) 
@@ -533,7 +557,18 @@ class ResultsUtility implements Serializable
                 link += "/console"
             }
 
-            output += sprintf("| %s | %s | [%s #%s](%s) |\n", [r.value.status, r.value.duration, r.value.job, r.value.id, link])
+            output += sprintf("| %s | %s |", [r.value.status, r.value.duration])
+            if(r.value.dry_run == true)
+            {
+                output += sprintf(" %s #dry-run |", r.value.job)
+            }
+            else
+            {
+                output += sprintf(" [%s #%s](%s) |", [r.value.job, r.value.id, link])
+            }
+            output += "\n"
+
+
         }
         return output
     }

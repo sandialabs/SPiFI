@@ -261,7 +261,6 @@ class JobLauncher
         }
 
 
-
         // Validate parameter value(s)
         if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
         {
@@ -330,7 +329,8 @@ class JobLauncher
      *                        status:   <jenkins job status (String)>,
      *                        id:       <jenkins job build id (String)>,
      *                        url:      <absolute URL to jenkins job (String)>,
-     *                        duration: <duration of job in seconds (Float)>
+     *                        duration: <duration of job in seconds (Float)>,
+     *                        dry_run:  <true IF job was launched as a dry-run (Boolean)>
      *                    ]
      */
     def launchInParallel()
@@ -463,6 +463,7 @@ class JobLauncher
         results[job.key]["id"]       = 0
         results[job.key]["url"]      = ""
         results[job.key]["duration"] = 0
+        results[job.key]["dry_run"]  = job.value.dry_run
 
         // Everything after this level is executed...
         try
@@ -475,7 +476,8 @@ class JobLauncher
                                       "[SPiFI]> - Delay : ${job.value.dry_run_delay} seconds\n" +
                                       "[SPiFI]> - Status: ${job.value.dry_run_status}"
 
-                    results[job.key]["status"] = job.value.dry_run_status
+                    results[job.key]["status"]   = job.value.dry_run_status
+                    results[job.key]["duration"] = job.value.dry_run_delay
                     this._env.sleep job.value.dry_run_delay
                 }
                 else
