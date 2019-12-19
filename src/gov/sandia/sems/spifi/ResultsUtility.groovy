@@ -463,7 +463,7 @@ class ResultsUtility implements Serializable
 
             Float duration = r.value.duration
 
-            output += sprintf("   %-9s   |   %-8.2f   |   %-70s\n", [r.value.status, duration, job_name])
+            output += sprintf("   %-9s   |   %10.2f |   %-70s\n", [r.value.status, duration, job_name])
         }
         return output
     }
@@ -501,7 +501,7 @@ class ResultsUtility implements Serializable
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f,", duration)
-            output += "\"dry_run\": \"${r.value.dry_run}\","
+            output += "\"dry_run\": ${r.value.dry_run},"            // TODO: Can JsonL handle a boolean?
             output += "\"url\": \"${r.value.url}\""
             output += "}"
 
@@ -559,7 +559,7 @@ class ResultsUtility implements Serializable
 
             Float duration = r.value.duration
 
-            output += sprintf("| %10s | %-12.2f |", [r.value.status, duration])
+            output += sprintf("| %10s | %12.2f |", [r.value.status, duration])
             if(r.value.dry_run == true)
             {
                 output += sprintf(" %s #dry-run |", r.value.job)
