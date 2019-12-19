@@ -1,3 +1,4 @@
+#!/usr/bin/env groovy
 /**
  * SPiFI_test_selectable_status.jenkinsfile
  *
