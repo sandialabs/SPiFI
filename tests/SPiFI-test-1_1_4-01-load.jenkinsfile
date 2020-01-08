@@ -9,20 +9,14 @@
 String node_restriction = "RHEL7 || RHEL6 || master"
 
 
-
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '365',       numToKeepStr: '90')),
     disableConcurrentBuilds(),
+    string(name: 'NODE_RESTRICTION',
+           defaultValue: node_restriction,
+           description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" )
 ])
-
-
-
-// Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
-String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
-
-// What is the branch name that we want to use
-String branchName = "v1.1.4"
 
 
 // Load node restriction(s) from parameters
@@ -31,14 +25,6 @@ if(params.containsKey("NODE_RESTRICTION"))
   node_restriction = params.NODE_RESTRICTION
 }
 
-// Misc global vars.
-String email_body = ""
-List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
-
-
-// Global faiulre counter for use at the end of testing.
-Integer num_failures = 0
-Integer num_tests    = 0
 
 
 node(node_restriction)
@@ -53,6 +39,9 @@ node(node_restriction)
         // Stage: Try to load SPiFI
         stage("Load SPiFI")
         {
+            // What is the branch name that we want to use
+            String branchName = "v1.1.4"
+
             try
             {
                 //@Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
