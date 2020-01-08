@@ -1,0 +1,89 @@
+#!/usr/bin/env groovy
+/**
+ * SPiFI_test_driver.jenkinsfile
+ *
+ * Test the SPiFI library
+ */
+
+// Configure default node restrictions
+String node_restriction = "RHEL7 || RHEL6 || master"
+
+
+
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
+                              daysToKeepStr: '365',       numToKeepStr: '90')),
+    disableConcurrentBuilds(),
+])
+
+
+
+// Get the Jenkins host we're running on (jenkins-srn-dev, jenkins-srn, etc.)
+String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
+
+// What is the branch name that we want to use
+String branchName = "v1.1.4"
+
+
+// Load node restriction(s) from parameters
+if(params.containsKey("NODE_RESTRICTION"))
+{
+  node_restriction = params.NODE_RESTRICTION
+}
+
+// Misc global vars.
+String email_body = ""
+List   exit_status_list = ["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "NOT_BUILT"]
+
+
+// Global faiulre counter for use at the end of testing.
+Integer num_failures = 0
+Integer num_tests    = 0
+
+
+node(node_restriction)
+{
+    // Clean the workspace
+    cleanWs();
+    println "\u27A4 Workspace cleaned."
+
+    timeout(time: 10, unit: "MINUTES")
+    {
+
+        // Stage: Try to load SPiFI
+        stage("Load SPiFI")
+        {
+            try
+            {
+                //@Field final String LIBRARY_VERSION = "SPiFI@${BRANCH_NAME}"
+                //println "LIBRARY_VERSION: ${LIBRARY_VERSION}"
+                //@Library(LIBRARY_VERSION) _       // Note: even this is b0rked in Jenkins... you have to use a literal constant.
+                @Library('SPiFI-1.1.4') _ 
+
+                println "\u2705 SPiFI library loaded successfully"
+
+                // Update branchName with spifi.Info.version() if possible
+                try
+                {
+                    branchName = gov.sandia.sems.spifi.Info.version()
+                    println "\u2705 Branch Loaded Version Info OK: ${branchName}"
+                }
+                catch(ex)
+                {
+                    println "\u274c An error occurred loading gov.sandia.sems.spifi.Info.version()\n${ex}\n" +
+                            "\u274c Branch Loaded Version Info FAILED: ${branchName}"
+                    currentBuild.result = "FAILURE"
+                }
+            }
+            catch(ex)
+            {
+                println "\u274c ERROR: Failed to load SPiFI Library:\n${ex}"
+                currentBuild.result = "FAILURE"
+            }
+        }   // end stage
+
+    }   // timeout
+}   // node
+
+
+
