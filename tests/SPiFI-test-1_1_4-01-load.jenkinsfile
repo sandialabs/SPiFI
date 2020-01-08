@@ -10,19 +10,23 @@ String node_restriction = "RHEL7 || RHEL6 || master"
 
 
 properties([
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
-                              daysToKeepStr: '365',       numToKeepStr: '90')),
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', 
+                              artifactNumToKeepStr: '',
+                              daysToKeepStr: '365',       
+                              numToKeepStr: '90')),
     disableConcurrentBuilds(),
-    string(name: 'NODE_RESTRICTION',
-           defaultValue: node_restriction,
-           description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" )
+    parameters([
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               description: "Restrict what node(s) the pipeline script can run on. Default: '${node_restriction}'" )
+    ])
 ])
 
 
 // Load node restriction(s) from parameters
 if(params.containsKey("NODE_RESTRICTION"))
 {
-  node_restriction = params.NODE_RESTRICTION
+    node_restriction = params.NODE_RESTRICTION
 }
 
 
