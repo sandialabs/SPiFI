@@ -455,8 +455,9 @@ class JobLauncher
     def _jobBody(job)
     {
         def utility = new gov.sandia.sems.spifi.Utility()
-        def results = [:]
 
+        // Set up results data structure and set default properties
+        def results = [:]
         results[job.key] = [:]
         results[job.key]["job"]      = job.value.jenkins_job_name
         results[job.key]["status"]   = ""
@@ -464,6 +465,9 @@ class JobLauncher
         results[job.key]["url"]      = ""
         results[job.key]["duration"] = 0
         results[job.key]["dry_run"]  = job.value.dry_run
+
+        // Build status return object (declare this here so that we can access it if we get an error)
+        def status = null
 
         // Everything after this level is executed...
         try
@@ -494,7 +498,6 @@ class JobLauncher
                         this._env.println "[SPiFI]> Number of retry conditions to check: 0"
                     }
 
-                    def       status = null
                     String    jobStatus = ""
                     Float     duration_seconds = 0.0
 
@@ -502,6 +505,7 @@ class JobLauncher
                     Integer   attempt_limit  = job.value.retry_max_count + 1        // +1 because the *first* attempt isn't a retry
                     Boolean   attempt_failed = true
                     Exception attempt_exception = null
+
                     while( attempt_failed && attempt_number < attempt_limit )
                     {
 
@@ -619,6 +623,7 @@ class JobLauncher
                               "SPiFI> Job timeout ${job.value.timeout} ${job.value.timeout_unit}.\n" +
                               "SPiFI> Exception:\n${e}\n" +
                               "SPiFI> --------------------------------------------------------"
+            this._env.println "SPiFI> status = ${status}"
             results[job.key]["status"] = "ABORTED"
         }
         catch(e)
