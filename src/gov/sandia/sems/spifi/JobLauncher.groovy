@@ -568,8 +568,8 @@ class JobLauncher
                                 String msg = "[SPiFI]> retry_condition matched = ${retry_condition_found}\n"
                                 if(retry_condition_found)
                                 {
-                                    msg += "[SPiFI]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
-                                    msg += "[SPiFI]> retry delay             = ${retry_condition_matched.retry_delay}\n"
+                                    msg += "[SPiFI]> retry_condition_matched = ${retry_condition_matched.asString()}\n" 
+                                    msg += "[SPiFI]> retry delay             = ${retry_condition_matched.retry_delay}\n" 
                                     msg += "[SPiFI]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
                                 }
                                 this._env.println "${msg}"
@@ -614,11 +614,12 @@ class JobLauncher
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
             this._env.println "SPiFI> --------------------------------------------------------\n" +
-                              "SPiFI> ERROR: Job time exceeded time limit set by the pipeline.\n" +
-                              "SPiFI> Timeout: ${job.value.timeout} ${job.value.timeout_unit}\n" +
+                              "SPiFI> ERROR: Job was aborted.\n" +
+                              "SPiFI> This can happen due to timeout or if the pipeline is aborted.\n" +
+                              "SPiFI> Job timeout ${job.value.timeout} ${job.value.timeout_unit}.\n" +
                               "SPiFI> Exception:\n${e}\n" +
                               "SPiFI> --------------------------------------------------------"
-            results[job.key]["status"] = "FAILURE"
+            results[job.key]["status"] = "ABORTED"
         }
         catch(e)
         {

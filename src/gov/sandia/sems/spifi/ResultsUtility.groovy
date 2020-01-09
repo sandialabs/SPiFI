@@ -382,7 +382,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("dry_run")
 
             String link = r.value.url
-            if(params.link_to_console) 
+            if(link != "" && params.link_to_console) 
             {
                 link += "/console"
             }
@@ -392,14 +392,23 @@ class ResultsUtility implements Serializable
                              <td>${r.value.status}</td>
                              <td>${r.value.duration}</td>
                          """.stripIndent()
+
+            // If dry run, note that in "link"
             if(r.value.dry_run == true)
             {
                 msg += "    <td>${r.value.job} #dry-run</td>\n"
             } 
+            // Don't provide empty links
+            else if(link == "")
+            {
+                msg += "    <td>${r.value.job} </td>\n"
+            }
+            // Otherwise, provide the link
             else
             {
                 msg += "    <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>\n"
             }
+
             msg += "</tr>"
 
             switch(r.value.status)
@@ -517,7 +526,8 @@ class ResultsUtility implements Serializable
         }
         output += "]}"
 
-        // Optionally, beautify the json so it's more human readable
+        // Optionally, beautify the json so it's more human readable 
+        // Note: This would make the output a JSON string, not JSONL
         if(params.beautify)
         {
             output = groovy.json.JsonOutput.prettyPrint(output)
@@ -552,7 +562,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("dry_run")
 
             String link = r.value.url
-            if(params.link_to_console) 
+            if(link != "" && params.link_to_console) 
             {
                 link += "/console"
             }
@@ -560,10 +570,17 @@ class ResultsUtility implements Serializable
             Float duration = r.value.duration
 
             output += sprintf("| %10s | %12.2f |", [r.value.status, duration])
+            // If dry run, note that in link
             if(r.value.dry_run == true)
             {
                 output += sprintf(" %s #dry-run |", r.value.job)
             }
+            // Don't provide empty links
+            else if(link == "")
+            {
+                output += sprintf(" %s |", r.value.job)
+            }
+            // Otherwise, provide the link
             else
             {
                 output += sprintf(" [%s #%s](%s) |", [r.value.job, r.value.id, link])
