@@ -50,7 +50,17 @@ node(node_restriction)
 {
     timestamps()
     {
+    
+    try
+    {
+        cleanWs()
+    }
+    catch(e)
+    {
+        println "WARNING!!!  cleanWs() failed.\n${e}"
+    }
 
+    /*
     stage('Clean Workspace')
     {
         println "\u27A4\n" +
@@ -65,6 +75,7 @@ node(node_restriction)
             println "WARNING!!!  cleanWs() failed.\n${e}"
         }
     }
+    */
 
     stage('Execute')
     {
