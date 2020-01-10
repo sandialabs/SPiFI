@@ -394,19 +394,20 @@ class ResultsUtility implements Serializable
                          """.stripIndent()
 
             // If dry run, note that in "link"
-            if(r.value.dry_run == true)
+            if(true == r.value.dry_run)
             {
                 msg += "    <td>${r.value.job} #dry-run</td>\n"
             } 
             // Don't provide empty links
-            else if(link == "")
+            else if("" == link)
             {
                 msg += "    <td>${r.value.job} </td>\n"
             }
             // Otherwise, provide the link
             else
             {
-                msg += "    <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>\n"
+                //msg += "    <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>\n"
+                msg += sprintf("    <td><A HREF='%s'>%s #%s</A></td>\n", [link, r.value.job, r.value.id])
             }
 
             msg += "</tr>"
