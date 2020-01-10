@@ -622,6 +622,8 @@ class JobLauncher
                               "SPiFI> Exception:\n${e}\n" +
                               "SPiFI> --------------------------------------------------------"
             results[job.key]["status"] = "ABORTED"
+            // TODO: Can we distinguish if this was killed due to a timeout or if it was a user-abort
+            //       of the pipeline itself?
         }
         catch(e)
         {
