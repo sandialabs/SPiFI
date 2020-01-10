@@ -396,17 +396,16 @@ class ResultsUtility implements Serializable
             // If dry run, note that in "link"
             if(true == r.value.dry_run)
             {
-                msg += "    <td>${r.value.job} #dry-run</td>\n"
+                msg += sprintf("    <td>%s #dry-run</td>\n", [r.value.job])
             } 
             // Don't provide empty links
             else if("" == link)
             {
-                msg += "    <td>${r.value.job} </td>\n"
+                msg += sprintf("    <td>%s</td>\n", [r.value.job])
             }
             // Otherwise, provide the link
             else
             {
-                //msg += "    <td><A HREF="${link}">${r.value.job} #${r.value.id}</A></td>\n"
                 msg += sprintf("    <td><A HREF='%s'>%s #%s</A></td>\n", [link, r.value.job, r.value.id])
             }
 
