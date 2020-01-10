@@ -466,9 +466,6 @@ class JobLauncher
         results[job.key]["duration"] = 0
         results[job.key]["dry_run"]  = job.value.dry_run
 
-        // Build status return object (declare this here so that we can access it if we get an error)
-        def status = null
-
         // Everything after this level is executed...
         try
         {
@@ -498,6 +495,7 @@ class JobLauncher
                         this._env.println "[SPiFI]> Number of retry conditions to check: 0"
                     }
 
+                    def       status = null
                     String    jobStatus = ""
                     Float     duration_seconds = 0.0
 
@@ -623,7 +621,6 @@ class JobLauncher
                               "SPiFI> Job timeout ${job.value.timeout} ${job.value.timeout_unit}.\n" +
                               "SPiFI> Exception:\n${e}\n" +
                               "SPiFI> --------------------------------------------------------"
-            this._env.println "SPiFI> status = ${status}"
             results[job.key]["status"] = "ABORTED"
         }
         catch(e)
