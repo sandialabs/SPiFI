@@ -523,7 +523,14 @@ class JobLauncher
                         status = this._env.build job        : job.value.jenkins_job_name,
                                                  parameters : job.value.parameters,
                                                  quietPeriod: job.value.quiet_period,
-                                                 propagate  : job.value.propagate_error
+                                                 propagate  : job.value.propagate_error,
+                                                 wait       : false
+
+                        this._env.println "[SPiFI DEBUGGING]> -------------------\n" +
+                                          "[SPiFI DEBUGGING]>\n" +
+                                          "[SPiFI DEBUGGING]> status = ${status}\n" +
+                                          "[SPiFI DEBUGGING]>\n" +
+                                          "[SPiFI DEBUGGING]> -------------------\n" 
 
                         duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
                         jobStatus        = status.getResult()

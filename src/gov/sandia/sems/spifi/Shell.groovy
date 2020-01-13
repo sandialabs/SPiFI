@@ -260,7 +260,7 @@ def execute(Map params)
                     // Execute the command
                     status = env.sh(script: "${command} ${redirect1} ${temp_filename} ${redirect2}", returnStatus: true)
 
-                    // Read in the temp file and remove it.
+                    // Read / load the temp file and remove it.
                     console = env.readFile(temp_filename).trim()
 
                     // If in verbose mode, print out the console output we loaded in.
