@@ -239,7 +239,7 @@ class HTMLUtility implements Serializable
                     background: #8CD564;
                 }
 
-                /* ---------- Status based themes ---------- */
+                /* ---------- Jenkins Status based themes ---- */
                 tr.SUCCESS td {
                     background-color: #80BD73;
                 }
@@ -254,6 +254,11 @@ class HTMLUtility implements Serializable
                 }
                 tr.NOT_BUILT td {
                     background-color: #e6e6e6;
+                }
+
+                /* ---------- SPiFI Status Based Themes ----- */
+                tr.TIMEOUT td {
+                    background-color: #E3D389;
                 }
 
                 /* ---------- Center columns [1-9] ---------- */

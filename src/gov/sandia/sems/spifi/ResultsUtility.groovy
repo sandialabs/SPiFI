@@ -26,7 +26,8 @@ class ResultsUtility implements Serializable
 {
     // Member Variables
     private static _env           // Requird Jenkins environment.
-
+    private _allowable_job_status_core
+    private _allowable_job_status_spifi
 
     /**
      * Constructor for ResultsUtility
@@ -43,6 +44,16 @@ class ResultsUtility implements Serializable
             throw new Exception("[SPiFI] Missing required parameter: 'env'")
         }
         this._env = params.env
+        this._allowable_job_status_core  = ["SUCCESS"  : "R",
+                                            "FAILURE"  : "R",
+                                            "UNSTABLE" : "R",
+                                            "ABORTED"  : "O",
+                                            "NOT_BUILT": "O",
+                                           ]
+        this._allowable_job_status_spifi = ["TIMEOUT"  : "O"
+                                           ]
+        //this._allowable_job_status_core  = ["SUCCESS","FAILURE","UNSTABLE","ABORTED","NOT_BUILT"]
+        //this._allowable_job_status_spifi = ["TIMEOUT"]            
     }
 
 
@@ -60,6 +71,7 @@ class ResultsUtility implements Serializable
      * @return String containing the Summary table for results that can be inserted into
      *                the console log, email, etc.
      */
+    @NonCPS
     def genResultSummaryTable(Map params)
     {
         // If format isn't provided, make it ASCII
@@ -72,14 +84,20 @@ class ResultsUtility implements Serializable
         assert params.containsKey("summary")
 
         assert params.summary.containsKey("NUMJOBS")
-        assert params.summary.containsKey("NUMSUCCESS")
-        assert params.summary.containsKey("NUMFAILURE")
-        assert params.summary.containsKey("NUMUNSTABLE")
-        assert params.summary.containsKey("NUMABORTED")
-        assert params.summary.containsKey("NUMNOT_BUILT")
+
+        // Check that we handle the status types that are provided by Jenkins
+        this._allowable_job_status_core.each()
+        {
+            assert params.summary.containsKey("NUM" + it.key)
+        }
+
+        // Check the extra status types that are specific to SPiFI
+        this._allowable_job_status_spifi.each()
+        {
+            assert params.summary.containsKey("NUM" + it.key)
+        }
 
         String output = ""
-
         switch(params.format)
         {
             case "HTML":
@@ -90,6 +108,9 @@ class ResultsUtility implements Serializable
                 break
             case "ASCII":
                 output += this._genResultSummaryTableASCII(params.summary)
+                break
+            case "JSONL":
+                throw new Exception("[SPiFI] genResultSummaryTable does not provide JSONL output")
                 break
             default:
                 output += this._genResultSummaryTableASCII(params.summary)
@@ -124,6 +145,7 @@ class ResultsUtility implements Serializable
      *                the console log, email, etc.
      *
      */
+    @NonCPS
     def genResultDetails(Map params)
     {
         // If format isn't provided, make it ASCII
@@ -193,6 +215,7 @@ class ResultsUtility implements Serializable
      *                the console log, email, etc.
      *
      */
+    @Deprecated
     def genResultDetailTable(Map params)
     {
         this._env.println "SPiFI DEPRECATION NOTICE]>\n" +
@@ -252,44 +275,50 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultSummaryTableHTML(summary)
     {
         String output = """
                         <table class="bgGreen tc2">
                             <tr><th>Summary Stat</th><th>Count</th></tr>
                             <tr><td>Num Tests</td><td>${summary.NUMJOBS}</td></tr>
-                            <tr {{CLASSNUMSUCCESS}}><td>Num Passed</td><td>${summary.NUMSUCCESS}</td></tr>
-                            <tr {{CLASSFAIL}}><td>Num Failed</td><td>${summary.NUMFAILURE}</td></tr>
-                            <tr {{CLASSUNSTABLE}}><td>Num Unstable</td><td>${summary.NUMUNSTABLE}</td></tr>
                         """.stripIndent()
 
-        // If there were aborted jobs, add the row
-        if(summary.NUMABORTED > 0)
+        this._allowable_job_status_core.each() 
         {
-            output += "<tr class='FAILURE'><td>Num Aborted</td><td>${summary.NUMABORTED}</td></tr>\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
+            {
+                output += "    <tr class='${it.key}'><td>Num ${it.key}</td><td>${tmpCount}</td></tr>\n"
+            }
         }
-        // If there were NOT_BUILT jobs, add the row
-        if(summary.NUMNOT_BUILT > 0)
+        this._allowable_job_status_spifi.each() 
         {
-            output += "<tr class='FAILURE'><td>Num NOT_Built</td><td>${summary.NUMNOT_BUILT}</td></tr>\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
+            {
+                output += "    <tr class='${it.key}'><td>Num ${it.key}</td><td>${tmpCount}</td></tr>\n"
+            }
         }
-
         output += "</table>\n"
 
+        // TODO: Revisit this logic -- what were we doing here again?
+        //       I think it was to make sure we're removing any remaining {{}} blocks
+        //       so they're all handled, but it might not really be necessary.
         if(summary.NUMSUCCESS != summary.NUMJOBS)
         {
             output = output.replace("{{CLASSNUMSUCCESS}}", "class='FAILURE'")
         }
         if(summary.NUMFAILURE > 0)
         {
-            output = output.replace("{{CLASSFAIL}}", "class='FAILURE'")
+            output = output.replace("{{CLASSFAILURE}}", "class='FAILURE'")
         }
         if(summary.NUMUNSTABLE > 0)
         {
             output = output.replace("{{CLASSUNSTABLE}}", "class='UNSTABLE'")
         }
         output = output.replace("{{CLASSNUMSUCCESS}}", "")
-        output = output.replace("{{CLASSFAIL}}", "")
+        output = output.replace("{{CLASSFAILURE}}", "")
         output = output.replace("{{CLASSUNSTABLE}}", "")
 
         return output
@@ -304,25 +333,32 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultSummaryTableASCII(summary)
     {
         String output = """
                            Summary Stat   |   Count
                         ------------------+-----------
                            Num Tests      |   ${summary.NUMJOBS}
-                           Num Passed     |   ${summary.NUMSUCCESS}
-                           Num Failure    |   ${summary.NUMFAILURE}
-                           Num Unstable   |   ${summary.NUMUNSTABLE}
                         """.stripIndent()
 
-        if(summary.NUMABORTED > 0)
+        this._allowable_job_status_core.each()
         {
-            output += "   Num Aborted    |   ${summary.NUMABORTED}\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
+            {
+                output += sprintf("   Num %-9s  |   %d\n", [it.key, tmpCount])
+            }
         }
-        if(summary.NUMNOT_BUILT > 0)
+        this._allowable_job_status_spifi.each()
         {
-            output += "   Num NOT_Built  |   ${summary.NUMNOT_BUILT}\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if ( it.value == "R" || ( it.value=="O" && tmpCount > 0) ) 
+            {
+                output += sprintf("   Num %-9s  |   %d\n", [it.key, tmpCount])
+            }
         }
+
         return output
     }
 
@@ -335,24 +371,32 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultSummaryTableMarkdown(summary)
     {
         String output = """
                         | Summary Stat    | Count  |
                         | --------------- |:------:|
-                        |   Num Tests     | ${summary.NUMJOBS}  |
-                        |   Num Passed    | ${summary.NUMSUCCESS}  |
-                        |   Num Failure   | ${summary.NUMFAILURE}  |
-                        |   Num Unstable  | ${summary.NUMUNSTABLE}  |
                         """.stripIndent()
-        if(summary.NUMABORTED > 0)
+        output += sprintf("|   Num Tests     | %5s  |\n", [summary.NUMJOBS])
+
+        this._allowable_job_status_core.each()
         {
-            output += "|   Num Aborted   | ${summary.NUMABORTED}  |\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
+            {
+                output += sprintf("|   Num %-9s | %5d  |\n", [it.key, tmpCount])
+            }
         }
-        if(summary.NUMNOT_BUILT > 0)
+        this._allowable_job_status_spifi.each()
         {
-            output += "|   Num NOT_Built | ${summary.NUMNOT_BUILT}  |\n"
+            Integer tmpCount  = summary["NUM" + it.key]
+            if ( it.value == "R" || ( it.value == "O" && tmpCount > 0 ) )
+            {
+                output += sprintf("|   Num %-9s | %5d  |\n", [it.key, tmpCount])
+            }
         }
+
         return output
     }
 
@@ -365,6 +409,7 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultDetailTableHTML(params)
     {
         String output = """
@@ -388,7 +433,7 @@ class ResultsUtility implements Serializable
             }
 
             String msg = """
-                         <tr {{CLASS}}>
+                         <tr class='${r.value.status}'>
                              <td>${r.value.status}</td>
                              <td>${r.value.duration}</td>
                          """.stripIndent()
@@ -398,37 +443,28 @@ class ResultsUtility implements Serializable
             {
                 msg += sprintf("    <td>%s #dry-run</td>\n", [r.value.job])
             } 
-            // Don't provide empty links
+            // If the link is empty, don't send it.
             else if("" == link)
             {
                 msg += sprintf("    <td>%s</td>\n", [r.value.job])
             }
-            // Otherwise, provide the link
-            else
+            // If the job id is set:
+            else if(r.value.id != "0")
             {
                 msg += sprintf("    <td><A HREF='%s'>%s #%s</A></td>\n", [link, r.value.job, r.value.id])
+            }
+            // Otherwise, just give the job name...
+            else
+            {
+                msg += sprintf("    <td>%s</td>\n", [r.value.job])
             }
 
             msg += "</tr>"
 
-            switch(r.value.status)
-            {
-                case "FAILURE":
-                    msg = msg.replace("{{CLASS}}", "class='FAILURE'")
-                    break
-                case "UNSTABLE":
-                    msg = msg.replace("{{CLASS}}", "class='UNSTABLE'")
-                    break
-                case "ABORTED":
-                    msg = msg.replace("{{CLASS}}", "class='ABORTED'")
-                    break
-                case "NOT_BUILT":
-                    msg = msg.replace("{{CLASS}}", "class='NOT_BUILT'")
-                    break
-                default:
-                    msg = msg.replace("{{CLASS}}", "")
-                    break
-            }
+            // Replace the {{CLASS}} entry
+            // -- Should this be put into the msg definition earlier rather than using the {{}} replacement?
+            //msg = msg.replace("{{CLASS}}", "class='${r.value.status}'")
+
             output += msg
         }
         output += "</table>\n"
@@ -444,6 +480,7 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultDetailTableASCII(params)
     {
         String output = """
@@ -460,14 +497,14 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("url")
             assert r.value.containsKey("dry_run")
 
-            String job_name = "${r.value.job} #"
+            String job_name = "${r.value.job}"
             if(r.value.dry_run == true)
             {
-                job_name += "dry-run"
+                job_name += " #dry-run"
             }
-            else
+            else if(r.value.id != "0")
             {
-                job_name += "${r.value.id}"
+                job_name += " #${r.value.id}"
             }
 
             Float duration = r.value.duration
@@ -486,6 +523,7 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted results
      */
+    @NonCPS
     def _genResultDetailTableJSONL(params)
     {
         def timestamp = new Date()
@@ -510,7 +548,7 @@ class ResultsUtility implements Serializable
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f,", duration)
-            output += "\"dry_run\": ${r.value.dry_run},"            // TODO: Can JsonL handle a boolean?
+            output += "\"dry_run\": ${r.value.dry_run}," 
             output += "\"url\": \"${r.value.url}\""
             output += "}"
 
@@ -544,6 +582,7 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
+    @NonCPS
     def _genResultDetailTableMarkdown(params)
     {
         // this._env.println "[SPiFI-DEBUG]> Entering ResultsUtility::_genResultDetailTableMarkdown(params)"
