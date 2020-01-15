@@ -16,6 +16,40 @@ package gov.sandia.sems.spifi
 
 
 
+/**
+ * Pretty print a Groovy exception StackTrace
+ *
+ * @param env       [REQUIRED] Object - Jenkins environment (use 'this' from the Jenkins pipeline).
+ * @param exception [REQUIRED] Exception - Groovy exception object.
+ *
+ * @return 
+ */
+def spifi_get_exception_stacktrace_pretty(Map args)
+{
+    if( !args.containsKey("env") )
+    {
+        throw new Exception("[SPiFI ERROR]> Missing required parameter 'env' to spifi_get_exception_stackgrace_pretty()")
+    }
+    if( !args.containsKey("exception") )
+    {
+        throw new Exception("[SPiFI ERROR]> Missing required parameter 'exception' to spifi_get_exception_stackgrace_pretty()")
+    }
+
+    def env = args.env
+    def ex  = args.exception
+
+    String output = ""
+
+    def strace = ex.getStackTrace()
+    strace.each
+    {
+        output += "[SPiFI]> \u2757 " +
+                  sprintf("%-70s %s\n", [it.getClassName().toString(), it.getMethodName().toString()])
+    }
+    return output.trim()
+}
+
+
 
 /**
  * Load a Jenkins parameter if it exists.

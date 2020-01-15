@@ -27,6 +27,7 @@ package gov.sandia.sems.spifi
 
 import gov.sandia.sems.spifi.DelayedRetry
 import gov.sandia.sems.spifi.DelayedRetryOnRegex
+import gov.sandia.sems.spifi.JenkinsTools
 import gov.sandia.sems.spifi.Utility
 
 
@@ -88,6 +89,9 @@ class JobLauncher
     private Map<String,String> _jobList                   // The jobs + their parameters
     private Map<String,String> _lastResultSummary         // Status on the latest results
 
+    private List _allowable_job_status_core               // Core exit status values from Jenkins (SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT)
+    private List _allowable_job_status_spifi              // Extra exit status values from SPiFI (TIMEOUT)
+
 
     /**
      * Constructor for the job launcher.
@@ -107,6 +111,9 @@ class JobLauncher
         this._env = params.env
         this._jobList = [:]
         this._lastResultSummary = [:]
+
+        this._allowable_job_status_core  = ["SUCCESS","FAILURE","UNSTABLE","ABORTED","NOT_BUILT"]
+        this._allowable_job_status_spifi = ["TIMEOUT"]
     }
 
     @Deprecated
@@ -305,6 +312,7 @@ class JobLauncher
     }
 
 
+
     /**
      * Clear / reset the job list and result summary.  This is an optional step and is only really
      * necessary if you're going to launch additional sets of jobs using the same launcher object.
@@ -318,6 +326,7 @@ class JobLauncher
         this._jobList.clear()
         this._resetLastResultSummary()
     }
+
 
 
     /**
@@ -373,6 +382,7 @@ class JobLauncher
     }
 
 
+
     /**
      * Return a summary of the most recent set of jobs run by LaunchInParallel.
      *
@@ -389,6 +399,7 @@ class JobLauncher
     {
         return this._lastResultSummary
     }
+
 
 
     /**
@@ -444,6 +455,7 @@ class JobLauncher
     // -------------------------------------------------------------------------
     // ----[ PRIVATE METHODS ]--------------------------------------------------
     // -------------------------------------------------------------------------
+
 
 
     /**
@@ -524,13 +536,13 @@ class JobLauncher
                                                  parameters : job.value.parameters,
                                                  quietPeriod: job.value.quiet_period,
                                                  propagate  : job.value.propagate_error,
-                                                 wait       : false
+                                                 wait       : true
 
-                        this._env.println "[SPiFI DEBUGGING]> -------------------\n" +
-                                          "[SPiFI DEBUGGING]>\n" +
-                                          "[SPiFI DEBUGGING]> status = ${status}\n" +
-                                          "[SPiFI DEBUGGING]>\n" +
-                                          "[SPiFI DEBUGGING]> -------------------\n" 
+                        //this._env.println "[SPiFI DEBUGGING]> -------------------\n" +
+                        //                  "[SPiFI DEBUGGING]>\n" +
+                        //                  "[SPiFI DEBUGGING]> status = ${status}\n" +
+                        //                  "[SPiFI DEBUGGING]>\n" +
+                        //                  "[SPiFI DEBUGGING]> -------------------\n" 
 
                         duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
                         jobStatus        = status.getResult()
@@ -615,22 +627,71 @@ class JobLauncher
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // End Timeout
 
-            // todo: See if we can identify the job build id and url, etc. even when jobs timeout...
+            // TODO: Detect that the timeout was hit???
+
+            // TODO: See if we can identify the job build id and url, etc. even when jobs timeout...
             //       maybe launch in non-blocking mode, get the info, and then block on results?
             //       (if this is possible in Jenkins' groovy).
 
         }      // End Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
+            // Note: FlowInterruptedException is triggered in both cases if the job was killed by 
+            //       the user or if it was killed due to a test timeout.
             this._env.println "SPiFI> --------------------------------------------------------\n" +
-                              "SPiFI> ERROR: Job was aborted.\n" +
+                              "SPiFI> ERROR: ${job.key} (${job.value.jenkins_job_name}) was aborted.\n" +
                               "SPiFI> This can happen due to timeout or if the pipeline is aborted.\n" +
                               "SPiFI> Job timeout ${job.value.timeout} ${job.value.timeout_unit}.\n" +
                               "SPiFI> Exception:\n${e}\n" +
+                              "SPiFI> Exception Cause:\n${e.getCause()}\n" +
+                              "SPiFI> Exception Message:\n${e.getMessage()}\n" +
+                              "SPiFI> Exception StackTrace:\n${e.getStackTrace()}\n" +
                               "SPiFI> --------------------------------------------------------"
-            results[job.key]["status"] = "ABORTED"
-            // TODO: Can we distinguish if this was killed due to a timeout or if it was a user-abort
-            //       of the pipeline itself?
+            def strace = e.getStackTrace()
+
+            // Many things can cause a FlowInterruptedException so let's check the stack trace 
+            // to try and identify what caused it.
+            // WARNING: This might be brittle if Jenkins changes things up, but for now there's 
+            //          no way I know of to differentiate what interrupted the sub-job.
+            /* DEBUG */ def tools = new gov.sandia.sems.spifi.JenkinsTools()
+            /* DEBUG */ this._env.println tools.spifi_get_exception_stacktrace_pretty(env: this._env, exception: e)
+
+            String interrupt_reason="UNKNOWN"
+            strace.find 
+            {
+                // Sub-job killed due to some kind of timeout 
+                if( it.getClassName().toString().contains("workflow.steps.TimeoutStepExecution") && it.getMethodName().toString() == "cancel")
+                {
+                    interrupt_reason = "TIMEOUT"
+                    results[job.key]["duration"] = utility.convertDurationToSeconds(job.value.timeout, job.value.timeout_unit)
+                    return true
+                }
+                // Sub-job killed due to an abort
+                // - Note: I don't think we can distinguish if this was due to a pipeline abort or if it's a sub-job abort
+                else if( it.getClassName().toString().contains("workflow.steps.BodyExecution") && it.getMethodName().toString() == "cancel" )
+                {
+                    interrupt_reason = "ABORTED"
+                    throw e
+                    return true
+                }
+                // Sometimes we get this in the stacktrace... I don't fully understand when this is triggered vs. the above one.
+                else if( it.getClassName().toString().contains("workflow.cps.CpsFlowExecution") && it.getMethodName().toString() == "interrupt" )
+                {
+                    interrupt_reason = "ABORTED"
+                    throw e
+                    return true
+                }
+                return false
+            }
+
+            // TODO: In this case, when we can tell that the pipeline itself was aborted, we do what Jenkins will do and 
+            //       we pass the exception up and just kill the whole pipeline at this point.  It will abort the sub-jobs
+            //       and exit.  There won't be any emails or anything else sent because things die.  
+            //       We could investigate some optional settings to JobLauncher to prevent killing the pipeline from immediately
+            //       aborting the whole pipeline but rather have it pass up some flag or status to note that the pipeline was 
+            //       killed here (though, a check for that should probably be put somewhere higher than in _jobBody).
+
+            results[job.key]["status"] = interrupt_reason
         }
         catch(e)
         {
@@ -641,7 +702,8 @@ class JobLauncher
         }
 
         return results
-    }
+    }   // _jobBody
+
 
 
     /**
@@ -662,6 +724,7 @@ class JobLauncher
     }
 
 
+
     /**
      * Drives the launching of a job if a monitor-node is not requested.
      * - This is the default mode of operation.
@@ -674,6 +737,7 @@ class JobLauncher
     }
 
 
+
     /**
      * Reset / Clear the summary from the last result.
      * This will be called every time we invoke LaunchInParallel()
@@ -683,12 +747,15 @@ class JobLauncher
     def _resetLastResultSummary()
     {
         this._lastResultSummary.clear()
-        this._lastResultSummary["NUMJOBS"]      = this._jobList.size()
-        this._lastResultSummary["NUMSUCCESS"]   = 0
-        this._lastResultSummary["NUMFAILURE"]   = 0
-        this._lastResultSummary["NUMUNSTABLE"]  = 0
-        this._lastResultSummary["NUMABORTED"]   = 0
-        this._lastResultSummary["NUMNOT_BUILT"] = 0
+        this._lastResultSummary["NUMJOBS"] = this._jobList.size()
+        this._allowable_job_status_core.each() 
+        {
+            this._lastResultSummary["NUM"+it] = 0
+        }
+        this._allowable_job_status_spifi.each() 
+        {
+            this._lastResultSummary["NUM"+it] = 0
+        }
     }
 
 
@@ -704,8 +771,8 @@ class JobLauncher
     def _updateLastResultSummary(String status)
     {
         // verify parameter(s)
-        assert "SUCCESS"==status || "FAILURE"==status || "UNSTABLE"==status || "ABORTED"==status || "NOT_BUILT"==status
-
+        assert this._allowable_job_status_core.contains(status) || this._allowable_job_status_spifi.contains(status)
+        
         String statusKey = "NUM" + status
         this._lastResultSummary[statusKey] += 1
     }
