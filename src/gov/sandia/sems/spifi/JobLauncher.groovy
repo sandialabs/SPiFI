@@ -119,10 +119,10 @@ class JobLauncher
     @Deprecated
     JobLauncher(env)
     {
-        this.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                     "[SPiFI DEPRECATION NOTICE]> JobLauncher(this) will be deprecated in 2.0.0\n" +
-                     "[SPiFI DEPRECATION NOTICE]> -  Please use JobLauncher(\"env\": this)\n" +
-                     "[SPiFI DEPRECATION NOTICE]>"
+        env.println "[SPiFI DEPRECATION NOTICE]>\n" +
+                    "[SPiFI DEPRECATION NOTICE]> JobLauncher(this) will be deprecated in 2.0.0\n" +
+                    "[SPiFI DEPRECATION NOTICE]> -  Please use JobLauncher(\"env\": this)\n" +
+                    "[SPiFI DEPRECATION NOTICE]>"
 
         // Set Parameter Default(s)
         this._env = env
