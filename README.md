@@ -38,6 +38,7 @@ The full user guide can be found at
 ### Change Log
 
 #### master : 2020-01-15
+- v1.3.0 - Release
 - Deprecation: `JenkinsTools.checked_get_parameter` is now `JenkinsTools.spifi_checked_get_parameter`
 - Next version will be 1.3.0 due to the changes in JobLauncher
 
