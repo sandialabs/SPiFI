@@ -37,7 +37,14 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master : 2020-01-15
+- Deprecation: `JenkinsTools.checked_get_parameter` is now `JenkinsTools.spifi_checked_get_parameter`
+- Next version will be 1.3.0 due to the changes in JobLauncher
+
 #### master : 2020-01-14
+- Adding a new "spifi-only" job completion label, "TIMEOUT" which will be set if a job is timed-out
+  via the timeout set in `JobLauncher.appendJob()`. Detection of this is via stacktrace processing
+  when we handle the exception that gets kicked off, so it may be brittle down the line.
 - Updates for issue #23 and #7
 - Add new function to JenkinsTools:
   ```groovy
