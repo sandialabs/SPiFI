@@ -37,6 +37,21 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master : 2020-01-14
+- Updates for issue #23 and #7
+- Add new function to JenkinsTools:
+  ```groovy
+  /**
+   * Pretty print a Groovy exception StackTrace
+   *
+   * @param env       [REQUIRED] Object - Jenkins environment (use 'this' from the Jenkins pipeline).
+   * @param exception [REQUIRED] Exception - Groovy exception object.
+   *
+   * @return 
+   */
+  def spifi_get_exception_stacktrace_pretty(Map args)
+  ```
+
 #### master : 2019-12-19
 - ISSUE #23: Address issue where aborted dry-run jobs report 0 time for duration and provided
              a bogus link.
