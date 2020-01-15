@@ -449,10 +449,10 @@ node(node_restriction)
             // This test should fail due to TIMEOUT
             launcher.appendJob(label: "T-TIMEOUT-TEST",
                                 job_name: "SPiFI_test_selectable_status",
-                                timeout: 5,
+                                timeout: 10,
                                 timeout_unit: "SECONDS",
                                 parameters: [ (string(name:"EXIT_STATUS", value: "SUCCESS")),
-                                              (string(name:"SLEEP_TIME",  value: "10"))
+                                              (string(name:"SLEEP_TIME",  value: "30"))
                                             ]
                                 )
 
@@ -559,6 +559,16 @@ node(node_restriction)
                 else
                 {
                     email_body += "<li>FAILED: NUMABORTED != 1 (got ${launcher_summary.NUMABORTED})</li>\n"
+                    stage_passed = false
+                }
+
+                if(launcher_summary.NUMTIMEOUT == 1)
+                {
+                    email_body += "<li>PASSED: NUMTIMEOUT == 1</li>\n"
+                }
+                else
+                {
+                    email_body += "<li>FAILED: NUMTIMEOUT != 1 (got ${launcher_summary.NUMTIMEOUT})</li>\n"
                     stage_passed = false
                 }
 
