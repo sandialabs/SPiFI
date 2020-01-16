@@ -129,6 +129,7 @@ def checked_get_parameter(Map args)
                      "[SPiFI DEPRECATION NOTICE]> checked_get_parameter will be deprecated in 2.0.0\n" +
                      "[SPiFI DEPRECATION NOTICE]> -  Please use spifi_checked_get_parameter\n" +
                      "[SPiFI DEPRECATION NOTICE]>"
+   return spifi_checked_get_parameter(args)
 }
 
 
