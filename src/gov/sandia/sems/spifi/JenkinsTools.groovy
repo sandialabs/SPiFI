@@ -24,7 +24,7 @@ package gov.sandia.sems.spifi
  *
  * @return 
  */
-def spifi_get_exception_stacktrace_pretty(Map args)
+static def spifi_get_exception_stacktrace_pretty(Map args)
 {
     if( !args.containsKey("env") )
     {
@@ -63,7 +63,7 @@ def spifi_get_exception_stacktrace_pretty(Map args)
  *
  * @return Object containing the value of the parameter returned.
  */
-def spifi_checked_get_parameter(Map args)
+static def spifi_checked_get_parameter(Map args)
 {
     if( !args.containsKey("env") )
     {
@@ -134,3 +134,5 @@ def checked_get_parameter(Map args)
 
 
 return this
+
+
