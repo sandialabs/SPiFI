@@ -12,21 +12,21 @@ node()
     stage("Stage 1")
     {
         // Instantiate a JobLauncher
-        def launcher = new gov.sandia.sems.spifi.JobLauncher(this)
+        def spifi_jl = new gov.sandia.sems.spifi.JobLauncher(this)
 
         // Add some jobs to run
-        launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
-        launcher.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
-        launcher.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
+        spifi_jl.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
+        spifi_jl.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
+        spifi_jl.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
 
         // Pretty Print the list of jobs to console output
-        launcher.printJobList()
+        spifi_jl.printJobList()
 
         // Launch the jobs
-        launcher.launchInParallel()
+        spifi_jl.launchInParallel()
 
         // Get the summary stats of the run
-        def summary = launcher.getLastResultSummary()
+        def summary = spifi_jl.getLastResultSummary()
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
