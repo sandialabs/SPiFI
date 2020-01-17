@@ -344,6 +344,8 @@ class JobLauncher
      */
     def launchInParallel()
     {
+        this._env.println "[SPiFI]> JobLauncher.launchInParallel()"
+
         def builders = [:]
         def results  = [:]
 
@@ -375,7 +377,8 @@ class JobLauncher
             def r = _r
             this._updateLastResultSummary(r.value["status"])
 
-            this._env.println "[SPiFI]> UpdateLastResultSummary:\n${r}"
+            this._env.println "[SPiFI]> Job ${r.key} (${r.value.job}) completed."
+            //this._env.println "[SPiFI]> - UpdateLastResultSummary:\n${r}"
         }
 
         return results
