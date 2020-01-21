@@ -148,7 +148,6 @@ node("master")
         notify(body: email_body, status: "SUCCESS")
     }  // end stage Notification
 
-}  // end node()
 
 
 
@@ -172,6 +171,7 @@ def notify(Map args)
 }
 
 
+}  // end node()
 
 
 
