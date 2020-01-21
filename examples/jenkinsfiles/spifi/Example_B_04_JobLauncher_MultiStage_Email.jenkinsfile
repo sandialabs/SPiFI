@@ -77,7 +77,8 @@ node("master")
         spifi_jl.appendJob(label: "Job-3", 
                            job_name: "YET_ANOTHER_JENKINS_JOB", 
                            dry_run: param_dry_run,
-                           dry_run_delay: 5)
+                           dry_run_delay: 5,
+                           dry_run_status: "FAILURE")
 
         // Pretty Print the list of jobs to console output
         spifi_jl.printJobList()
