@@ -3,6 +3,7 @@
 // Load the SPiFI library
 def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 
+// Configure Job Properties
 properties([
     buildDiscarder(
         logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
@@ -148,11 +149,13 @@ node("master")
         notify(body: email_body, status: "SUCCESS")
     }  // end stage Notification
 
-
+}  // end node()
 
 
 def notify(Map args)
 {
+    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
     String email_body = args.body
 
     // Set up email subject and prepend a header to the email based on status.
@@ -170,8 +173,6 @@ def notify(Map args)
          mimeType: "text/html"
 }
 
-
-}  // end node()
 
 
 
