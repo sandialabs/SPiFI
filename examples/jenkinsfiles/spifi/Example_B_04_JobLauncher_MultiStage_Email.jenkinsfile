@@ -113,6 +113,9 @@ node("master")
             // Must be one of:  [SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT]
             // This also casuses the pipeline to terminate at the end of this stage.
             currentBuild.result = "FAILURE"
+
+            // Exit the pipeline!
+            return
         }
     }  // end stage: Run Tests
 
