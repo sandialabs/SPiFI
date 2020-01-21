@@ -152,14 +152,16 @@ node("master")
 }  // end node()
 
 
+// Simple notifier
 def notify(Map args)
 {
+    // Load SPiFI (defs won't already have libspifi)
     def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
-
-    String email_body = args.body
 
     // Set up email subject and prepend a header to the email based on status.
     String email_subject = "[SPiFI] Example 04-B JL MultiStageEmail: ${args.status}"
+
+    // Prepend a header to the email message including the status
     args.body = "<H1>Testing Result: ${args.status}</H1>\n" + args.body
 
     // Create a SPiFI HTMLUtility object to generate the html document for emailing.
@@ -168,7 +170,7 @@ def notify(Map args)
     // Send the email using Jenkins' email utility.
     mail to:       param_email_devops  /* Global */,
          replyTo:  param_email_replyto /* Global */,
-         subject:  param_email_subject /* Global */,
+         subject:  email_subject       /* Local */,
          body:     spifi_hu.generate(body: args.body),
          mimeType: "text/html"
 }
