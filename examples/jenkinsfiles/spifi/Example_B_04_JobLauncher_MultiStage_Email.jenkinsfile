@@ -8,13 +8,17 @@ properties([
         logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
     ),
     disableConcurrentBuilds(),
-    parameters([ booleanParam(name: 'DryRun', defaultValue: true,
+    parameters([ booleanParam(name: 'PARAM_DRY_RUN', 
+                             defaultValue: true,
                              description: '''dry-run mode: echo commands but don't run anything'''),
-                 booleanParam(name: 'CleanWorkspace', defaultValue: false,
+                 booleanParam(name: 'PARAM_CLEAN_WORKSPACE', 
+                             defaultValue: false,
                              description: '''Optionally clean the workspace before entering the pipeline.'''),
-                 stringParam(name: 'EMAIL_REPLYTO', defaultValue: "wcmclen@sandia.gov",
+                 stringParam(name: 'PARAM_EMAIL_REPLYTO', 
+                             defaultValue: "wcmclen@sandia.gov",
                              description: '''Reply-To email address for generated status messages.'''),
-                 stringParam(name: 'EMAIL_DEVOPS',  defaultValue: "wcmclen@sandia.gov",
+                 stringParam(name: 'PARAM_EMAIL_DEVOPS',  
+                             defaultValue: "wcmclen@sandia.gov",
                              description: '''Email list for dev-ops team.  Separate multiple email addresses using spaces.''')
                ])
 ])
