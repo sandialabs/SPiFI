@@ -10,7 +10,7 @@ properties([
     ),
     disableConcurrentBuilds(),
     parameters([ booleanParam(name: 'PARAM_DRY_RUN', 
-                             defaultValue: true,
+                             defaultValue: false,
                              description: '''dry-run mode: echo commands but don't run anything'''),
                  booleanParam(name: 'PARAM_CLEAN_WORKSPACE', 
                              defaultValue: false,
