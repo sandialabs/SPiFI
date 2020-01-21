@@ -50,6 +50,8 @@ String email_body = "<H1>Summary</H1>"
 
 node("master")
 {
+    // Set this to TRUE to halt the pipeline after a stage.
+    Boolean EXIT_PIPELINE = false
 
     // Clean the workspace if requested.
     // - Does not need to be in a stage() { ... } but should be 
@@ -106,18 +108,29 @@ node("master")
         // If all jobs didn't pass, update the pipeline_status var
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
-            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
-            notify(body: email_body, status: "FAILURE")
-
             // Set the Jenkins Pipeline Status.
             // Must be one of:  [SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT]
             // This also casuses the pipeline to terminate at the end of this stage.
             currentBuild.result = "FAILURE"
 
-            // Exit the pipeline!
+            // Tell the post-stage check to halt further execution.
+            EXIT_PIPELINE = true
+
+            // Immediately exit this stage
             return
         }
     }  // end stage: Run Tests
+
+    // Post-stage check 
+    if( EXIT_PIPELINE)
+    {
+        // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
+        notify(body: email_body, status: "FAILURE")
+
+        // Immediately exit the node() { ... } block
+        return
+    }
+
 
 
     // Final stage.
