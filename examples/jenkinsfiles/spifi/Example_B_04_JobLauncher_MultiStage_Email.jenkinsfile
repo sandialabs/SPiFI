@@ -25,16 +25,6 @@ properties([
 ])
 
 
-// Create state variables for the Parameters.
-// - You can control parameters in a Jenkinsfile using the "properties" block above,
-//   but Jenkins won't know about the parameter until it runs once.  To avoid errors,
-//   it's useful to create separate state variables with defaults for that first run
-//   where the parameter won't exist.
-//Boolean do_clean_workspace = false
-
-//String email_devops  = "wcmclen@sandia.gov"
-//String email_replyto = "wcmclen@sandia.gov"
-
 Boolean param_dry_run         = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
                                                                                   params: params, 
                                                                                   key: "PARAM_DRY_RUN",
@@ -54,23 +44,7 @@ Boolean param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_paramete
                                                                                   key: "PARAM_EMAIL_DEVOPS",
                                                                                   default: "wcmclen@sandia.gov")
 
-/*
-if(params.containsKey("EMAIL_REPLYTO"))
-{
-    email_replyto = params.EMAIL_REPLYTO
-}
-if(params.containsKey("EMAIL_DEVOPS"))
-{
-    email_devops = params.EMAIL_DEVOPS
-}
-if(params.containsKey("CleanWorkspace"))
-{
-    do_clean_workspace = params.CleanWorkspace
-}
-*/
-
-// Create other variables that we wish to keep around to pass information
-// across stages.
+// Create other variables that we wish to keep around to pass information across stages.
 String email_body = "<H1>Summary</H1>"
 
 
