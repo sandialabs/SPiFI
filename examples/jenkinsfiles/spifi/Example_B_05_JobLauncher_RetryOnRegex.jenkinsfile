@@ -27,14 +27,14 @@ node("master")
                                        ],
                            dry_run: false,
                            retry_max_count: 10,
-                           retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
-                                                                                             "retry_delay": 1,
-                                                                                             "retry_delay_units": "MINUTES",
-                                                                                             "retry_regex": "TestingError_UNSTABLE"),                                                         
-                                               new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
-                                                                                             "retry_delay": 10,
-                                                                                             "retry_delay_units": "SECONDS",
-                                                                                             "retry_regex": "TestingError_FAILURE")
+                           retry_conditions: [ libspifi.DelayedRetryOnRegex.new("env": this,
+                                                                                "retry_delay": 1,
+                                                                                "retry_delay_units": "MINUTES",
+                                                                                "retry_regex": "TestingError_UNSTABLE"),                                                         
+                                               libspifi.DelayedRetryOnRegex.new("env": this,
+                                                                                "retry_delay": 10,
+                                                                                "retry_delay_units": "SECONDS",
+                                                                                "retry_regex": "TestingError_FAILURE")
                                              ]
                           )
 
