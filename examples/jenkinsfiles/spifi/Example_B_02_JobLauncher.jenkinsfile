@@ -5,14 +5,14 @@
 node()
 {
     // Load the SPiFI library
-    @Library('SPiFI') _
+    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 
 
     // Pipeline Stage
     stage("Stage 1")
     {
         // Instantiate a JobLauncher
-        def spifi_jl = new gov.sandia.sems.spifi.JobLauncher(env: this)
+        def spifi_jl = libspifi.JobLauncher.new(env: this)
 
         // Add some jobs to run
         spifi_jl.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
