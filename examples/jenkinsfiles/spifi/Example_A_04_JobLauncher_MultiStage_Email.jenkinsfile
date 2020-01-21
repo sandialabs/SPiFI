@@ -25,16 +25,6 @@ properties([
 ])
 
 
-// Create state variables for the Parameters.
-// - You can control parameters in a Jenkinsfile using the "properties" block above,
-//   but Jenkins won't know about the parameter until it runs once.  To avoid errors,
-//   it's useful to create separate state variables with defaults for that first run
-//   where the parameter won't exist.
-//Boolean do_clean_workspace = false
-
-//String email_devops  = "wcmclen@sandia.gov"
-//String email_replyto = "wcmclen@sandia.gov"
-
 def spifi_jt = new gov.sandia.sems.spifi.JenkinsTools()
 
 Boolean param_dry_run         = spifi_jt.spifi_checked_get_parameter(env: this, 
@@ -56,21 +46,6 @@ Boolean param_email_devops    = spifi_jt.spifi_checked_get_parameter(env: this,
                                                                      key: "PARAM_EMAIL_DEVOPS",
                                                                      default: "wcmclen@sandia.gov")
 
-/*
-if(params.containsKey("EMAIL_REPLYTO"))
-{
-    email_replyto = params.EMAIL_REPLYTO
-}
-if(params.containsKey("EMAIL_DEVOPS"))
-{
-    email_devops = params.EMAIL_DEVOPS
-}
-if(params.containsKey("CleanWorkspace"))
-{
-    do_clean_workspace = params.CleanWorkspace
-}
-*/
-
 // Create other variables that we wish to keep around to pass information
 // across stages.
 String email_body = "<H1>Summary</H1>"
@@ -91,7 +66,7 @@ node("master")
     stage("Run Tests")
     {
         // Instantiate a JobLauncher
-        def spifi_jl = libspifi.JobLauncher.new(env: this)
+        def spifi_jl = new gov.sandia.sems.spifi.JobLauncher(env: this)
 
         // Add some jobs to run
         spifi_jl.appendJob(label: "Job-1", 
@@ -117,7 +92,7 @@ node("master")
         def summary = spifi_jl.getLastResultSummary()
 
         // Create a SPiFI ResultsUtility handler
-        def spifi_ru = libspifi.ResultsUtility.new(env: this)
+        def spifi_ru = new gov.sandia.sems.spifi.ResultsUtility(env: this)
 
         // Print out the summary table to the Jenkins console (i.e., NUMJOBS, NUMSUCCESS, NUMFAILURE, etc.)
         println spifi_ru.genResultSummaryTable(format: "ASCII", summary: summary)
@@ -157,11 +132,6 @@ node("master")
 // Simple notifier
 def notify(Map args)
 {
-    // Load SPiFI (defs won't already have libspifi)
-    // (This shouldn't cost anything to load as Jenkins uses the 'first' one of
-    // these it sees and then just caches).
-    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
-
     // Set up email subject and prepend a header to the email based on status.
     String email_subject = "[SPiFI] Example 04-B JL MultiStageEmail: ${args.status}"
 
@@ -169,7 +139,7 @@ def notify(Map args)
     args.body = "<H1>Testing Result: ${args.status}</H1>\n" + args.body
 
     // Create a SPiFI HTMLUtility object to generate the html document for emailing.
-    spifi_hu = libspifi.HTMLUtility.new(env: this)
+    def spifi_hu = new gov.sandia.sems.spifi.HTMLUtility(env: this)
 
     // Send the email using Jenkins' email utility.
     mail to:       param_email_devops  /* Global */,
