@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 // Load the SPiFI library
-@Library('SPiFI') _
+def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 
 node()
 {
@@ -9,31 +9,31 @@ node()
     stage("Stage 1")
     {
         // Instantiate a JobLauncher
-        def launcher = new gov.sandia.sems.spifi.JobLauncher(env: this)
+        def spifi_jl = libspifi.JobLauncher.new(env: this)
 
         // Add some jobs to run
-        launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
-        launcher.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
-        launcher.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
+        spifi_jl.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
+        spifi_jl.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
+        spifi_jl.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
 
         // Pretty Print the list of jobs to console output
-        launcher.printJobList()
+        spifi_jl.printJobList()
 
         // Launch the jobs and save the results
-        def results = launcher.launchInParallel()
+        def results = spifi_jl.launchInParallel()
 
         // Get the summary stats of the run
-        def summary = launcher.getLastResultSummary()
+        def summary = spifi_jl.getLastResultSummary()
 
         // Print out ASCII tables of the run.
-        def results_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+        def spifi_ru = libspifi.ResultsUtility.new(env: this)
 
         // Print out the summary table to the Jenkins console (i.e., NUMJOBS, NUMSUCCESS, NUMFAILURE, etc.)
-        println results_util.genResultSummaryTable(format: "ASCII", summary: summary)
+        println spifi_ru.genResultSummaryTable(format: "ASCII", summary: summary)
 
         // Print out the details table of the job that ran.
         // This provides the status of the individual jobs, etc.
-        println results_util.genResultDetailTable(format: "ASCII", results: results)
+        println spifi_ru.genResultDetailTable(format: "ASCII", results: results)
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
