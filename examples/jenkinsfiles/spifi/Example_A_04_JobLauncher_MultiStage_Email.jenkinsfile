@@ -52,6 +52,8 @@ String email_body = "<H1>Summary</H1>"
 
 node("master")
 {
+    // Set this to TRUE to halt the pipeline after a stage.
+    Boolean EXIT_PIPELINE = false
 
     // Clean the workspace if requested.
     // - Does not need to be in a stage() { ... } but should be 
@@ -79,7 +81,8 @@ node("master")
         spifi_jl.appendJob(label: "Job-3", 
                            job_name: "YET_ANOTHER_JENKINS_JOB", 
                            dry_run: param_dry_run,
-                           dry_run_delay: 5)
+                           dry_run_delay: 5,
+                           dry_run_status: "FAILURE")
 
         // Pretty Print the list of jobs to console output
         spifi_jl.printJobList()
@@ -104,24 +107,34 @@ node("master")
         email_body += "<H3>Job Execution Results</H3>\n"
         email_body += spifi_ru.genResultDetails(format: "HTML", results: results)
 
-        // If all jobs didn't pass, update the pipeline_status var
+        // Set failure conditions if actual results don't match expected results.
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
-            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
-            notify(body: email_body, status: "FAILURE")
-
             // Set the Jenkins Pipeline Status.
             // Must be one of:  [SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT]
             // This also casuses the pipeline to terminate at the end of this stage.
             currentBuild.result = "FAILURE"
 
-            // Exit the pipeline!
+            // Tell the post-stage check to halt further execution.
+            EXIT_PIPELINE = true
+
+            // Immediately exit this stage
             return
         }
     }  // end stage: Run Tests
 
+    // Post-stage check
+    if( EXIT_PIPELINE)
+    {
+        // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
+        notify(body: email_body, status: "FAILURE")
 
-    // Final stage.
+        // Immediately exit the node() { ... } block
+        return
+    }        
+
+
+    // Notification Stage
     stage("Nofitication")
     {
         // We only get here if things succeeded so send the success notification.
@@ -129,6 +142,7 @@ node("master")
     }  // end stage Notification
 
 }  // end node()
+
 
 
 // Simple notifier
