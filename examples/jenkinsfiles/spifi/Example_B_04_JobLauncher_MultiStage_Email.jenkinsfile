@@ -122,7 +122,7 @@ node("master")
 
         // Print out the details table of the job that ran.
         // This provides the status of the individual jobs, etc.
-        println spifi_ru.genResultDetail(format: "ASCII", results: results)
+        println spifi_ru.genResultDetail.new(format: "ASCII", results: results)
 
         // Update the email_body with HTML tables
         email_body += "<H3>Job Execution Results</H3>\n"
