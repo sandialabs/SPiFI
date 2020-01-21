@@ -124,6 +124,8 @@ node("master")
     stage("Nofitication")
     {
         // We only get here if things succeeded so send the success notification.
+        println "Only go here if Stage 1 succeeded!"
+
         notify(body: email_body, status: "SUCCESS")
     }  // end stage Notification
 
