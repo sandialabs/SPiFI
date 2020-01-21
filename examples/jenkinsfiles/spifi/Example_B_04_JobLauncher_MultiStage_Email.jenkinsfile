@@ -156,6 +156,8 @@ node("master")
 def notify(Map args)
 {
     // Load SPiFI (defs won't already have libspifi)
+    // (This shouldn't cost anything to load as Jenkins uses the 'first' one of
+    // these it sees and then just caches).
     def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 
     // Set up email subject and prepend a header to the email based on status.
