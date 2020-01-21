@@ -105,7 +105,7 @@ node("master")
         email_body += "<H3>Job Execution Results</H3>\n"
         email_body += spifi_ru.genResultDetails(format: "HTML", results: results)
 
-        // If all jobs didn't pass, update the pipeline_status var
+        // Set failure conditions if actual results don't match expected results.
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
             // Set the Jenkins Pipeline Status.
