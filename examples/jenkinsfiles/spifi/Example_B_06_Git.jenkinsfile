@@ -1,0 +1,77 @@
+#!/usr/bin/env groovy
+/**
+ * Example demonstrating the use of the Git.clone() function in SPiFI.
+ *
+ * Valid for SPiFI versions:
+ *  - 1.0.0 : if the repository has no submodules
+ *  - 1.3.0 : for `recurse_submodules` and `shallow` options
+ *            (these options will simply be ignored by previous versions)
+ */
+
+
+// Load the SPiFI library
+def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+// Configure properties
+properties([
+    parameters([
+        string(name: "REPOSITORY_URL",
+               defaultValue: 'git@gitlab-ex.sandia.gov:wcmclen/test-project-a.git',
+               description: 'Git Repository to use',
+               trim: true),
+        credentials(name: "GIT_CREDENTIAL",
+                    credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials',
+                    defaultValue: '',
+                    description: 'The Git credential to use for checking out the repository',
+                    required: true)
+    ])
+])
+
+// Quit if we don't have all the parameters
+Boolean parameter_first_run = false
+if(false == params.containsKey("REPOSITORY_URL"))   parameter_first_run = true
+if(false == params.containsKey("GIT_CREDENTIAL"))   parameter_first_run = true
+if(parameter_first_run)
+{
+    currentBuild.status = "UNSTABLE"
+    return
+}
+
+// Fail early on obviously bad parameter values
+assert params.GIT_CREDENTIAL != ""
+assert params.REPOSITORY_URL != ""
+
+
+timestamps()
+{
+
+// Launch pipeline on a rhel6 or rhel7 jenkins node
+node("OS_RHEL7 || master")
+{
+
+    cleanWs()
+
+    // Pipeline Stage 1
+    stage('Stage 1: SPiFI.Git()')
+    {
+        def spifi_git = libspifi.Git.new()
+
+        Boolean clone_ok = spifi_git.clone(env: this,
+                                           dir: "test-project-A",
+                                           url: params.REPOSITORY_URL,
+                                           credentialsId: params.GIT_CREDENTIAL,
+                                           branch: "master",
+                                           recurse_submodules: true,
+                                           retries: 3,
+                                           retry_delay: 30,
+                                           shallow: true,
+                                           timeout: 10,
+                                           timeout_units: "MINUTES",
+                                           verbose: true)
+    }  // End Stage 1
+
+
+
+}  // end node()
+
+}  // end timestamps
