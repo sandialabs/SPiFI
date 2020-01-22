@@ -24,51 +24,55 @@ package gov.sandia.sems.spifi;
 /**
  * Clone a git repository with retries, timeout, and directory location provided.
  *
- * @param env            [REQUIRED] Object  The jenkins environment in the jenkins file.
- *                                          This should be the `this` object.
- * @param url            [REQUIRED] String  The URL to the git repository.
- *                                          i.e., git@github.com:trilinos/Trilinos.git
- * @param branch         [OPTIONAL] String  The branch name to check out.
- *                                          Default: master
- * @param credentialsId  [OPTIONAL] String  A Jenkins credentialsID if required.
- *                                          Default: null
- * @param dir            [OPTIONAL] String  The directory to clone into, relative to
- *                                          dir at the current scope.
- *                                          Default: ""
- * @param retries        [OPTIONAL] Integer Number of retries to attempt.
- *                                          Default: 0
- * @param retry_delay    [OPTIONAL] Integer Number of seconds to wait before retrying.
- *                                          Default: 60
- * @param timeout        [OPTIONAL] Integer How long is the timeout to be per attempt?
- *                                          The default here is 30 minutes -but- in practice the Jenkins Git plugin
- *                                          doesn't expose the timeout option in the pipeline call so Jenkins will end
- *                                          up using the default, which is 10 minutes. Fixing this is a high priority
- *                                          for SPiFI development.
- *                                          Default: 30
- *                                          TODO: Determine what the timeout units are for GitSCM (Minutes?)
- * @param timeout_units  [OPTIONAL] String  Units to use for the timeout.
- *                                          Allowed values are: {HOURS|MINUTES|SECONDS}.
- *                                          Default: MINUTES
- *                                          DEPRECATED IN version 2.0.0 due to changeover to GitSCM in 1.1.4
- * @param verbose        [OPTIONAL] Boolean Print out verbose information to the console.
- *                                          Default: false
+ * @param env                [REQUIRED] Object  The jenkins environment in the jenkins file.
+ *                                              This should be the `this` object.
+ * @param url                [REQUIRED] String  The URL to the git repository.
+ *                                              i.e., git@github.com:trilinos/Trilinos.git
+ * @param branch             [OPTIONAL] String  The branch name to check out.
+ *                                              Default: master
+ * @param credentialsId      [OPTIONAL] String  A Jenkins credentialsID if required.
+ *                                              Default: null
+ * @param dir                [OPTIONAL] String  The directory to clone into, relative to
+ *                                              dir at the current scope.
+ *                                              Default: ""
+ * @param retries            [OPTIONAL] Integer Number of retries to attempt.
+ *                                              Default: 0
+ * @param retry_delay        [OPTIONAL] Integer Number of seconds to wait before retrying.
+ *                                              Default: 60
+ * @param timeout            [OPTIONAL] Integer How long is the timeout to be per attempt?
+ *                                              The default here is 30 minutes -but- in practice the Jenkins Git plugin
+ *                                              doesn't expose the timeout option in the pipeline call so Jenkins will end
+ *                                              up using the default, which is 10 minutes. Fixing this is a high priority
+ *                                              for SPiFI development.
+ *                                              Default: 30
+ *                                              TODO: Determine what the timeout units are for GitSCM (Minutes?)
+ * @param timeout_units      [OPTIONAL] String  Units to use for the timeout.
+ *                                              Allowed values are: {HOURS|MINUTES|SECONDS}.
+ *                                              Default: MINUTES
+ *                                              DEPRECATED IN version 2.0.0 due to changeover to GitSCM in 1.1.4
+ * @param verbose            [OPTIONAL] Boolean Print out verbose information to the console.
+ *                                              Default: false
+ * @param recurse_submodules [OPTIONAL] Boolean Enable recursive submodule checkout.
+ *                                              Default: false
+ * @param shallow            [OPTIONAL] Boolean Enable a shallow clone (limits depth by default to 50) to reduce the 
+ *                                              size of the checkout. Default: false
  *
  * @return true if clone was successful, false if it failed.
  *
- * @TODO Find out if there is a way in a pipeline job to change Jenkins' default timeout for git requests.
- *       - Unfortunately, the Jenkins attitude is that no repository should take more than 10 minutes to clone... that's cute, but
- *         we see failures on Trilinos frequently because either Github or SNL Proxy throttles the download.
  */
 def clone(Map params)
 {
     // Set up default values
-    String  dir           = "."
-    String  url           = ""
-    String  branch        = "master"
-    String  credentialsId = null
-    Integer retries       = 0
-    Integer retry_delay   = 60
-    Integer timeout       = 30
+    String  dir                = "."
+    String  url                = ""
+    String  branch             = "master"
+    String  credentialsId      = null
+    Boolean recurse_submodules = false
+    Integer retries            = 0
+    Integer retry_delay        = 60
+    Integer timeout            = 30
+    Boolean shallow            = false
+    Integer shallow_depth      = 50
     // String  timeout_units = "MINUTES"
 
     // Process required parameters.
@@ -86,28 +90,28 @@ def clone(Map params)
     url = params.url
 
     // Update optional parameters
-    if(params.containsKey("branch"))         branch = params.branch
-    if(params.containsKey("credentialsId"))  credentialsId = params.credentialsId
-    if(params.containsKey("dir"))            dir = params.dir
-    if(params.containsKey("retries"))        retries = params.retries
-    if(params.containsKey("retry_delay"))    retry_delay = params.retry_delay
-    if(params.containsKey("timeout"))        timeout = params.timeout
-    // if(params.containsKey("timeout_units"))  timeout_units = params.timeout_units                   // DEPRECATE in v2.0.0
-
-    // Validate parameters
-    // assert timeout_units=="SECONDS" || timeout_units=="MINUTES" || timeout_units=="HOURS"         // DEPRECATION: timeout_units
+    if(params.containsKey("branch"))               branch             = params.branch
+    if(params.containsKey("credentialsId"))        credentialsId      = params.credentialsId
+    if(params.containsKey("dir"))                  dir                = params.dir
+    if(params.containsKey("recurse_submodules"))   recurse_submodules = params.recurse_submodules
+    if(params.containsKey("retries"))              retries            = params.retries
+    if(params.containsKey("retry_delay"))          retry_delay        = params.retry_delay
+    if(params.containsKey("timeout"))              timeout            = params.timeout
+    if(params.containsKey("shallow"))              shallow            = params.shallow
 
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)
     {
         env.println "[SPiFI]> Git.clone()\n" +
-                    "[SPiFI]> -  url           : ${url}\n" +
-                    "[SPiFI]> -  branch        : ${branch}\n" +
-                    "[SPiFI]> -  dir           : ${dir}\n" +
-                    "[SPiFI]> -  credentialsId : ${credentialsId}\n" +
-                    "[SPiFI]> -  retries       : ${retries}\n" +
-                    "[SPiFI]> -  retry_delay   : ${retry_delay}\n" +
-                    "[SPiFI]> -  timeout       : ${timeout}\n" +
+                    "[SPiFI]> -  url               : ${url}\n" +
+                    "[SPiFI]> -  branch            : ${branch}\n" +
+                    "[SPiFI]> -  dir               : ${dir}\n" +
+                    "[SPiFI]> -  credentialsId     : ${credentialsId}\n" +
+                    "[SPiFI]> -  recurse_submodules: ${recurse_submodules}\n" +
+                    "[SPiFI]> -  retries           : ${retries}\n" +
+                    "[SPiFI]> -  retry_delay       : ${retry_delay}\n" +
+                    "[SPiFI]> -  timeout           : ${timeout}\n" +
+                    "[SPiFI]> -  shallow           : ${shallow}\n" +
                     "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}\n" +
                     "[SPiFI]> Raw Params:\n${params}"
@@ -123,23 +127,34 @@ def clone(Map params)
         {
             try
             {
-                /*
-                // DEPRECATED / REPLACED by GitSCM
-                env.timeout(time: timeout, unit: timeout_units)
-                {
-                    env.dir("${dir}")
-                    {
-                        env.git url: url, branch: branch, credentialsId: credentialsId
-                        env.println "[SPiFI]> git successfully cloned: ${url}"
-                    }
-                }
-                */
+                // Offical Docs to `checkout`: https://jenkins.io/doc/pipeline/steps/workflow-scm-step 
                 checkout([$class: 'GitSCM', 
                           branches: [[name: branch]], 
                           doGenerateSubmoduleConfigurations: false, 
-                          extensions: [ [$class: 'RelativeTargetDirectory', relativeTargetDir: dir], 
-                                        [$class: 'CheckoutOption', timeout: timeout], 
-                                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: timeout]
+                          extensions: [ [$class: 'RelativeTargetDirectory', 
+                                                 relativeTargetDir: dir
+                                        ],
+                                        [$class: 'CheckoutOption', 
+                                                 timeout: timeout
+                                        ], 
+                                        [$class: 'CloneOption', 
+                                                 depth: shallow_depth, 
+                                                 noTags: false, 
+                                                 reference: '', 
+                                                 shallow: shallow, 
+                                                 timeout: timeout
+                                        ],
+                                        [$class: 'SubmoduleOption', 
+                                                 depth: shallow_depth, 
+                                                 disableSubmodules: !recurse_submodules,
+                                                 parentCredentials: true,
+                                                 recursiveSubmodules: recurse_submodules /**/,
+                                                 reference: '',
+                                                 shallow: shallow,
+                                                 threads: 2,
+                                                 timeout: timeout,
+                                                 trackingSubmodules: false
+                                        ]
                                       ], 
                           submoduleCfg: [], 
                           userRemoteConfigs: [ [credentialsId: credentialsId, url: url] ]
@@ -164,5 +179,6 @@ def clone(Map params)
     }
     return output
 }
+
 
 return this
