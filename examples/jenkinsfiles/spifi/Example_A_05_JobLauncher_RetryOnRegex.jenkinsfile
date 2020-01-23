@@ -1,0 +1,76 @@
+#!/usr/bin/env groovy
+
+/**
+ * Launch a set of jobs in parallel using SPiFI
+ * Note: the sub-jobs are the jobs located in the `tests/` directory within SPiFI.
+ */
+node("master")
+{
+    // Load the SPiFI library
+    @Library('SPiFI') _
+
+    // Pipeline Stage
+    stage("MyStage")
+    {
+        // Instantiate a JobLauncher
+        def launcher = new gov.sandia.sems.spifi.JobLauncher(env: this)
+
+        // Run SPiFI_test_pass_every_third job (this will run the sequence FAILURE, UNSTABLE, FAILURE*, SUCCESS
+        // based on the PARAM_THRESHOLD parameter which dictates which run in the sequence will be the SUCCESS
+        // output. When this job fails, it will include the string "TestingError_<STATUS>" in its console output
+        // for matching by the retry_conditions parameters.
+        launcher.appendJob(label: "T-01",
+                           job_name: "SPiFI_test_pass_every_third",
+                           timeout: 6,
+                           timeout_unit: "MINUTES",
+                           parameters: [ (string(name:"NODE_RESTRICTION", value: "master")),
+                                         (string(name:"PARAM_THRESHOLD",  value: "3"))
+                                       ],
+                           dry_run: false,
+                           retry_max_count: 10,
+                           retry_conditions: [ new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                             "retry_delay": 1,
+                                                                                             "retry_delay_units": "MINUTES",
+                                                                                             "retry_regex": "TestingError_UNSTABLE"),                                                         
+                                               new gov.sandia.sems.spifi.DelayedRetryOnRegex("env": this,
+                                                                                             "retry_delay": 10,
+                                                                                             "retry_delay_units": "SECONDS",
+                                                                                             "retry_regex": "TestingError_FAILURE")
+                                             ]
+                          )
+
+        // Adding a 2nd job that will SUCCEED with no retries.
+        launcher.appendJob(label: "T-02",
+                           job_name: "SPiFI_test_selectable_status",
+                           timeout: 90,
+                           timeout_unit: "SECONDS",
+                           parameters: [ (string(name:"EXIT_STATUS",  value: "SUCCESS")),
+                                         (string(name:"SLEEP_TIME", value: "1"))
+                                       ]
+                           )
+
+        // Pretty Print the list of jobs to console output
+        launcher.printJobList()
+
+        // Launch the jobs
+        launcher.launchInParallel()
+
+        // Get the summary stats of the run
+        def summary = launcher.getLastResultSummary()
+
+        // Print out the results summary as a table to the console output
+        def results_util = new gov.sandia.sems.spifi.ResultsUtility(env: this)
+        println results_util.genResultSummaryTable(summary: summary, format: "ASCII")
+
+        // Check the summary
+        // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
+        if(summary.NUMJOBS != summary.NUMSUCCESS)
+        {
+            currentBuild.result = 'FAILURE'
+            return
+        }
+    }  // end Stage
+
+
+}  // end node()
+

@@ -1,0 +1,175 @@
+#!/usr/bin/env groovy
+
+// Load the SPiFI library
+def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+// Configure Job Properties
+properties([
+    buildDiscarder(
+        logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
+    ),
+    disableConcurrentBuilds(),
+    parameters([ booleanParam(name: 'PARAM_DRY_RUN', 
+                             defaultValue: false,
+                             description: '''dry-run mode: echo commands but don't run anything'''),
+                 booleanParam(name: 'PARAM_CLEAN_WORKSPACE', 
+                             defaultValue: false,
+                             description: '''Optionally clean the workspace before entering the pipeline.'''),
+                 stringParam(name: 'PARAM_EMAIL_REPLYTO', 
+                             defaultValue: "wcmclen@sandia.gov",
+                             description: '''Reply-To email address for generated status messages.'''),
+                 stringParam(name: 'PARAM_EMAIL_DEVOPS',  
+                             defaultValue: "wcmclen@sandia.gov",
+                             description: '''Email list for dev-ops team.  Separate multiple email addresses using spaces.''')
+               ])
+])
+
+
+Boolean param_dry_run         = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                  params: params, 
+                                                                                  key: "PARAM_DRY_RUN",
+                                                                                  default: false, 
+                                                                                  required: true)
+Boolean param_clean_workspace = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                  params: params, 
+                                                                                  key: "PARAM_CLEAN_WORKSPACE",
+                                                                                  default: false, 
+                                                                                  required: true)
+Boolean param_email_replyto   = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                  params: params, 
+                                                                                  key: "PARAM_EMAIL_REPLYTO",
+                                                                                  default: "wcmclen@sandia.gov")
+Boolean param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                  params: params, 
+                                                                                  key: "PARAM_EMAIL_DEVOPS",
+                                                                                  default: "wcmclen@sandia.gov")
+
+// Create other variables that we wish to keep around to pass information across stages.
+String email_body = "<H1>Summary</H1>"
+
+
+node("master")
+{
+    // Set this to TRUE to halt the pipeline after a stage.
+    Boolean EXIT_PIPELINE = false
+
+    // Clean the workspace if requested.
+    // - Does not need to be in a stage() { ... } but should be 
+    //   inside the node() { ... } block you wish to clean.
+    if(param_clean_workspace)
+    {
+        cleanWs()
+    }
+
+    // Do some work
+    stage("Run Tests")
+    {
+        // Instantiate a JobLauncher
+        def spifi_jl = libspifi.JobLauncher.new(env: this)
+
+        // Add some jobs to run
+        spifi_jl.appendJob(label: "Job-1", 
+                           job_name: "JENKINS_JOB_TO_RUN",  
+                           dry_run: param_dry_run,
+                           dry_run_delay: 5)
+        spifi_jl.appendJob(label: "Job-2", 
+                           job_name: "ANOTHER_JENKINS_JOB", 
+                           dry_run: param_dry_run,
+                           dry_run_delay: 5)
+        spifi_jl.appendJob(label: "Job-3", 
+                           job_name: "YET_ANOTHER_JENKINS_JOB", 
+                           dry_run: param_dry_run,
+                           dry_run_delay: 5,
+                           dry_run_status: "FAILURE")
+
+        // Pretty Print the list of jobs to console output
+        spifi_jl.printJobList()
+
+        // Launch the jobs and save the results
+        def results = spifi_jl.launchInParallel()
+
+        // Get the summary stats of the run
+        def summary = spifi_jl.getLastResultSummary()
+
+        // Create a SPiFI ResultsUtility handler
+        def spifi_ru = libspifi.ResultsUtility.new(env: this)
+
+        // Print out the summary table to the Jenkins console (i.e., NUMJOBS, NUMSUCCESS, NUMFAILURE, etc.)
+        println spifi_ru.genResultSummaryTable(format: "ASCII", summary: summary)
+
+        // Print out the details table of the job that ran.
+        // This provides the status of the individual jobs, etc.
+        println spifi_ru.genResultDetails(format: "ASCII", results: results)
+
+        // Update the email_body with HTML tables
+        email_body += "<H3>Job Execution Results</H3>\n"
+        email_body += spifi_ru.genResultDetails(format: "HTML", results: results)
+
+        // Set failure conditions if actual results don't match expected results.
+        if(summary.NUMJOBS != summary.NUMSUCCESS)
+        {
+            // Set the Jenkins Pipeline Status.
+            // Must be one of:  [SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT]
+            // This also casuses the pipeline to terminate at the end of this stage.
+            currentBuild.result = "FAILURE"
+
+            // Tell the post-stage check to halt further execution.
+            EXIT_PIPELINE = true
+
+            // Immediately exit this stage
+            return
+        }
+    }  // end stage: Run Tests
+
+    // Post-stage check 
+    if( EXIT_PIPELINE)
+    {
+        // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
+        notify(body: email_body, status: "FAILURE")
+
+        // Immediately exit the node() { ... } block
+        return
+    }
+
+
+
+    // Final stage.
+    stage("Nofitication")
+    {
+        // We only get here if things succeeded so send the success notification.
+        println "Only go here if Stage 1 succeeded!"
+
+        notify(body: email_body, status: "SUCCESS")
+    }  // end stage Notification
+
+}  // end node()
+
+
+// Simple notifier
+def notify(Map args)
+{
+    // Load SPiFI (defs won't already have libspifi)
+    // (This shouldn't cost anything to load as Jenkins uses the 'first' one of
+    // these it sees and then just caches).
+    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+    // Set up email subject and prepend a header to the email based on status.
+    String email_subject = "[SPiFI] Example 04-B JL MultiStageEmail: ${args.status}"
+
+    // Prepend a header to the email message including the status
+    args.body = "<H1>Testing Result: ${args.status}</H1>\n" + args.body
+
+    // Create a SPiFI HTMLUtility object to generate the html document for emailing.
+    spifi_hu = libspifi.HTMLUtility.new(env: this)
+
+    // Send the email using Jenkins' email utility.
+    mail to:       param_email_devops  /* Global */,
+         replyTo:  param_email_replyto /* Global */,
+         subject:  email_subject       /* Local */,
+         body:     spifi_hu.generate(body: args.body),
+         mimeType: "text/html"
+}
+
+
+
+

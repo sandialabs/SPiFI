@@ -1,0 +1,14 @@
+/**
+ * Load the SPiFI Library
+ *
+ */
+node()
+{
+    // Load the SPiFI library
+    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+    // Print out the library version of SPiFI
+    println "Loaded SPiFI version: ${libspifi.Info.version()}"
+
+}
+

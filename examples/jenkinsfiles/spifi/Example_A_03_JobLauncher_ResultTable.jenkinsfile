@@ -9,7 +9,7 @@ node()
     stage("Stage 1")
     {
         // Instantiate a JobLauncher
-        def launcher = new gov.sandia.sems.spifi.JobLauncher(this)
+        def launcher = new gov.sandia.sems.spifi.JobLauncher(env: this)
 
         // Add some jobs to run
         launcher.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")

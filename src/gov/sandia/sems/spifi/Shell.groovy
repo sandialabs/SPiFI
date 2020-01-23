@@ -164,10 +164,10 @@ def execute(Map params)
                     "[SPiFI]> -  dry_run_status     : ${dry_run_status}\n" +
                     "[SPiFI]> -  dry_run_output     : ${dry_run_output}\n" +
                     "[SPiFI]> -  valid status values: ${status_values_ok}\n" +
-                    "[SPiFI]> -  output_type        : ${output_type}"
-        env.println "[SPiFI]> Environment:\n" +
-                    "[SPiFI]> -  workspace: ${env.WORKSPACE}"
-        env.println "[SPiFI]> Raw Params:\n${params}"
+                    "[SPiFI]> -  output_type        : ${output_type}\n" +
+                    "[SPiFI]> Environment:\n" +
+                    "[SPiFI]> -  workspace: ${env.WORKSPACE}\n" +
+                    "[SPiFI]> Raw Params:\n${params}"
     }
 
     if(dry_run)

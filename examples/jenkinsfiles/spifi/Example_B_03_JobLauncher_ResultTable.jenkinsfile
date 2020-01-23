@@ -1,0 +1,47 @@
+#!/usr/bin/env groovy
+
+// Load the SPiFI library
+def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+node()
+{
+    // Pipeline Stage
+    stage("Stage 1")
+    {
+        // Instantiate a JobLauncher
+        def spifi_jl = libspifi.JobLauncher.new(env: this)
+
+        // Add some jobs to run
+        spifi_jl.appendJob(label: "Job-1", job_name: "JENKINS_JOB_TO_RUN")
+        spifi_jl.appendJob(label: "Job-2", job_name: "ANOTHER_JENKINS_JOB")
+        spifi_jl.appendJob(label: "Job-3", job_name: "YET_ANOTHER_JENKINS_JOB")
+
+        // Pretty Print the list of jobs to console output
+        spifi_jl.printJobList()
+
+        // Launch the jobs and save the results
+        def results = spifi_jl.launchInParallel()
+
+        // Get the summary stats of the run
+        def summary = spifi_jl.getLastResultSummary()
+
+        // Print out ASCII tables of the run.
+        def spifi_ru = libspifi.ResultsUtility.new(env: this)
+
+        // Print out the summary table to the Jenkins console (i.e., NUMJOBS, NUMSUCCESS, NUMFAILURE, etc.)
+        println spifi_ru.genResultSummaryTable(format: "ASCII", summary: summary)
+
+        // Print out the details table of the job that ran.
+        // This provides the status of the individual jobs, etc.
+        println spifi_ru.genResultDetailTable(format: "ASCII", results: results)
+
+        // Check the summary
+        // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
+        if(summary.NUMJOBS != summary.NUMSUCCESS)
+        {
+            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
+            currentBuild.result = 'FAILURE'
+            return
+        }
+    }  // end Stage 1
+}  // end node()
