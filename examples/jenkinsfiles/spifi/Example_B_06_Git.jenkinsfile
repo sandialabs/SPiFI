@@ -68,6 +68,9 @@ node("OS_RHEL7 || master")
                                            timeout: 10,
                                            timeout_units: "MINUTES",
                                            verbose: true)
+
+        assert clone_ok : "Git clone failed"
+
     }  // End Stage 1
 
 
