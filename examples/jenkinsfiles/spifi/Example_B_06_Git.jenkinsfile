@@ -57,7 +57,7 @@ node("OS_RHEL7 || master")
         def spifi_git = libspifi.Git.new()
 
         Boolean clone_ok = spifi_git.clone(env: this,
-                                           dir: "test-project-A",
+                                           dir: "repo",
                                            url: params.REPOSITORY_URL,
                                            credentialsId: params.GIT_CREDENTIAL,
                                            branch: "master",
