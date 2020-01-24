@@ -40,22 +40,19 @@ package gov.sandia.sems.spifi;
  * @param retry_delay        [OPTIONAL] Integer Number of seconds to wait before retrying.
  *                                              Default: 60
  * @param timeout            [OPTIONAL] Integer How long is the timeout to be per attempt?
- *                                              The default here is 30 minutes -but- in practice the Jenkins Git plugin
- *                                              doesn't expose the timeout option in the pipeline call so Jenkins will end
- *                                              up using the default, which is 10 minutes. Fixing this is a high priority
- *                                              for SPiFI development.
  *                                              Default: 30
- *                                              TODO: Determine what the timeout units are for GitSCM (Minutes?)
  * @param timeout_units      [OPTIONAL] String  Units to use for the timeout.
  *                                              Allowed values are: {HOURS|MINUTES|SECONDS}.
  *                                              Default: MINUTES
- *                                              DEPRECATED IN version 2.0.0 due to changeover to GitSCM in 1.1.4
+ *                                              DEPRECATED IN version 2.0.0 due to changeover 
+ *                                              to GitSCM in 1.1.4
  * @param verbose            [OPTIONAL] Boolean Print out verbose information to the console.
  *                                              Default: false
  * @param recurse_submodules [OPTIONAL] Boolean Enable recursive submodule checkout.
  *                                              Default: false
- * @param shallow            [OPTIONAL] Boolean Enable a shallow clone (limits depth by default to 50) to reduce the 
- *                                              size of the checkout. Default: false
+ * @param shallow            [OPTIONAL] Boolean Enable a shallow clone (limits depth by default to 50) 
+ *                                              to reduce the size of the checkout.
+ *                                              Default: false
  *
  * @return true if clone was successful, false if it failed.
  *
@@ -73,7 +70,12 @@ def clone(Map params)
     Integer timeout            = 30
     Boolean shallow            = false
     Integer shallow_depth      = 50
-    // String  timeout_units = "MINUTES"
+
+    // List of known parameters to this function
+    List parameter_list = ["env", "url", "branch", "credentialsId", "dir", "retries", "retry_delay",
+                           "timeout", "timeout_units", "verbose", "recurse_submodules",
+                           "shallow"] 
+
 
     // Process required parameters.
     if(!params.containsKey("env"))
@@ -99,6 +101,18 @@ def clone(Map params)
     if(params.containsKey("timeout"))              timeout            = params.timeout
     if(params.containsKey("shallow"))              shallow            = params.shallow
 
+    // Print a message if there are any unknown parameters.
+    String unknown_parameters = ""
+    params.each
+    { key ->
+      if( !parameter_list.contains(key) )
+      {
+          unknown_parameters += " ${key}"
+      }
+    }
+    env.println "[SPiFI]> Git.clone() received unknown parameters:\n" +
+                "[SPiFI]>             - ${unknown_parameters.trim()}"
+
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)
     {
@@ -114,7 +128,7 @@ def clone(Map params)
                     "[SPiFI]> -  shallow           : ${shallow}\n" +
                     "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}\n" +
-                    "[SPiFI]> Raw Params:\n${params}"
+                    "[SPiFI]> Raw Params:\n${params}" 
     }
 
     // Initialize output variables
