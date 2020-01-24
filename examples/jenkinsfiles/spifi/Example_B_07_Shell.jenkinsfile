@@ -50,6 +50,7 @@ node("OS_RHEL7 || master")
                                           dry_run_status: "SUCCESS",
                                           verbose: false
                                          ) 
+        println results
 
     }  // End Stage 1
 
