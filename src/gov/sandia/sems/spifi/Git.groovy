@@ -59,6 +59,15 @@ package gov.sandia.sems.spifi;
  */
 def clone(Map params)
 {
+    // List of known parameters to this function
+    List parameter_list = ["env", 
+                           "url",           "branch", 
+                           "credentialsId", "dir", 
+                           "retries",       "retry_delay",
+                           "timeout",       "timeout_units", 
+                           "verbose",       "recurse_submodules",
+                           "shallow"] 
+
     // Set up default values
     String  dir                = "."
     String  url                = ""
@@ -70,12 +79,6 @@ def clone(Map params)
     Integer timeout            = 30
     Boolean shallow            = false
     Integer shallow_depth      = 50
-
-    // List of known parameters to this function
-    List parameter_list = ["env", "url", "branch", "credentialsId", "dir", "retries", "retry_delay",
-                           "timeout", "timeout_units", "verbose", "recurse_submodules",
-                           "shallow"] 
-
 
     // Process required parameters.
     if(!params.containsKey("env"))
