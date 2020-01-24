@@ -103,7 +103,7 @@ def clone(Map params)
 
     // Print a message if there are any unknown parameters.
     String unknown_parameters = ""
-    params.each
+    params.keySet().each
     { key ->
       if( !parameter_list.contains(key) )
       {
