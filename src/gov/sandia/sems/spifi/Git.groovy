@@ -111,7 +111,7 @@ def clone(Map params)
       }
     }
     env.println "[SPiFI]> Git.clone() received unknown parameters:\n" +
-                "[SPiFI]>             - ${unknown_parameters.trim()}"
+                "[SPiFI]> - [ ${unknown_parameters.trim()} ] "
 
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)

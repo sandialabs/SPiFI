@@ -38,7 +38,8 @@ class Utility
      * Normalize time from HOURS or MINUTES into SECONDS
      *
      * @param time  [REQUIRED] Float  - The amount of time units to convert.
-     * @param units [REQUIRED] String - The unit of measurement of the time.  (HOURS, MINUTES, SECONDS, MILLISECONDS)
+     * @param units [REQUIRED] String - The unit of measurement of the time.  
+     *                                  (HOURS, MINUTES, SECONDS, MILLISECONDS)
      *
      * @return Float value of time converted into seconds.
      */
