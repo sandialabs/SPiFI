@@ -10,8 +10,7 @@
 
 
 // Load the SPiFI library
-@Library("SPiFI-DEV@master")
-//def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+@Library("SPiFI-DEV@master") _
 
 // Configure properties
 properties([
