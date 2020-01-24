@@ -18,7 +18,7 @@ properties([
 
 // Quit if we don't have all the parameters
 Boolean parameter_first_run = false
-if(false == params.containsKey("PARAM_DRY_RUN")) parameter_first_run = true
+if(false == params.containsKey("DRY_RUN")) parameter_first_run = true
 if(parameter_first_run)
 {
     currentBuild.status = "UNSTABLE"
