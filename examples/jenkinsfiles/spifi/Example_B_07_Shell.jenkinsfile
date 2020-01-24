@@ -47,10 +47,10 @@ node("OS_RHEL7 || master")
                                           output_type: "stdout+stderr",
                                           dry_run: params.DRY_RUN,
                                           dry_run_output: "dry run output",
+                                          dry_run_status: 0,
                                           verbose: false
                                          ) 
         println results
-//                                          dry_run_status: "SUCCESS",
 
     }  // End Stage 1
 
