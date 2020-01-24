@@ -46,7 +46,7 @@ node("OS_RHEL7 || master")
                                           command: "ls -ltr",
                                           output_type: "stdout+stderr",
                                           dry_run: params.DRY_RUN,
-                                          dry_run_stdout: "dry run output",
+                                          dry_run_output: "dry run output",
                                           dry_run_status: "SUCCESS",
                                           verbose: false
                                          ) 
