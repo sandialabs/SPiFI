@@ -68,7 +68,50 @@ def execute(Map params)
 {
     def utility = new gov.sandia.sems.spifi.Utility()
 
+    //
+    // Begin parameter validation
+    //
 
+    // Check and set env first
+    if(!params.containsKey("env"))
+    {
+        throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
+    }
+    def env = params.env
+
+    env.println "[SPiFI]> Shell.execute()"
+    env.println "[SPiFI]> Shell.execute(): parameter check begin"
+    Map params_expected = [ "env":              [ option: "R" ],
+                            "command":          [ option: "R" ],
+                            "path":             [ option: "O" ],
+                            "retries":          [ option: "O" ],
+                            "retry_delay":      [ option: "O" ],
+                            "timeout":          [ option: "O" ],
+                            "timeout_units":    [ option: "O" ],
+                            "verbose":          [ option: "O" ],
+                            "dry_run":          [ option: "O" ],
+                            "dry_run_delay":    [ option: "O" ],
+                            "dry_run_status":   [ option: "O" ],
+                            "dry_run_output":   [ option: "O" ],
+                            "status_values_ok": [ option: "O" ],
+                            "output_type":      [ option: "O" ]
+                          ]
+    Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env, 
+                                                                               params_expected: params_expected, 
+                                                                               params_received: params,
+                                                                               verbose: params.containsKey("verbose") && params.verbose
+                                                                               )
+    if( !params_ok )
+    {
+        throw new Exception("SPiFI ERROR: parameter check failed for Shell.execute()")
+    }
+    env.println "[SPiFI]> Shell.execute(): parameter check complete"
+
+    //
+    // Completed parameter validation
+    //
+
+    // Create a map to put output data into
     Map output = [:]
 
     // Set up default values
@@ -94,17 +137,7 @@ def execute(Map params)
     // What kind of output do we capture?
     String output_type = "stdout+stderr"
 
-    // Process required parameters.
-    if(!params.containsKey("env"))
-    {
-        throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
-    }
-    def env = params.env
-
-    if(!params.containsKey("command"))
-    {
-        throw new Exception("[SPiFI] ERROR: Missing required parameter: command")
-    }
+    // The command to execute
     String command = params.command
 
     // Update optional parameters

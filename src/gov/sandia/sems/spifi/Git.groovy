@@ -59,18 +59,54 @@ package gov.sandia.sems.spifi;
  */
 def clone(Map params)
 {
-    // List of known parameters to this function
-    List parameter_list = ["env", 
-                           "url",           "branch", 
-                           "credentialsId", "dir", 
-                           "retries",       "retry_delay",
-                           "timeout",       "timeout_units", 
-                           "verbose",       "recurse_submodules",
-                           "shallow"] 
+    //
+    // Begin parameter validation
+    //
+
+    // Check and set env first
+    if(!params.containsKey("env"))
+    {
+        throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
+    }
+    def env = params.env
+
+    env.println "[SPiFI]> Git.clone()"
+    env.println "[SPiFI]> Git.clone(): parameter check begin"
+    Map params_expected = [ "env":                 [ option: "R" ],
+                            "url":                 [ option: "R" ],
+                            "branch":              [ option: "O" ],
+                            "credentialsId":       [ option: "O" ],
+                            "dir":                 [ option: "O" ],
+                            "retries":             [ option: "O" ],
+                            "retry_delay":         [ option: "O" ],
+                            "timeout":             [ option: "O" ],
+                            "timeout_units":       [ option: "O" ],
+                            "verbose":             [ option: "O" ],
+                            "recurse_submodules":  [ option: "O" ],
+                            "shallow":             [ option: "O" ],
+                          ]
+    Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env,
+                                                                               params_expected: params_expected,
+                                                                               params_received: params,
+                                                                               verbose: params.containsKey("verbose") && params.verbose
+                                                                               )
+    if( !params_ok )
+    {
+        throw new Exception("SPiFI ERROR: parameter check failed for Git.clone()")
+    }
+
+    // Additional type check on params.url
+    assert params.url instanceof String
+
+    env.println "[SPiFI]> Git.clone(): parameter check complete"
+
+    //
+    // Completed parameter validation
+    //
 
     // Set up default values
     String  dir                = "."
-    String  url                = ""
+    String  url                = params.url
     String  branch             = "master"
     String  credentialsId      = null
     Boolean recurse_submodules = false
@@ -80,21 +116,7 @@ def clone(Map params)
     Boolean shallow            = false
     Integer shallow_depth      = 50
 
-    // Process required parameters.
-    if(!params.containsKey("env"))
-    {
-        throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
-    }
-    def env = params.env
-
-    if(!params.containsKey("url"))
-    {
-        throw new Exception("[SPiFI] ERROR: Missing required parameter: url")
-    }
-    assert params.url instanceof String
-    url = params.url
-
-    // Update optional parameters
+    // Set optional parameters
     if(params.containsKey("branch"))               branch             = params.branch
     if(params.containsKey("credentialsId"))        credentialsId      = params.credentialsId
     if(params.containsKey("dir"))                  dir                = params.dir
@@ -103,21 +125,6 @@ def clone(Map params)
     if(params.containsKey("retry_delay"))          retry_delay        = params.retry_delay
     if(params.containsKey("timeout"))              timeout            = params.timeout
     if(params.containsKey("shallow"))              shallow            = params.shallow
-
-    // Print a message if there are any unknown parameters.
-    String unknown_parameters = ""
-    params.keySet().each
-    { key ->
-      if( !parameter_list.contains(key) )
-      {
-          unknown_parameters += "${key}"
-      }
-    }
-    if( "" != unknown_parameters )
-    {
-        env.println "[SPiFI]> Git.clone() received unknown parameters:\n" +
-                    "[SPiFI]> - [ ${unknown_parameters.trim()} ] "
-    }
 
     // Optionally print out some debugging output
     if(params.containsKey("verbose") && params.verbose == true)
