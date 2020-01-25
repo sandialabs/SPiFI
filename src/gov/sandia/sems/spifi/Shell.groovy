@@ -248,7 +248,10 @@ def execute(Map params)
             // Error out if the path doesn't actually exist.
             if( !fileExists("${path}") )
             {
-                env.println "[SPiFI]> WARNING in Shell::execute(): ${path} does not exist!"
+                // TODO: Check this println -- it seems to be failing in docker images. Maybe need to
+                //       specifically check for directory over file?
+                //env.println "[SPiFI]> WARNING in Shell::execute(): ${path} does not exist!"
+
                 /*  This can break some things - revisit when going to version 1.2.0 and doing DEPRECATION work
                     Perhaps a warning is the right thing... or error out (but that will change how testing is done
                     Since the tests rely on doing things like "ls <directory that doesn't exist>" to get stderr output.
