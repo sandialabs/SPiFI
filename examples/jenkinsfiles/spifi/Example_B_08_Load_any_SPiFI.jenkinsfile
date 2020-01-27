@@ -67,7 +67,7 @@ try
                         retriever: modernSCM([ $class: 'GitSCMSource',
                                                credentialsId: params.SPiFI_GIT_CREDENTIAL,
                                                remote: params.SPiFI_URL,
-                                               traits: [ gitBranchDiscovery(),
+                                               traits: [ [ $class: 'jenkins.plugins.git.traits.BranchDiscoveryTrait'],
                                                          [ $class: 'CloneOptionTrait',
                                                            extension: [noTags: false, reference: '', shallow: false, timeout: 5]
                                                          ]
