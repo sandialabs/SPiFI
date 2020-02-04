@@ -1,14 +1,56 @@
+#!/usr/bin/env groovy
+
 /**
- * Load the SPiFI Library
- *
+ * Example B-01 
+ * 
+ * Dynamic loading of the SPiFI library using `library()` to 
+ * allow parameterizeable version picking.
  */
+
+// (Optional) Set up build properties with a choice parameter 
+// to choose version of SPiFI to load from available versions
+// on your server.
+properties([
+    parameters([
+        choice(name: "SPiFI_VERSION",
+               choices: ['SPiFI-1.3.0', 'SPiFI-1.2.2'],
+               description: 'SPiFI Version')
+        ])
+    ])
+
+// Set a default value if the parameter doesn't exist.
+// - This protects against errors during a first-run.
+String param_spifi_version = "SPiFI-1.3.0"
+if(params.containsKey("SPiFI_VERSION"))
+{
+    param_spifi_version = params.SPiFI_VERSION
+}
+
+
+// Grab a handle to all of SPiFI
+def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+
+
 node()
 {
-    // Load the SPiFI library
-    def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+    stage("Get Version")
+    {
+        // Print out full version inside a println
+        println "Loaded SPiFI version : ${libspifi.Info.version()}"
 
-    // Print out the library version of SPiFI
-    println "Loaded SPiFI version: ${libspifi.Info.version()}"
+        // Grab individual version components
+        Integer version_major = libspifi.Info.version_major()
+        Integer version_minor = libspifi.Info.version_minor()
+        Integer version_patch = libspifi.Info.version_patch()
 
-}
+        // Multi-line print 
+        println "Version breakdown:\n" +
+                "- major: ${version_major}\n" +
+                "- minor: ${version_minor}\n" +
+                "- patch: ${version_patch}"
+    } // End Stage
+
+} // End Node
+
+
 
