@@ -17,17 +17,8 @@ properties([
         ])
     ])
 
-
+// Fail if required parameters are missing.
 assert params.containsKey("SPiFI_VERSION"), "Missing required parameter: SPiFI_VERSION"
-
-// Set a default value if the parameter doesn't exist.
-// - This protects against errors during a first-run.
-//String param_spifi_version = "SPiFI-1.3.0"
-//if(params.containsKey("SPiFI_VERSION"))
-//{
-//    param_spifi_version = params.SPiFI_VERSION
-//}
-
 
 // Grab a handle to all of SPiFI
 def libspifi = library(params.SPiFI_VERSION).gov.sandia.sems.spifi
