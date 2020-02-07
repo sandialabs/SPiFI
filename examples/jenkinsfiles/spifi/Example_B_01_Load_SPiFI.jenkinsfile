@@ -12,7 +12,7 @@
 properties([
     parameters([
         choice(name: "SPiFI_VERSION",
-               choices: ['SPiFI-1.3.0', 'SPiFI-1.2.2'],
+               choices: ['SPiFI-1.3.0', 'SPiFI-1.2.2', 'SPiFI','SPiFI@master'],
                description: 'SPiFI Version')
         ])
     ])
