@@ -204,16 +204,8 @@ class JobLauncher
         //
         // Begin parameter validation
         //
-
-        // Check and set env first
-        if(!params.containsKey("env"))
-        {
-            throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
-        }
-        def env = params.env
-
-        env.println "[SPiFI]> JobLauncher.appendJob()"
-        env.println "[SPiFI]> JobLauncher.appendJob(): parameter check begin"
+        this._env.println "[SPiFI]> JobLauncher.appendJob()"
+        this._env.println "[SPiFI]> JobLauncher.appendJob(): parameter check begin"
         Map params_expected = [ "label":                   [ option: "R" ],
                                 "job_name":                [ option: "R" ],
                                 "parameters":              [ option: "O" ],
@@ -241,7 +233,7 @@ class JobLauncher
         {
             throw new Exception("SPiFI ERROR: parameter check failed for JobLauncher.appendJob()")
         }
-        env.println "[SPiFI]> JobLauncher.appendJob(): parameter check complete"
+        this._env.println "[SPiFI]> JobLauncher.appendJob(): parameter check complete"
 
         //
         // Completed parameter validation
