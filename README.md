@@ -37,6 +37,13 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master : 2020-02-10
+- Add a new optional `verbose` parameter to `JobLauncher.appendJob()` for use
+  by SPiFI developers to turn on additional debugging messages.  Currently
+  this is only used by `gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check()`
+  but we could expand its use later if we want to.
+  - This will not affect any backwards compatibility or deprecate anything.
+
 #### master : 2020-01-21
 - v1.3.1 (or v1.3.0 patch) fixes / minor additions
   - Add new parameters to `Git.clone()`
