@@ -224,7 +224,7 @@ class JobLauncher
                                 "retry_lines_to_check":    [ option: "O" ],
                                 "retry_conditions":        [ option: "O" ]
                             ]
-        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env,
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
                                                                                    params_expected: params_expected,
                                                                                    params_received: params,
                                                                                    verbose: params.containsKey("verbose") && params.verbose
