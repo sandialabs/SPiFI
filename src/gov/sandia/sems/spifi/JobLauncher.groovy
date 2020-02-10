@@ -83,7 +83,7 @@ class JobLauncher
                                                       // - data members are:  retry_delay, retry_delay_units, retry_regex
 
         // Debugging / Development helpers
-        Boolean verbose = False
+        Boolean verbose = false
     }
 
 
@@ -200,7 +200,7 @@ class JobLauncher
      *                                                     objects.
      *                                                     Only the FINAL attempt's results will be reported.
      * @param verbose                 [OPTIONAL] Boolean - Toggle extra verbosity for debugging.  (v1.3.1)
-     *                                                     Default: False
+     *                                                     Default: false
      *
      * @return nothing
      */
