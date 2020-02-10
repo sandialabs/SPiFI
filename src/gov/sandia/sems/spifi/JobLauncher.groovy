@@ -81,6 +81,9 @@ class JobLauncher
                                                       //  on retry-criteria.  Note: num_attempts == num_retries+1
         List    retry_conditions     = null           // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
                                                       // - data members are:  retry_delay, retry_delay_units, retry_regex
+
+        // Debugging / Development helpers
+        Boolean verbose = False
     }
 
 
@@ -196,6 +199,8 @@ class JobLauncher
      *                                                     a re-run of the job. Currently this must be a list of DelayedRetryOnRegex
      *                                                     objects.
      *                                                     Only the FINAL attempt's results will be reported.
+     * @param verbose                 [OPTIONAL] Boolean - Toggle extra verbosity for debugging.  (v1.3.1)
+     *                                                     Default: False
      *
      * @return nothing
      */
@@ -222,7 +227,8 @@ class JobLauncher
                                 "expected_duration_units": [ option: "O" ],
                                 "retry_max_count":         [ option: "O" ],
                                 "retry_lines_to_check":    [ option: "O" ],
-                                "retry_conditions":        [ option: "O" ]
+                                "retry_conditions":        [ option: "O" ],
+                                "verbose":                 [ option: "O" ]
                             ]
         Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
                                                                                    params_expected: params_expected,
@@ -255,6 +261,7 @@ class JobLauncher
         if(params.containsKey("dry_run_status"))  { job.dry_run_status  = params.dry_run_status  }
         if(params.containsKey("dry_run_delay"))   { job.dry_run_delay   = params.dry_run_delay   }
         if(params.containsKey("monitor_node"))    { job.monitor_node    = params.monitor_node    }
+        if(params.containsKey("verobse"))         { job.verbose         = params.verbose         }
 
         // Process expected duration parameters
         if(params.containsKey("expected_duration_min"))   { job.expected_duration_min   = params.expected_duration_min   }
