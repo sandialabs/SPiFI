@@ -1,0 +1,80 @@
+#!/usr/bin/env groovy
+
+node()
+{
+    cleanWs()
+
+    stage("Generate File")
+    {
+        // Better ways to create this but for the purposes of this example,
+        // this works.
+        sh "echo 'dakota_revision = 4a64e28' > jenkins_env_vars"
+        sh "echo 'local_revision = d841ef7' >> jenkins_env_vars"
+        sh "echo 'artifact_archive_path = /sems-data-store/dakota/test_artifacts/non_devel_branches/wpc_pipeline_pub/dakota_wc_core_pipeline/16' >> jenkins_env_vars"
+        sh "echo 'binary_archive_path = /sems-data-store/dakota/test_artifacts/non_devel_branches/wpc_pipeline_pub/dakota_wc_core_pipeline/latest_binaries' >> jenkins_env_vars"
+        sh "echo 'JenkinsDriver_results = 0' >> jenkins_env_vars"
+    } // end stage
+
+
+    stage("Read File")
+    {
+        // Read the file
+        Map jenkins_env_vars = load_delimited_kvpair_file_to_map("jenkins_env_vars", " = ")
+
+        // Loop over the map and print everything in it
+        String ostr = "jenkins_env_vars:\n"
+        jenkins_env_vars.each
+        { k,v ->
+            ostr += sprintf(" - %-25s :: %s\n", [k, v])
+            //      ^^^^^^^-- make sure "Use Groovy Sandbox" is unchecked or Jenkins
+            //                will get grumpy.
+        }
+        println ostr
+
+        // Print out the artifact_archive_path value
+        println "artifact_archive_path == ${jenkins_env_vars.artifact_archive_path}"
+
+    } // end stage
+
+} // end node
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// functions & helpers
+//////////////////////////////////////////////////////////////////////////
+
+
+
+/**
+ * Loads a delimited text file containg key-value pairs into a map.
+ * Empty lines are skipped.
+ *
+ * @param filename  String containing the name of the file to load.
+ * @param delimiter String containing the delimter.
+ *                  Default: ","
+ * @return          Map containing the key:value pairs from the file.
+ * @todo            Could easily be enhanced to ignore lines starting
+ *                  with a '#'... /shrug.
+ */
+Map load_delimited_kvpair_file_to_map(String filename, String delimiter=",")
+{
+    Map output = [:]
+
+    String lines = readFile(filename).trim()
+
+    if( lines )
+    {
+        lines.split("\n").each
+        { line ->
+            if( line.trim() )
+            {
+                def (key,value) = line.split( " = " ).collect { it.trim() }
+                output."$key" = value
+            }
+        }
+    }
+    return output
+}
+
+
