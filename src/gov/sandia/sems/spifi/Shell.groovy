@@ -96,8 +96,8 @@ def execute(Map params)
                             "status_values_ok": [ option: "O" ],
                             "output_type":      [ option: "O" ]
                           ]
-    Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env, 
-                                                                               params_expected: params_expected, 
+    Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env,
+                                                                               params_expected: params_expected,
                                                                                params_received: params,
                                                                                verbose: params.containsKey("verbose") && params.verbose
                                                                                )
@@ -217,7 +217,7 @@ def execute(Map params)
                          dry_run_output +
                          "\n" +
                          "*** SPiFI DEPRECATION WARNING ***\n" +
-                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
         // END DEPRECATION
 
         return output
@@ -264,7 +264,7 @@ def execute(Map params)
                                 output.console +
                                  "\n" +
                                  "*** SPiFI DEPRECATION WARNING ***\n" +
-                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
                 // END DEPRECATION
                 return output
                 */
@@ -370,10 +370,10 @@ def execute(Map params)
     // BEGIN DEPRECATION
     output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" +
                      "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                     output.console + 
+                     output.console +
                      "\n" +
                      "*** SPiFI DEPRECATION WARNING ***\n" +
-                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***" 
+                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
 
     // END DEPRECATION
 

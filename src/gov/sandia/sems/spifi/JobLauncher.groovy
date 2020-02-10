@@ -201,34 +201,59 @@ class JobLauncher
      */
     def appendJob(Map params)
     {
-        def utility = new gov.sandia.sems.spifi.Utility()
+        //
+        // Begin parameter validation
+        //
 
-        // Optional Debugging messages
-        //this._env.println "[SPiFI] DEBUGGING> params:\n" + params
-        //params.retry_conditions.each
-        //{ rci->
-        //    this._env.println "[SPiFI] DEBUGGING> params.retry_condition: ${rci.asString()}"
-        //    this._env.println "[SPiFI] DEBUGGING> params.retry_condition:\n" +
-        //                      "[SPiFI] DEBUGGING>    retry_delay       = ${rci.retry_delay}\n" +
-        //                      "[SPiFI] DEBUGGING>    retry_delay_units = \"${rci.retry_delay_units}\"\n" +
-        //                      "[SPiFI] DEBUGGING>    retry_regex       = \"${rci.retry_regex}\"\n"
-        //}
+        // Check and set env first
+        if(!params.containsKey("env"))
+        {
+            throw new Exception("[SPiFI] ERROR: Missing required parameter: env")
+        }
+        def env = params.env
 
-        // Check for required parameters
-        if(!params.containsKey("label"))
+        env.println "[SPiFI]> JobLauncher.appendJob()"
+        env.println "[SPiFI]> JobLauncher.appendJob(): parameter check begin"
+        Map params_expected = [ "label":                   [ option: "R" ],
+                                "job_name":                [ option: "R" ],
+                                "parameters":              [ option: "O" ],
+                                "quiet_period":            [ option: "O" ],
+                                "timeout":                 [ option: "O" ],
+                                "timeout_unit":            [ option: "O" ],
+                                "propagate_error":         [ option: "O" ],
+                                "dry_run":                 [ option: "O" ],
+                                "dry_run_delay":           [ option: "O" ],
+                                "dry_run_status":          [ option: "O" ],
+                                "monitor_node":            [ option: "O" ],
+                                "expected_duration_min":   [ option: "O" ],
+                                "expected_duration_max":   [ option: "O" ],
+                                "expected_duration_units": [ option: "O" ],
+                                "retry_max_count":         [ option: "O" ],
+                                "retry_lines_to_check":    [ option: "O" ],
+                                "retry_conditions":        [ option: "O" ]
+                            ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
         {
-            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob missing required parameter: label")
+            throw new Exception("SPiFI ERROR: parameter check failed for JobLauncher.appendJob()")
         }
-        if(!params.containsKey("job_name"))
-        {
-            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob missing required parameter: job_name")
-        }
+        env.println "[SPiFI]> JobLauncher.appendJob(): parameter check complete"
+
+        //
+        // Completed parameter validation
+        //
 
         def job = new _parameters()
 
+        // Pass REQUIRED parameters to the job object
         job.label    = params.label
         job.job_name = params.job_name
 
+        // Pass OPTIONAL parameters to the job object or keep default.
         if(params.containsKey("parameters"))      { job.parameters      = params.parameters      }
         if(params.containsKey("quiet_period"))    { job.quiet_period    = params.quiet_period    }
         if(params.containsKey("timeout"))         { job.timeout         = params.timeout         }
@@ -250,12 +275,14 @@ class JobLauncher
             if(params.retry_lines_to_check < 0) { job.retry_lines_to_check = 0 }
             else { job.retry_lines_to_check = params.retry_lines_to_check }
         }
+
         if(params.containsKey("retry_max_count"))
         {
             if(params.retry_max_count < 0)                        { job.retry_max_count = 0 }
             else if(params.retry_max_count > job.retry_max_limit) { job.retry_max_count = job.retry_max_limit }
             else                                                  { job.retry_max_count = params.retry_max_count }
         }
+
         if(params.containsKey("retry_conditions"))
         {
             // Validate the parameters
@@ -266,7 +293,6 @@ class JobLauncher
             // Got here, so the retry_conditions parameter list is ok.
             job.retry_conditions = params.retry_conditions
         }
-
 
         // Validate parameter value(s)
         if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
@@ -285,6 +311,7 @@ class JobLauncher
 
 
         // normalize expected duration bounds to seconds.
+        def utility = new gov.sandia.sems.spifi.Utility()
         job.expected_duration_min   = utility.convertDurationToSeconds(job.expected_duration_min, job.expected_duration_units)
         job.expected_duration_max   = utility.convertDurationToSeconds(job.expected_duration_max, job.expected_duration_units)
         job.expected_duration_units = "SECONDS"  // set units AFTER they are normalized to seconds.
@@ -351,7 +378,7 @@ class JobLauncher
 
         // Construct the execution 'block' that will be executed concurrently for each of the jobs.
         this._jobList.each
-        {   _job ->
+        { _job ->
             def job = _job
             results[job.key] = "UNKNOWN"
             builders[job.key] =
@@ -373,12 +400,11 @@ class JobLauncher
         // Update the result summary
         this._resetLastResultSummary()
         results.each
-        {   _r ->
+        { _r ->
             def r = _r
             this._updateLastResultSummary(r.value["status"])
 
             this._env.println "[SPiFI]> Job ${r.key} (${r.value.job}) completed [${r.value.status}]."
-            //this._env.println "[SPiFI]> - UpdateLastResultSummary:\n${r}"
         }
 
         return results
@@ -453,6 +479,7 @@ class JobLauncher
 
         this._env.println "${strJobs}"
     }
+
 
 
     // -------------------------------------------------------------------------
@@ -541,32 +568,28 @@ class JobLauncher
                                                  propagate  : job.value.propagate_error,
                                                  wait       : true
 
-                        //this._env.println "[SPiFI DEBUGGING]> -------------------\n" +
-                        //                  "[SPiFI DEBUGGING]>\n" +
-                        //                  "[SPiFI DEBUGGING]> status = ${status}\n" +
-                        //                  "[SPiFI DEBUGGING]>\n" +
-                        //                  "[SPiFI DEBUGGING]> -------------------\n" 
+                        // ... build() blocks until all the jobs have returned ...
 
                         duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
                         jobStatus        = status.getResult()
 
                         // If job was successful, check the execution time bounds.
-                        if(jobStatus=="SUCCESS")
+                        if("SUCCESS" == jobStatus)
                         {
                             // Set status to UNSTABLE if we care about min duration and duration < mn expected OR
                             //                        if we care about max duration and duration > max expected
                             if( (job.value.expected_duration_min > 0 && duration_seconds < job.value.expected_duration_min) ||
                                 (job.value.expected_duration_max > 0 && duration_seconds > job.value.expected_duration_max) )
                             {
-                                this._env.println "SPiFI> WARNING: Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
-                                                  "SPiFI>          Setting status to UNSTABLE"
+                                this._env.println "SPiFI WARNING> Job returned SUCCESS but execution time is outside the expected time bounds.\n" +
+                                                  "SPiFI WARNING> Setting status to UNSTABLE"
 
                                 jobStatus = "UNSTABLE"
                             }
                         }
 
                         // Check job status for a retry IF the job returned FAILURE or UNSTABLE
-                        else if(jobStatus == "FAILURE" || jobStatus == "UNSTABLE")
+                        else if("FAILURE" == jobStatus || "UNSTABLE" == jobStatus)
                         {
                             // Only scan the job results if we have retry-conditions
                             if(job.value.retry_conditions != null)
@@ -592,8 +615,8 @@ class JobLauncher
                                 String msg = "[SPiFI]> retry_condition matched = ${retry_condition_found}\n"
                                 if(retry_condition_found)
                                 {
-                                    msg += "[SPiFI]> retry_condition_matched = ${retry_condition_matched.asString()}\n" 
-                                    msg += "[SPiFI]> retry delay             = ${retry_condition_matched.retry_delay}\n" 
+                                    msg += "[SPiFI]> retry_condition_matched = ${retry_condition_matched.asString()}\n"
+                                    msg += "[SPiFI]> retry delay             = ${retry_condition_matched.retry_delay}\n"
                                     msg += "[SPiFI]> retry delay units       = ${retry_condition_matched.retry_delay_units}\n"
                                 }
                                 this._env.println "${msg}"
@@ -639,7 +662,7 @@ class JobLauncher
         }      // End Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
         {
-            // Note: FlowInterruptedException is triggered in both cases if the job was killed by 
+            // Note: FlowInterruptedException is triggered in both cases if the job was killed by
             //       the user or if it was killed due to a test timeout.
             this._env.println "SPiFI> --------------------------------------------------------\n" +
                               "SPiFI> ERROR: ${job.key} (${job.value.jenkins_job_name}) was aborted.\n" +
@@ -652,17 +675,17 @@ class JobLauncher
                               "SPiFI> --------------------------------------------------------"
             def strace = e.getStackTrace()
 
-            // Many things can cause a FlowInterruptedException so let's check the stack trace 
+            // Many things can cause a FlowInterruptedException so let's check the stack trace
             // to try and identify what caused it.
-            // WARNING: This might be brittle if Jenkins changes things up, but for now there's 
+            // WARNING: This might be brittle if Jenkins changes things up, but for now there's
             //          no way I know of to differentiate what interrupted the sub-job.
-            /* DEBUG */ def tools = new gov.sandia.sems.spifi.JenkinsTools()
-            /* DEBUG */ this._env.println tools.spifi_get_exception_stacktrace_pretty(env: this._env, exception: e)
+            def tools = new gov.sandia.sems.spifi.JenkinsTools()                                             /* DEBUGGING */
+            this._env.println tools.spifi_get_exception_stacktrace_pretty(env: this._env, exception: e)      /* DEBUGGING */
 
             String interrupt_reason="UNKNOWN"
-            strace.find 
+            strace.find
             {
-                // Sub-job killed due to some kind of timeout 
+                // Sub-job killed due to some kind of timeout
                 if( it.getClassName().toString().contains("workflow.steps.TimeoutStepExecution") && it.getMethodName().toString() == "cancel")
                 {
                     interrupt_reason = "TIMEOUT"
@@ -687,12 +710,13 @@ class JobLauncher
                 return false
             }
 
-            // TODO: In this case, when we can tell that the pipeline itself was aborted, we do what Jenkins will do and 
-            //       we pass the exception up and just kill the whole pipeline at this point.  It will abort the sub-jobs
-            //       and exit.  There won't be any emails or anything else sent because things die.  
-            //       We could investigate some optional settings to JobLauncher to prevent killing the pipeline from immediately
-            //       aborting the whole pipeline but rather have it pass up some flag or status to note that the pipeline was 
-            //       killed here (though, a check for that should probably be put somewhere higher than in _jobBody).
+            // TODO: In this case, when we can tell that the pipeline itself was aborted, we do what Jenkins will do and
+            //       we pass the exception up and just kill the whole pipeline. It will abort the sub-jobs and exit.
+            //       There won't be any emails or anything else sent because things die.
+            //       We could investigate some optional settings to JobLauncher to prevent killing the pipeline from
+            //       immediately aborting the whole pipeline but rather have it pass up some flag or status to note
+            //       that the pipeline was killed here (though, a check for that should probably be put somewhere
+            //       higher than in _jobBody).
 
             results[job.key]["status"] = interrupt_reason
         }
@@ -751,11 +775,11 @@ class JobLauncher
     {
         this._lastResultSummary.clear()
         this._lastResultSummary["NUMJOBS"] = this._jobList.size()
-        this._allowable_job_status_core.each() 
+        this._allowable_job_status_core.each()
         {
             this._lastResultSummary["NUM"+it] = 0
         }
-        this._allowable_job_status_spifi.each() 
+        this._allowable_job_status_spifi.each()
         {
             this._lastResultSummary["NUM"+it] = 0
         }
@@ -775,7 +799,7 @@ class JobLauncher
     {
         // verify parameter(s)
         assert this._allowable_job_status_core.contains(status) || this._allowable_job_status_spifi.contains(status)
-        
+
         String statusKey = "NUM" + status
         this._lastResultSummary[statusKey] += 1
     }
