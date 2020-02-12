@@ -160,14 +160,15 @@ def notify(Map args)
     args.body = "<H1>Testing Result: ${args.status}</H1>\n" + args.body
 
     // Create a SPiFI HTMLUtility object to generate the html document for emailing.
-    spifi_hu = libspifi.HTMLUtility.new(env: this)
+    def spifi_hu = libspifi.HTMLUtility.new(env: this)
 
     // Send the email using Jenkins' email utility.
-    mail to:       param_email_devops  /* Global */,
+    mail(to:       param_email_devops  /* Global */,
          replyTo:  param_email_replyto /* Global */,
          subject:  email_subject       /* Local */,
          body:     spifi_hu.generate(body: args.body),
          mimeType: "text/html"
+        )
 }
 
 

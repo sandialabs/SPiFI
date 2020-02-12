@@ -414,7 +414,11 @@ class ResultsUtility implements Serializable
     {
         String output = """
                         <table class="bgGreen tc1 tc2">
-                            <tr><th>Status</th><th>Duration (s)</th><th>Job Name</th></tr>
+                            <tr>
+                                <th>Status</th>
+                                <th>Duration (s)</th>
+                                <th>Job Name</th>
+                            </tr>
                         """.stripIndent()
         params.results.each
         {   r ->
@@ -432,11 +436,10 @@ class ResultsUtility implements Serializable
                 link += "/console"
             }
 
-            String msg = """
-                         <tr class='${r.value.status}'>
-                             <td>${r.value.status}</td>
-                             <td>${r.value.duration}</td>
-                         """.stripIndent()
+            String msg = ""
+            msg += "    <tr class='${r.value.status}'>\n"
+            msg += "        <td>${r.value.status}</td>\n"
+            msg += "        <td>${r.value.duration}</td>\n"
 
             // If dry run, note that in "link"
             if(true == r.value.dry_run)

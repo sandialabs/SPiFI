@@ -241,7 +241,7 @@ class HTMLUtility implements Serializable
 
                 /* ---------- Jenkins Status based themes ---- */
                 tr.SUCCESS td {
-                    background-color: #80BD73;
+                    /* SUCCESS status uses default background color */
                 }
                 tr.FAILURE td {
                     background-color: #E38E89;
@@ -250,6 +250,9 @@ class HTMLUtility implements Serializable
                     background-color: #E3D389;
                 }
                 tr.ABORTED td {
+                    background-color: #e6e6e6;
+                }
+                tr.TIMEOUT td {
                     background-color: #e6e6e6;
                 }
                 tr.NOT_BUILT td {
