@@ -41,7 +41,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
-String branchName = "master"
+String branchName = "v1.3.1"
 
 
 // Load node restriction(s) from parameters
@@ -178,7 +178,7 @@ node(node_restriction)
             {
                 email_body += "<ol>\n"
 
-                @Library('SPiFI-DEV@master') _      // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-DEV@v1.3.1') _      // Note: this must be const string, can't parameterize :/
                 //@Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
