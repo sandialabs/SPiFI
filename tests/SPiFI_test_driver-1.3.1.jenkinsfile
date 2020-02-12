@@ -178,7 +178,7 @@ node(node_restriction)
             {
                 email_body += "<ol>\n"
 
-                @Library('SPiFI-DEV@v1.3.1') _      // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-1.3.1') _      // Note: this must be const string, can't parameterize :/
                 //@Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
