@@ -37,6 +37,10 @@ The full user guide can be found at
 
 ### Change Log
 
+#### master: 2020-02-12
+- Bug fix for [Issue 27][5] : Fixed alternating color bug in the HTML generated tables.
+- Will add this to a 1.3.1 release.
+
 #### master : 2020-02-10
 - Add a new optional `verbose` parameter to `JobLauncher.appendJob()` for use
   by SPiFI developers to turn on additional debugging messages.  Currently
@@ -138,4 +142,7 @@ The full user guide can be found at
 [2]: https://jenkins.io/doc/book/pipeline/
 [3]: http://www.groovy-lang.org/
 [4]: https://wiki.jenkins.io/display/JENKINS/Script+Security+Plugin
+[5]: https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/issues/27
+
+
 
