@@ -2,28 +2,6 @@
 
 
 
-// Set up Jenkins pipeline properties.
-properties([
-    parameters([
-        credentials(name: "SSH_CREDENTIAL",
-                    credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials',
-                    defaultValue: 'f638e89f-7379-44be-b6de-6c23214e42b9',
-                    description: "",
-                    required: true)
-    ])
-])
-
-
-// Exit UNSTABLE if this is the first run (i.e, parameters are missing).
-Boolean is_first_run = false
-if(false == params.containsKey("SSH_CREDENTIAL")) is_first_run = true
-if(is_first_run)
-{
-    currentBuild.status = "UNSTABLE"
-    return
-}
-
-
 timestamps()
 {
 
