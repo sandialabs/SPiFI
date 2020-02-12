@@ -1,0 +1,94 @@
+#!/usr/bin/env groovy
+
+
+
+// Set up Jenkins pipeline properties.
+properties([
+    parameters([
+        credentials(name: "SSH_CREDENTIAL",
+                    credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials',
+                    defaultValue: 'f638e89f-7379-44be-b6de-6c23214e42b9',
+                    description: "",
+                    required: true)
+    ])
+])
+
+
+// Exit UNSTABLE if this is the first run (i.e, parameters are missing).
+Boolean is_first_run = false
+if(false == params.containsKey("SSH_CREDENTIAL")) is_first_run = true
+if(is_first_run)
+{
+    currentBuild.status = "UNSTABLE"
+    return
+}
+
+
+timestamps()
+{
+
+node()
+{
+    cleanWs()
+
+
+    stage("Generate Data")
+    {
+        // do something and create a text file output.txt
+        sh "ls -ltr > test-output.txt 2>&1"
+        sh "echo 'this is a test' > test-output.md 2>&1"
+    }  // End Stage 
+
+
+    stage("Archive Artifacts")
+    {
+        // archive the file as an artifact
+        archiveArtifacts(allowEmptyArchive: true, 
+                         artifacts: '*.txt, *.md', 
+                         fingerprint: true)
+    }  // End Stage
+
+
+    stage("Transfer Files")
+    {
+        if(true)
+        {
+            // Attempt to reduce the crud for the command to work.
+            String destination_srvr = "software-srn.sandia.gov"
+            String destination_path = "/sems-data-store/dakota/testing/sshPublisherTest"
+    
+            sshPublisher(
+                alwaysPublishFromMaster: true,
+                publishers: [
+                    sshPublisherDesc(
+                        configName: destination_srvr,
+                        sshRetry: [
+                            retries: 3,
+                            retryDelay: 5000
+                        ],
+                        transfers: [
+                            sshTransfer(
+                                makeEmptyDirs: false,
+                                remoteDirectory: destination_path,
+                                removePrefix: '',
+                                sourceFiles: '*.txt'
+                            ),
+                            sshTransfer(
+                                makeEmptyDirs: false,
+                                remoteDirectory: destination_path,
+                                removePrefix: '',
+                                sourceFiles: '*.md'
+                            )
+                        ],
+                        verbose: false
+                    )
+                ]
+            )
+        }  // skip stage
+    } // End stage
+
+
+
+}  // End node
+
+}  // End timestamps
