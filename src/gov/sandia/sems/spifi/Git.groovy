@@ -80,7 +80,7 @@ def clone(Map params)
                             "retries":             [ option: "O" ],
                             "retry_delay":         [ option: "O" ],
                             "timeout":             [ option: "O" ],
-                            "timeout_units":       [ option: "O" ],
+                            "timeout_units":       [ option: "D" ],
                             "verbose":             [ option: "O" ],
                             "recurse_submodules":  [ option: "O" ],
                             "shallow":             [ option: "O" ],
