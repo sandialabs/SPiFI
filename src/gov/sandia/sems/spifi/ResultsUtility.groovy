@@ -40,30 +40,11 @@ class ResultsUtility implements Serializable
      */
     ResultsUtility(Map params)
     {
-        //
-        // Begin parameter validation
-        //
         if(!params.containsKey("env"))
         {
             throw new Exception("[SPiFI] Missing required parameter: 'env'")
         }
         this._env = params.env
-
-        Map params_expected = [ "env":     [option: "R"],
-                                "verbose": [option: "O"]
-                              ]
-        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
-                                                                                   params_expected: params_expected,
-                                                                                   params_received: params,
-                                                                                   verbose: params.containsKey("verbose") && params.verbose
-                                                                                   )
-        if( !params_ok )
-        {
-            throw new Exception("SPiFI ERROR: parameter check failed for ResultsUtility.ResultsUtility")
-        }
-        //
-        // Completed parameter validation
-        //
 
         this._allowable_job_status_core  = ["SUCCESS"  : "R",
                                             "FAILURE"  : "R",
