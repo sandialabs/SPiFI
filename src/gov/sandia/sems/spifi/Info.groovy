@@ -22,7 +22,7 @@ package gov.sandia.sems.spifi;
  */
 static def version()
 {
-    String spifi_version = "master"
+    String spifi_version = "1.3.2"
     return spifi_version
 }
 
@@ -61,7 +61,7 @@ static def version_minor()
  */
 static def version_patch()
 {
-    Integer spifi_patch = 1
+    Integer spifi_patch = 2
     return  spifi_patch
 }
 
