@@ -35,7 +35,7 @@ static def version()
  */
 static def version_major()
 {
-    Integer spifi_major = 1
+    Integer spifi_major = 2
     return  spifi_major
 }
 
@@ -48,7 +48,7 @@ static def version_major()
  */
 static def version_minor()
 {
-    Integer spifi_minor = 3
+    Integer spifi_minor = 0
     return  spifi_minor
 }
 
@@ -61,7 +61,7 @@ static def version_minor()
  */
 static def version_patch()
 {
-    Integer spifi_patch = 2
+    Integer spifi_patch = 0
     return  spifi_patch
 }
 
