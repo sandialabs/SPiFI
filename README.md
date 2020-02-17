@@ -39,11 +39,9 @@ The full user guide can be found at
 
 #### master: 2020-02-17
 - Update `ResultsUtility` functions to use `gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check()`
-- Add `verbose` parameter to ResultsUtility c'tor.
 - Add `verbose` parameter to ResultsUtility.genResultSummaryTable() parameter list.
 - Add `verbose` parameter to ResultsUtility.genResultDetails() parameter list.
 - Update `HTMLUtility` functions to use `gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check()`
-- Add `verbose` parameter to HTMLUtility c'tor.
 - Add `verbose` parameter to HTMLUtility.generate()
 - Add `verbose` paramter to HTMLUtility.generateList()
 
