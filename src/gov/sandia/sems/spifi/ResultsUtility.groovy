@@ -49,7 +49,7 @@ class ResultsUtility implements Serializable
         }
         this._env = params.env
 
-        Map params_expected = [ "env":     [optoin: "R"],
+        Map params_expected = [ "env":     [option: "R"],
                                 "verbose": [option: "O"]
                               ]
         Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
@@ -100,7 +100,7 @@ class ResultsUtility implements Serializable
         //
         // Begin parameter validation
         //
-        Map params_expected = [ "summary":  [optoin: "R"],
+        Map params_expected = [ "summary":  [option: "R"],
                                 "format":   [option: "O"],
                                 "verbose":  [option: "O"]
                               ]
@@ -193,7 +193,7 @@ class ResultsUtility implements Serializable
         //
         // Begin parameter validation
         //
-        Map params_expected = [ "results":         [optoin: "R"],
+        Map params_expected = [ "results":         [option: "R"],
                                 "format":          [option: "O"],
                                 "link_to_console": [option: "O"],
                                 "beautify":        [option: "O"],

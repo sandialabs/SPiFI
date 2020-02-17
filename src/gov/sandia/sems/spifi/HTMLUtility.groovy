@@ -30,51 +30,80 @@ class HTMLUtility implements Serializable
     /**
      * Constructor
      *
-     * @param env  [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
-     *
+     * @param env     [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging (c'tor only). (v1.3.1)
+     *                                     Default: false.
      * @return nothing
      */
     HTMLUtility(Map params)
     {
-        // Validate parameters
+        //
+        // Begin parameter validation
+        //
         if(!params.containsKey("env"))
         {
             throw new Exception("[SPiFI] Missing required parameter: 'env'")
         }
         this._env = params.env
+
+        Map params_expected = [ "env":     [option: "R"],
+                                "verbose": [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
+        {
+            throw new Exception("SPiFI ERROR: parameter check failed for HTMLUtility.HTMLUtility")
+        }
+        //
+        // Completed parameter validation
+        //
     }
 
 
     /**
      * generate
      *
-     * @param body [REQUIRED] String   - String containing the body of the HTML to generate.
-     *                                   This is the content that would be inside the <BODY></BODY> elements
-     *                                   in a HTML document.
-     * @param footer [OPTIONAL] String - String containing optional extra footer text to add the the footer before
-     *                                   the standard link to the Jenkins job running the pipeline.
-     *                                   - The footer will be set to Gray text and will have a newline added after it.
-     *                                   - The footer must be a self-contained HTML block (i.e., all <element> tags
-     *                                     must have the corresponding </element> closing tag.)
+     * @param body    [REQUIRED] String  - String containing the body of the HTML to generate.
+     *                                     This is the content that would be inside the <BODY></BODY> elements
+     *                                     in a HTML document.
+     * @param footer  [OPTIONAL] String  - String containing optional extra footer text to add the the footer before
+     *                                     the standard link to the Jenkins job running the pipeline.
+     *                                     - The footer will be set to Gray text and will have a newline added after it.
+     *                                     - The footer must be a self-contained HTML block (i.e., all <element> tags
+     *                                       must have the corresponding </element> closing tag.)
+     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging. (v1.3.1)
+     *                                     Default: false.
      *
      * @return String containing the assembled HTML document with template and headers.
      */
     def generate(Map params)
     {
+        //
+        // Begin parameter validation
+        //
+        Map params_expected = [ "body":     [option: "R"],
+                                "footer":   [option: "O"],
+                                "verbose":  [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
+        {
+            throw new Exception("SPiFI ERROR: parameter check failed for HTMLUtility.generate()")
+        }
+        //
+        // Completed parameter validation
+        //
+
         // Set default properties.
-        String footer = ""
-
-        // Verify required parameters are provided.
-        if(!params.containsKey("body"))
-        {
-            throw new Exception("[SPiFI] Missing required parameter: 'body'.")
-        }
-
-        // If optional parameter(s) are provided, override the default.
-        if(params.containsKey("footer"))
-        {
-            footer = params.footer + "<BR/>"
-        }
+        String footer = footer = params.containsKey("footer") ? "${params.footer}<BR/>" : ""
 
         // Assemble the HTML document
         String output = this._genTemplate()
@@ -85,29 +114,42 @@ class HTMLUtility implements Serializable
 
 
     /**
-     * Generate an HTML List string and return it.  
+     * Generate an HTML List string and return it.
      *
-     * The default list generated is an ordered list, but it can optionally be changed to generate an 
+     * The default list generated is an ordered list, but it can optionally be changed to generate an
      * unordered list by providing the `unordered_list` parameter.
-     * 
-     * @param data           [REQUIRED] List of String - A List containing the strings of what you want to be in the 
+     *
+     * @param data           [REQUIRED] List of String - A List containing the strings of what you want to be in the
      *                                                   list.  Each entry is an entry in the list.
      * @param unordered_list [OPTIONAL] Boolean        - If this tag is present and set to true then the list type
      *                                                   generated will be an unordered list. `<ul></ul>`
+     * @param verbose        [OPTIONAL] Boolean        - Toggle extra verbosity for debugging. (v1.3.1)
+     *                                                   Default: false.
      */
     def generateList(Map params)
     {
-        String list_type = "OL"
-        if(params.containsKey("unordered_list") && params.unordered_list == true)
+        //
+        // Begin parameter validation
+        //
+        Map params_expected = [ "data":           [option: "R"],
+                                "unordered_list": [option: "O"],
+                                "verbose":        [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
         {
-            list_type = "UL"
+            throw new Exception("SPiFI ERROR: parameter check failed for HTMLUtility.generateList()")
         }
+        //
+        // Completed parameter validation
+        //
 
-        if(!params.containsKey("data"))
-        {
-            throw new Exception("[SPiFI] Missing required parameter: 'data'.")
-        }
-
+        // Set list type based on parameter 'unordered_list' setting
+        String list_type = params.containsKey("unordered_list") && params.unordered_list ? "UL" : "OL";
 
         // Create output variable
         String output = ""
