@@ -1272,7 +1272,6 @@ node(node_restriction)
                                                  retries: 2,
                                                  retry_delay: 10,
                                                  timeout: 90,
-                                                 timeout_units: "SECONDS",
                                                  verbose: true
                                                 )
 
