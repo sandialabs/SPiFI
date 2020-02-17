@@ -32,29 +32,50 @@ class ResultsUtility implements Serializable
     /**
      * Constructor for ResultsUtility
      *
-     * @param env  [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+     * @param env     [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline)
+     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging (c'tor only). (v1.3.1)
+     *                                     Default: false.
      *
      * @return nothing
      */
     ResultsUtility(Map params)
     {
-        // Validate parameters
+        //
+        // Begin parameter validation
+        //
         if(!params.containsKey("env"))
         {
             throw new Exception("[SPiFI] Missing required parameter: 'env'")
         }
         this._env = params.env
+
+        Map params_expected = [ "env":     [option: "R"],
+                                "verbose": [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
+        {
+            throw new Exception("SPiFI ERROR: parameter check failed for ResultsUtility.ResultsUtility")
+        }
+        //
+        // Completed parameter validation
+        //
+
         this._allowable_job_status_core  = ["SUCCESS"  : "R",
                                             "FAILURE"  : "R",
                                             "UNSTABLE" : "R",
                                             "ABORTED"  : "O",
                                             "NOT_BUILT": "O",
                                            ]
+
         this._allowable_job_status_spifi = ["TIMEOUT"  : "O"
                                            ]
-        //this._allowable_job_status_core  = ["SUCCESS","FAILURE","UNSTABLE","ABORTED","NOT_BUILT"]
-        //this._allowable_job_status_spifi = ["TIMEOUT"]            
     }
+
 
 
     /**
@@ -67,6 +88,8 @@ class ResultsUtility implements Serializable
      * @param format   [OPTIONAL] String - Type of output table to generate.
      *                                     Must be one of: [ ASCII | HTML | MARKDOWN ]
      *                                     Default: ASCII
+     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging. (1.3.1)
+     *                                     Default: false
      *
      * @return String containing the Summary table for results that can be inserted into
      *                the console log, email, etc.
@@ -74,14 +97,28 @@ class ResultsUtility implements Serializable
     @NonCPS
     def genResultSummaryTable(Map params)
     {
+        //
+        // Begin parameter validation
+        //
+        Map params_expected = [ "summary":  [option: "R"],
+                                "format":   [option: "O"],
+                                "verbose":  [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
+        {
+            throw new Exception("SPiFI ERROR: parameter check failed for ResultsUtility.genResultSummaryTable()")
+        }
+
         // If format isn't provided, make it ASCII
         if(!params.containsKey("format"))
         {
             params["format"] = "ASCII"
         }
-
-        // Check required param: summary
-        assert params.containsKey("summary")
 
         assert params.summary.containsKey("NUMJOBS")
 
@@ -96,6 +133,9 @@ class ResultsUtility implements Serializable
         {
             assert params.summary.containsKey("NUM" + it.key)
         }
+        //
+        // Completed parameter validation
+        //
 
         String output = ""
         switch(params.format)
@@ -137,9 +177,11 @@ class ResultsUtility implements Serializable
      *                                             links will point at the job itself.
      *                                             Default: false
      * @param beautify        [OPTIONAL] Boolean - Toggle beautification of the output to make it more
-     *                                             human-readable.  This option is only used when 
+     *                                             human-readable.  This option is only used when
      *                                             format is set to one of: [ JSONL ]
      *                                             Default: false
+     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging. (1.3.1)
+     *                                     Default: false
      *
      * @return String containing the Detail table for results that can be inserted into
      *                the console log, email, etc.
@@ -148,6 +190,25 @@ class ResultsUtility implements Serializable
     @NonCPS
     def genResultDetails(Map params)
     {
+        //
+        // Begin parameter validation
+        //
+        Map params_expected = [ "results":         [option: "R"],
+                                "format":          [option: "O"],
+                                "link_to_console": [option: "O"],
+                                "beautify":        [option: "O"],
+                                "verbose":         [option: "O"]
+                              ]
+        Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
+                                                                                   params_expected: params_expected,
+                                                                                   params_received: params,
+                                                                                   verbose: params.containsKey("verbose") && params.verbose
+                                                                                   )
+        if( !params_ok )
+        {
+            throw new Exception("SPiFI ERROR: parameter check failed for ResultsUtility.genResultDetails()")
+        }
+
         // If format isn't provided, make it ASCII
         if(!params.containsKey("format"))
         {
@@ -163,9 +224,9 @@ class ResultsUtility implements Serializable
         {
             params["beautify"] = false
         }
-
-        // Check required param: results
-        assert params.containsKey("results")
+        //
+        // Completed parameter validation
+        //
 
         String output = ""
 
@@ -205,9 +266,9 @@ class ResultsUtility implements Serializable
      * @param format          [OPTIONAL] String  - Type of output table to generate.
      *                                             Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
      *                                             Default: ASCII
-     * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML 
+     * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML
      *                                             and Markdown will be to the console
-     *                                             output on Jenkins.  If false, the 
+     *                                             output on Jenkins.  If false, the
      *                                             links will point at the job itself.
      *                                             Default: false
      *
@@ -284,7 +345,7 @@ class ResultsUtility implements Serializable
                             <tr><td>Num Tests</td><td>${summary.NUMJOBS}</td></tr>
                         """.stripIndent()
 
-        this._allowable_job_status_core.each() 
+        this._allowable_job_status_core.each()
         {
             Integer tmpCount  = summary["NUM" + it.key]
             if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
@@ -292,7 +353,7 @@ class ResultsUtility implements Serializable
                 output += "    <tr class='${it.key}'><td>Num ${it.key}</td><td>${tmpCount}</td></tr>\n"
             }
         }
-        this._allowable_job_status_spifi.each() 
+        this._allowable_job_status_spifi.each()
         {
             Integer tmpCount  = summary["NUM" + it.key]
             if( it.value=="R" || (it.value=="O" && tmpCount > 0) )
@@ -353,7 +414,7 @@ class ResultsUtility implements Serializable
         this._allowable_job_status_spifi.each()
         {
             Integer tmpCount  = summary["NUM" + it.key]
-            if ( it.value == "R" || ( it.value=="O" && tmpCount > 0) ) 
+            if ( it.value == "R" || ( it.value=="O" && tmpCount > 0) )
             {
                 output += sprintf("   Num %-9s  |   %d\n", [it.key, tmpCount])
             }
@@ -431,7 +492,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("dry_run")
 
             String link = r.value.url
-            if(link != "" && params.link_to_console) 
+            if(link != "" && params.link_to_console)
             {
                 link += "/console"
             }
@@ -445,7 +506,7 @@ class ResultsUtility implements Serializable
             if(true == r.value.dry_run)
             {
                 msg += sprintf("    <td>%s #dry-run</td>\n", [r.value.job])
-            } 
+            }
             // If the link is empty, don't send it.
             else if("" == link)
             {
@@ -551,7 +612,7 @@ class ResultsUtility implements Serializable
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
             output += sprintf("\"duration\": %.2f,", duration)
-            output += "\"dry_run\": ${r.value.dry_run}," 
+            output += "\"dry_run\": ${r.value.dry_run},"
             output += "\"url\": \"${r.value.url}\""
             output += "}"
 
@@ -567,7 +628,7 @@ class ResultsUtility implements Serializable
         }
         output += "]}"
 
-        // Optionally, beautify the json so it's more human readable 
+        // Optionally, beautify the json so it's more human readable
         // Note: This would make the output a JSON string, not JSONL
         if(params.beautify)
         {
@@ -604,7 +665,7 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("dry_run")
 
             String link = r.value.url
-            if(link != "" && params.link_to_console) 
+            if(link != "" && params.link_to_console)
             {
                 link += "/console"
             }
