@@ -39,13 +39,8 @@ package gov.sandia.sems.spifi;
  *                                              Default: 0
  * @param retry_delay        [OPTIONAL] Integer Number of seconds to wait before retrying.
  *                                              Default: 60
- * @param timeout            [OPTIONAL] Integer How long is the timeout to be per attempt?
+ * @param timeout            [OPTIONAL] Integer How long is the timeout to be per attempt in SECONDS?
  *                                              Default: 30
- * @param timeout_units      [OPTIONAL] String  Units to use for the timeout.
- *                                              Allowed values are: {HOURS|MINUTES|SECONDS}.
- *                                              Default: MINUTES
- *                                              DEPRECATED IN version 2.0.0 due to changeover 
- *                                              to GitSCM in 1.1.4
  * @param verbose            [OPTIONAL] Boolean Print out verbose information to the console.
  *                                              Default: false
  * @param recurse_submodules [OPTIONAL] Boolean Enable recursive submodule checkout.
@@ -80,7 +75,6 @@ def clone(Map params)
                             "retries":             [ option: "O" ],
                             "retry_delay":         [ option: "O" ],
                             "timeout":             [ option: "O" ],
-                            "timeout_units":       [ option: "O" ],
                             "verbose":             [ option: "O" ],
                             "recurse_submodules":  [ option: "O" ],
                             "shallow":             [ option: "O" ],

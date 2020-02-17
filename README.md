@@ -38,6 +38,10 @@ The full user guide can be found at
 ### Change Log
 
 #### master: 2020-02-17
+- v1.3.2 release branch created. This is the final branch in the 1.x line.
+- v2.0.0 release branch created. All deprecations from the 1.x line are removed.
+
+#### master: 2020-02-17
 - Update `ResultsUtility` functions to use `gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check()`
 - Add `verbose` parameter to ResultsUtility.genResultSummaryTable() parameter list.
 - Add `verbose` parameter to ResultsUtility.genResultDetails() parameter list.

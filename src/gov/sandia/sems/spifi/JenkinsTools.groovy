@@ -118,22 +118,7 @@ static def spifi_checked_get_parameter(Map args)
 }
 
 
-@Deprecated
-def checked_get_parameter(Map args)
-{
-    if( !args.containsKey("env") )
-    {
-        throw new Exception("[SPiFI ERROR]> Missing required parameter 'env' to checed_get_parameter()")
-    }
-    args.env.println "[SPiFI DEPRECATION NOTICE]>\n" +
-                     "[SPiFI DEPRECATION NOTICE]> checked_get_parameter will be deprecated in 2.0.0\n" +
-                     "[SPiFI DEPRECATION NOTICE]> -  Please use spifi_checked_get_parameter\n" +
-                     "[SPiFI DEPRECATION NOTICE]>"
-   return spifi_checked_get_parameter(args)
-}
-
 
 
 return this
-
 
