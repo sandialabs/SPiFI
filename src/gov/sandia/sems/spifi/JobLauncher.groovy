@@ -209,8 +209,8 @@ class JobLauncher
         //
         // Begin parameter validation
         //
-        this._env.println "[SPiFI]> JobLauncher.appendJob()"
-        this._env.println "[SPiFI]> JobLauncher.appendJob(): parameter check begin"
+        this._env.println "[SPiFI]> JobLauncher.appendJob()\n" +
+                          "[SPiFI]> JobLauncher.appendJob(): parameter check begin"
         Map params_expected = [ "label":                   [ option: "R" ],
                                 "job_name":                [ option: "R" ],
                                 "parameters":              [ option: "O" ],
