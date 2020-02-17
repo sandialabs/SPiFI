@@ -84,7 +84,7 @@ class HTMLUtility implements Serializable
         //
 
         // Set default properties.
-        String footer = footer = params.containsKey("footer") ? "${params.footer}<BR/>" : ""
+        String footer = params.containsKey("footer") ? "${params.footer}<BR/>" : ""
 
         // Assemble the HTML document
         String output = this._genTemplate()
