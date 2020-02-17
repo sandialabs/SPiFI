@@ -1,0 +1,43 @@
+#!/usr/bin/env groovy
+/**
+ * Example pipeline showing the use of the JsonSlurper function to load
+ * JSON files.
+ */
+
+import groovy.json.*   // Needed for JsonSlurper
+
+node()
+{
+    cleanWs()
+
+    stage("A")
+    {
+        String text = "[\n" +
+                      "{ \"A\": 99 }\n" +
+                      "]"
+        writeFile(file: "test.txt", text: text)
+    }
+    
+    stage("B")
+    {
+        catchError(buildResult: "SUCCESS", stageResult: "FAILURE")
+        {
+            def jS  = new JsonSlurper()
+            
+            def jsonFromText = jS.parseText('{"list": [1,2,3,4]}')
+            println "\u2756 " + jsonFromText
+            println "\u2756 " + jsonFromText.list[2]
+            
+            
+            String textFile     = readFile("test.txt")
+            println "\u2756 TextFile:\n" + textFile
+
+            def jS2 = new JsonSlurper()  // I get tracebacks if I don't make a new JsonSlurper for the 2nd read 
+            def jsonFromFile = jS2.parseText( textFile )
+            println "\u2756 " + jsonFromFile
+            println "\u2756 " + "${jsonFromFile[0].A}"
+            // Note, I tried just using jsonFromFile[0].A in the println but it failed, maybe because the value was an Integer rather than string?
+        }
+    }
+}
+
