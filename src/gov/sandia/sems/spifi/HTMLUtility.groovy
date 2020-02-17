@@ -114,7 +114,7 @@ class HTMLUtility implements Serializable
 
 
     /**
-     * Generate an HTML List string and return it.
+     * Generate a HTML List string and return it.
      *
      * The default list generated is an ordered list, but it can optionally be changed to generate an
      * unordered list by providing the `unordered_list` parameter.
