@@ -51,7 +51,7 @@ import gov.sandia.sems.spifi.Utility
  *                                              (i.e., if the command returns any of these OR 0 then the command will not
  *                                              trigger a retry.)
  *                                              Default: []
- * @param output_type      [OPTIONAL] String  - Output Type, stdout, stderr, etc. to capture.
+ * @param output_type      [OPTIONAL] String  - Output Type to capture (stdout, stderr, etc).
  *                                              Options are: {stdout,stderr,stdout+stderr}
  *                                              Default: stdout+stderr
  *
@@ -62,7 +62,6 @@ import gov.sandia.sems.spifi.Utility
  *             will be 0.
  *             If the last attempt results in an exception thrown then status = -1, console = ""
  *             If the routine is run in dry-run mode, then status = dry_run_status, console = dry_run_output.
- *             DEPRECATION NOTICE: the 'stdout' is still provided but will go away in version 2.0, please use 'console' instead.
  */
 def execute(Map params)
 {
@@ -211,14 +210,6 @@ def execute(Map params)
         output.status  = dry_run_status
         output.console = dry_run_output
         output.retries = 0
-        // BEGIN DEPRECATION
-        output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
-                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                         dry_run_output +
-                         "\n" +
-                         "*** SPiFI DEPRECATION WARNING ***\n" +
-                         "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
-        // END DEPRECATION
 
         return output
     }
@@ -248,24 +239,12 @@ def execute(Map params)
             // Error out if the path doesn't actually exist.
             if( !fileExists("${path}") )
             {
-                // TODO: Check this println -- it seems to be failing in docker images. Maybe need to
-                //       specifically check for directory over file?
-                //env.println "[SPiFI]> WARNING in Shell::execute(): ${path} does not exist!"
-
-                /*  This can break some things - revisit when going to version 1.2.0 and doing DEPRECATION work
+                /*  This can break some things... Revisit this sometime.
                     Perhaps a warning is the right thing... or error out (but that will change how testing is done
                     Since the tests rely on doing things like "ls <directory that doesn't exist>" to get stderr output.
                 output.status  = 1
                 output.console = "An error occurred: ${path} provided to SPiFI Shell::execute() does not exist."
                 output.retries = 0
-                // BEGIN DEPRECATION
-                output.stdout  = "***SPiFI DEPRECATION WARNING***\n" +
-                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                                output.console +
-                                 "\n" +
-                                 "*** SPiFI DEPRECATION WARNING ***\n" +
-                                 "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
-                // END DEPRECATION
                 return output
                 */
             }
@@ -367,15 +346,6 @@ def execute(Map params)
     output.status  = status
     output.console = console
     output.retries = retries_performed
-    // BEGIN DEPRECATION
-    output.stdout  = "*** SPiFI DEPRECATION WARNING ***\n" +
-                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***\n" +
-                     output.console +
-                     "\n" +
-                     "*** SPiFI DEPRECATION WARNING ***\n" +
-                     "*** switch to output.console for console output before version 2.0 in Shell::execute() ***"
-
-    // END DEPRECATION
 
     return output
 }
