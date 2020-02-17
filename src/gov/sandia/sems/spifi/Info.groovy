@@ -22,6 +22,8 @@ package gov.sandia.sems.spifi;
  */
 static def version()
 {
+    // Note: for releases, this should be formatted X.X.X 
+    //       leave the 'v' out.  i.e., "2.0.0"
     String spifi_version = "master"
     return spifi_version
 }
