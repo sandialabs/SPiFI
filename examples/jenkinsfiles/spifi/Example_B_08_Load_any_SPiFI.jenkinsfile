@@ -101,7 +101,10 @@ node(params.NODE_RESTRICTION)
     cleanWs()
 
     // Print out the library version of SPiFI
-    println "Loaded SPiFI version: ${libspifi.Info.version()}"
+    println "Loaded SPiFI version: ${libspifi.Info.version()}\n"  +
+            "- Version major: ${libspifi.Info.version_major()}\n" +
+            "- Version minor: ${libspifi.Info.version_minor()}\n" +
+            "- Version patch: ${libspifi.Info.version_patch()}"
 
 }  // end node
 
