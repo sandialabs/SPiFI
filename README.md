@@ -32,7 +32,7 @@ in your Jenkins jobs.
 
 ### User Guide
 The full user guide can be found at
-[https://sems.sandia.gov/content/sems-pipeline-framework-infrastructure-spifi-user-guide][1]
+[https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home][1]
 
 
 ### Change Log
@@ -150,7 +150,7 @@ The full user guide can be found at
 
 
 
-[1]: https://sems.sandia.gov/content/sems-pipeline-framework-infrastructure-spifi-user-guide
+[1]: https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home
 [2]: https://jenkins.io/doc/book/pipeline/
 [3]: http://www.groovy-lang.org/
 [4]: https://wiki.jenkins.io/display/JENKINS/Script+Security+Plugin
