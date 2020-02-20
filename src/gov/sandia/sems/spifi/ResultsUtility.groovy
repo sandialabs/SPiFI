@@ -75,7 +75,7 @@ class ResultsUtility implements Serializable
      * @return String containing the Summary table for results that can be inserted into
      *                the console log, email, etc.
      */
-    @NonCPS
+//    @NonCPS
     def genResultSummaryTable(Map params)
     {
         //
@@ -168,7 +168,7 @@ class ResultsUtility implements Serializable
      *                the console log, email, etc.
      *
      */
-    @NonCPS
+//    @NonCPS
     def genResultDetails(Map params)
     {
         //
