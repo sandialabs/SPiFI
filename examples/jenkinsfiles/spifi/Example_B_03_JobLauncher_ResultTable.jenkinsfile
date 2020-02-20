@@ -33,7 +33,7 @@ node()
 
         // Print out the details table of the job that ran.
         // This provides the status of the individual jobs, etc.
-        println spifi_ru.genResultDetailTable(format: "ASCII", results: results)
+        println spifi_ru.genResultDetails(format: "ASCII", results: results)
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
