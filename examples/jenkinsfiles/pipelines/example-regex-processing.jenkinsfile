@@ -1,0 +1,63 @@
+#!/usr/bin/env groovy
+/**
+ * Example showing the use of regular expressions in Jenkinsfiles.
+ *
+ */
+
+String text = "1877 total PASS. Of the 1869 expected to PASS:  1869 PASS, 0 DIFF, 0 FAIL."
+println "text: ${text}"
+
+
+
+timestamps
+{
+node()
+{
+    stage("A")
+    {
+        def pattern = ~/\S*(\d+)\S*/
+        List match_list = get_matches(pattern, text)
+        println match_list
+    } // Stage A
+    
+    stage("B")
+    {
+        def pattern = ~/this won't match my string/
+        List match_list = get_matches(pattern, text)
+        println match_list
+    } // Stage B
+    
+}  // node
+}  // timestamps
+
+
+
+/**
+ * Takes a regular expression pattern and a text string
+ * and returns the match instances as a list.
+ * 
+ * @param regex java.util.regex.Pattern [REQUIRED] This is a pattern object
+ *                    and can be created via def pattern = ~/<regex>/
+ * @param text  String [REQUIRED] Text to be searched.
+ * 
+ * @returns List containing the matched results inside the '()' regions
+ */
+def get_matches(def regex, String text)
+{
+    assert regex instanceof java.util.regex.Pattern
+    
+    List output = []
+    
+    def matcher = (text =~ regex)
+    if(matcher)
+    {
+        matcher.each
+        { match ->
+            output.add(match[0])
+        }
+    }
+    return output
+}
+
+
+
