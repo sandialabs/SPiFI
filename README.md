@@ -17,7 +17,7 @@ developer to focus more on "what" the pipeline does rather than "how" to do it
 (which often involves a fight with what parts of Groovy Jenkins' sandbox enables).
 
 
-### [Jenkins Pipelines]
+### Jenkins Pipelines
 The [Jenkins Pipeline Plugin][2] provides a capability to build continuous
 delivery pipelines into Jenkins.  A continuous delivery pipeline provides an
 automated expression of a process that progresses software multiple stages of
@@ -28,12 +28,12 @@ The scripted format is implemented using a [sandboxed][4] version of the
 [Apache Groovy][3] language.
 
 
-### [User Guide]
+### User Guide
 The full user guide can be found at
 [https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home][1]
 
 
-### [Contact Information]
+### Contact Information
 Please contact the SEMS helpdesk for questions and assistance with using SPiFI
 in your Jenkins jobs.
 
