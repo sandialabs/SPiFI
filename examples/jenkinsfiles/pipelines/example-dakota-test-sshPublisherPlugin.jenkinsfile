@@ -32,8 +32,9 @@ node()
         if(true)
         {
             // Attempt to reduce the crud for the command to work.
-            String destination_srvr = "software-srn.sandia.gov"
+            //String destination_srvr = "software-srn.sandia.gov"
             //String destination_path = "/sems-data-store/dakota/testing/sshPublisherTest"
+            String destination_srvr = "sisu.sandia.gov"
             String destination_path = "/ascldap/users/wcmclen/tmp/dakota/sshPublisherTest"
     
             sshPublisher(
