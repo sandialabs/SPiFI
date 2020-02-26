@@ -1,9 +1,33 @@
 #!/usr/bin/env groovy
 
+properties(
+    [ 
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '90', numToKeepStr: '120')), 
+        disableConcurrentBuilds(), 
+        gitLabConnection('None'), 
+        [ $class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false ],
+        parameters(
+            [
+                string(name: "DESTINATION_SERVER", defaultValue: 'software-srn.sandia.gov', description: '', trim: true), 
+                string(name: "DESTINATION_PATH",   defaultValue: '/sems-data-store/dakota/testing/sshPublisherTest', description: '', trim: true)
+            ]
+        )
+    ]
+)
 
 
 timestamps()
 {
+
+if( !params.containsKey("DESTINATION_SERVER") )
+{
+    params.DESTINATION_SERVER = "software-srn.sandia.gov"
+}
+if( !params.containsKey("DESTINATION_PATH") )
+{
+    params.DESTINATION_PATH = "/sems-data-store/dakota/testing/sshPublisherTest"
+}
+
 
 node()
 {
@@ -31,17 +55,11 @@ node()
     {
         if(true)
         {
-            // Attempt to reduce the crud for the command to work.
-            //String destination_srvr = "software-srn.sandia.gov"
-            //String destination_path = "/sems-data-store/dakota/testing/sshPublisherTest"
-            String destination_srvr = "sisu.sandia.gov"
-            String destination_path = "/ascldap/users/wcmclen/tmp/dakota/sshPublisherTest"
-    
             sshPublisher(
                 alwaysPublishFromMaster: true,
                 publishers: [
                     sshPublisherDesc(
-                        configName: destination_srvr,
+                        configName: params.DESTINATION_SERVER,
                         sshRetry: [
                             retries: 3,
                             retryDelay: 5000
@@ -49,13 +67,13 @@ node()
                         transfers: [
                             sshTransfer(
                                 makeEmptyDirs: false,
-                                remoteDirectory: destination_path,
+                                remoteDirectory: params.DESTINATION_PATH,
                                 removePrefix: '',
                                 sourceFiles: '*.txt'
                             ),
                             sshTransfer(
                                 makeEmptyDirs: false,
-                                remoteDirectory: destination_path,
+                                remoteDirectory: params.DESTINATION_PATH,
                                 removePrefix: '',
                                 sourceFiles: '*.md'
                             )
