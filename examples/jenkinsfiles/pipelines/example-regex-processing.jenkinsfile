@@ -11,7 +11,7 @@ println "text: ${text}"
 
 timestamps
 {
-node()
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
     stage("A")
     {

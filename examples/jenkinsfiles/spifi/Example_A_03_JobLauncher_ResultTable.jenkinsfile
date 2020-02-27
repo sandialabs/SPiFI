@@ -3,7 +3,7 @@
 // Load the SPiFI library
 @Library('SPiFI') _
 
-node()
+node("master || RHEL6 || RHEL7")
 {
     // Pipeline Stage
     stage("Stage 1")

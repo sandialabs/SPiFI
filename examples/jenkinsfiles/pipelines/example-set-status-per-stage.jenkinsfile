@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-node()
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
     stage("Stage 1")
     {

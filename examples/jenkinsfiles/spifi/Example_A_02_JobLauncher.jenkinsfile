@@ -2,7 +2,7 @@
  * Launch a set of jobs in parallel using SPiFI
  *
  */
-node()
+node("master || RHEL6 || RHEL7")
 {
     // Load the SPiFI library
     @Library('SPiFI') _

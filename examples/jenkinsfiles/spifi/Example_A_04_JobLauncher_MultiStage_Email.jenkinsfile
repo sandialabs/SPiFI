@@ -50,7 +50,7 @@ Boolean param_email_devops    = spifi_jt.spifi_checked_get_parameter(env: this,
 String email_body = "<H1>Summary</H1>"
 
 
-node("master")
+node("master || RHEL6 || RHEL7")
 {
     // Set this to TRUE to halt the pipeline after a stage.
     Boolean EXIT_PIPELINE = false

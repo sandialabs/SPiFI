@@ -3,7 +3,7 @@
 // Load the SPiFI library
 def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 
-node()
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
     // Pipeline Stage
     stage("Stage 1")

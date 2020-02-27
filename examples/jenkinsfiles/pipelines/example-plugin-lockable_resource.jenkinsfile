@@ -53,7 +53,7 @@ if(callDepthLimit > 10)
 // Lock resource: 'libBlocker001'
 lock(resource: "lblBlocker001")
 {
-    node()
+    node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
     {
         stage("myjob")
         {

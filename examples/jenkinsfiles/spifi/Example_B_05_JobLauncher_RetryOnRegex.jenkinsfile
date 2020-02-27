@@ -6,7 +6,7 @@ def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
  * Launch a set of jobs in parallel using SPiFI
  * Note: the sub-jobs are the jobs located in the `tests/` directory within SPiFI.
  */
-node("master")
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
     // Pipeline Stage
     stage("MyStage")

@@ -29,7 +29,7 @@ if( !params.containsKey("DESTINATION_PATH") )
 }
 
 
-node()
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
     cleanWs()
 

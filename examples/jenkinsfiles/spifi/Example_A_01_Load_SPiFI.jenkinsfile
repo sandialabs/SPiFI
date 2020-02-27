@@ -2,7 +2,7 @@
  * Load the SPiFI Library
  *
  */
-node()
+node("master || RHEL6 || RHEL7")
 {
     // Load the SPiFI library
     @Library('SPiFI') _

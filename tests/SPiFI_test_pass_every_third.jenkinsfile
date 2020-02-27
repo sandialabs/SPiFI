@@ -29,7 +29,7 @@ properties([
 
 
 
-String node_restriction = "RHEL7 || RHEL6 || master"
+String node_restriction = "master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7"
 
 Integer threshold = 3
 

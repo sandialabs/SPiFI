@@ -4,7 +4,7 @@
  * Launch a set of jobs in parallel using SPiFI
  * Note: the sub-jobs are the jobs located in the `tests/` directory within SPiFI.
  */
-node("master")
+node("master || RHEL6 || RHEL7")
 {
     // Load the SPiFI library
     @Library('SPiFI') _
