@@ -1063,7 +1063,7 @@ node(node_restriction)
 
         }   // End Stage
 
-        }   // end if version restriction(s)
+        //}   // end if version restriction(s)
         //else
         //{
         //    println "\u2757\n" +
