@@ -230,7 +230,7 @@ node(node_restriction)
                 return
             }
 
-        }
+        }  // stage load spifi library
 
 
         // Create 2 vars to carry over to the email builder stage if stage 4 passes.
@@ -238,9 +238,9 @@ node(node_restriction)
         def launcher_summary = null
 
 
-        if( (gov.sandia.sems.spifi.Info.version_major() >= 2 && gov.sandia.sems.spifi.Info.version_minor() >= 0) ||
-            (gov.sandia.sems.spifi.Info.version_major() == 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2) )
-        {
+        //if( (gov.sandia.sems.spifi.Info.version_major() >= 2 && gov.sandia.sems.spifi.Info.version_minor() >= 0) ||
+        //    (gov.sandia.sems.spifi.Info.version_major() == 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2) )
+        //{
 
         // Stage: Job Launcher (dry-run mode jobs)
         stage("Test Job Launcher (dry-run mode)")
@@ -589,9 +589,7 @@ node(node_restriction)
                 sendEmailFailure(to: emailDevOps, from: emailFrom, reply_to: emailReplyTo, body: email_body)
                 return
             }
-
         }   // End Stage
-
 
 
         // Stage: ResultsUtility (relies on Stage 4)
@@ -826,6 +824,7 @@ node(node_restriction)
             println "\u27A4\n" +
                     "\u27A4 Stage: Test Job Launcher (retries)\n" +
                     "\u27A4"
+
             email_body += "<H3>Stage: Test Job Launcher (retries)</H3>\n"
             email_body += "<OL>\n"
 
@@ -1065,12 +1064,12 @@ node(node_restriction)
         }   // End Stage
 
         }   // end if version restriction(s)
-        else
-        {
-            println "\u2757\n" +
-                    "\u2757 WARNING: JobLauncher stages skipped due to version restriction.\n" +
-                    "\u2757"
-        }
+        //else
+        //{
+        //    println "\u2757\n" +
+        //            "\u2757 WARNING: JobLauncher stages skipped due to version restriction.\n" +
+        //            "\u2757"
+        //}
 
 
         // Stage: Test org.sandia.sems.spifi.Shell
