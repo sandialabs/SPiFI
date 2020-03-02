@@ -509,7 +509,7 @@ node(node_restriction)
                 launcher_summary = launcher.getLastResultSummary()
                 println ">>> SUMMARY: ${launcher_summary}"
 
-                email_body += "<H4>Launcher Summary</H4>\n"
+                email_body += "<H4>Launcher Summary (real-run mode)</H4>\n"
                 email_body += "<ol>\n"
                 if(launcher_summary.NUMJOBS == 8)
                 {
@@ -531,13 +531,13 @@ node(node_restriction)
                     stage_passed = false
                 }
 
-                if(launcher_summary.NUMFAILURE == 2)
+                if(launcher_summary.NUMFAILURE == 1)
                 {
-                    email_body += "<li>PASSED: NUMFAILURE == 2</li>\n"
+                    email_body += "<li>PASSED: NUMFAILURE == 1</li>\n"
                 }
                 else
                 {
-                    email_body += "<li>FAILED: NUMFAILURE != 2 (got ${launcher_summary.NUMFAILURE})</li>\n"
+                    email_body += "<li>FAILED: NUMFAILURE != 1 (got ${launcher_summary.NUMFAILURE})</li>\n"
                     stage_passed = false
                 }
 
@@ -670,32 +670,14 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (ASCII)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, format: "ASCII")
-                email_body += "<li>PASSED: genResultDetailTable (ASCII)</li>\n"
+                def output = result_util.genResultDetails(results: launcher_results, format: "ASCII")
+                email_body += "<li>PASSED: genResultDetails (ASCII)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (ASCII)</li>\n"
-                num_failures++
-            }
-
-
-
-            // Test Detail Table Generation (JSONL - DEPRECATED)
-            // - This is to be removed in v2.0.0
-            println ">>> Test Detail Table Generation (JSONL - DEPRECATED)"
-            try{
-                num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, format: "JSONL")
-                email_body += "<li>PASSED: genResultDetailTable (JSONL - DEPRECATED)</li>\n"
-                println ">>> details jsonl:\n${output}"
-            }
-            catch(ex)
-            {
-                println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (JSONL - DEPRECATED)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (ASCII)</li>\n"
                 num_failures++
             }
 
@@ -722,46 +704,46 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: default)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, format: "MARKDOWN")
-                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
+                def output = result_util.genResultDetails(results: launcher_results, format: "MARKDOWN")
+                email_body += "<li>PASSED: genResultDetails (MARKDOWN, link_to_console: default)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: default)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (MARKDOWN, link_to_console: default)</li>\n"
                 num_failures++
             }
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results,
+                def output = result_util.genResultDetails(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: false)
-                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
+                email_body += "<li>PASSED: genResultDetails (MARKDOWN, link_to_console: false)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: false)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (MARKDOWN, link_to_console: false)</li>\n"
                 num_failures++
             }
 
             println ">>> Test Detail Table Generation (MARKDOWN, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results,
+                def output = result_util.genResultDetails(results: launcher_results,
                                                               format: "MARKDOWN",
                                                               link_to_console: true)
-                email_body += "<li>PASSED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
+                email_body += "<li>PASSED: genResultDetails (MARKDOWN, link_to_console: true)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (MARKDOWN, link_to_console: true)</li>\n"
+                email_body += "<li>FAILED: genResultDetails(MARKDOWN, link_to_console: true)</li>\n"
                 num_failures++
             }
 
@@ -771,46 +753,46 @@ node(node_restriction)
             println ">>> Test Detail Table Generation (HTML, link_to_console: default)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results, format: "HTML")
-                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
+                def output = result_util.genResultDetails(results: launcher_results, format: "HTML")
+                email_body += "<li>PASSED: genResultDetails (HTML, link_to_console: default)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: default)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (HTML, link_to_console: default)</li>\n"
                 num_failures++
             }
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: false)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results,
+                def output = result_util.genResultDetails(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: false)
-                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
+                email_body += "<li>PASSED: genResultDetails (HTML, link_to_console: false)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: false)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (HTML, link_to_console: false)</li>\n"
                 num_failures++
             }
 
             println ">>> Test Detail Table Generation (HTML, link_to_console: true)"
             try{
                 num_tests++
-                def output = result_util.genResultDetailTable(results: launcher_results,
+                def output = result_util.genResultDetails(results: launcher_results,
                                                               format: "HTML",
                                                               link_to_console: true)
-                email_body += "<li>PASSED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
+                email_body += "<li>PASSED: genResultDetails (HTML, link_to_console: true)</li>\n"
                 println ">>> details table ascii:\n${output}"
             }
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<li>FAILED: genResultDetailTable (HTML, link_to_console: true)</li>\n"
+                email_body += "<li>FAILED: genResultDetails (HTML, link_to_console: true)</li>\n"
                 num_failures++
             }
             email_body += "</ol>\n"
