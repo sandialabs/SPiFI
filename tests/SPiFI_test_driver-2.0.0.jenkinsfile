@@ -237,8 +237,6 @@ node(node_restriction)
         def launcher_summary = null
 
 
-        if(gov.sandia.sems.spifi.Info.version_major() >= 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2)
-        {
 
         // Stage: Job Launcher (dry-run mode jobs)
         stage("Test Job Launcher (dry-run mode)")
@@ -1042,8 +1040,6 @@ node(node_restriction)
             email_body += "</ol>\n"
 
         }   // End Stage
-
-        }   // end if major >= 1 and minor >= 2
 
 
         // Stage: Test org.sandia.sems.spifi.Shell
