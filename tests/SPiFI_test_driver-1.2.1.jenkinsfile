@@ -1485,7 +1485,7 @@ node(node_restriction)
                 }
 
                 String email_body_summary = ""
-                email_body_summary += "<H1>Testing Summary</H1>\n" +
+                email_body_summary += "<H1>Testing Summary (${jenkins_site})</H1>\n" +
                                       "<H3>Overview</H3>\n" +
                                       "<ol>\n" +
                                       "  <li>Final Status: ${status}</li>\n" +
@@ -1524,7 +1524,7 @@ node(node_restriction)
 def sendEmailFailure(Map params)
 {
     String email_body_summary = ""
-    email_body_summary += "<H1>Testing Summary</H1>\n" +
+    email_body_summary += "<H1>Testing Summary (${jenkins_site})</H1>\n" +
                           "<H3>Overview</H3>\n" +
                           "<ol>\n" +
                           "  <li>Final Status: FAILURE</li>\n" +
