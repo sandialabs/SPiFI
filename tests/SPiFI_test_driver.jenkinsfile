@@ -238,7 +238,8 @@ node(node_restriction)
         def launcher_summary = null
 
 
-        if(gov.sandia.sems.spifi.Info.version_major() >= 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2)
+        if( (gov.sandia.sems.spifi.Info.version_major() >= 2 && gov.sandia.sems.spifi.Info.version_minor() >= 0) ||
+            (gov.sandia.sems.spifi.Info.version_major() == 1 && gov.sandia.sems.spifi.Info.version_minor() >= 2) )
         {
 
         // Stage: Job Launcher (dry-run mode jobs)
@@ -1063,7 +1064,13 @@ node(node_restriction)
 
         }   // End Stage
 
-        }   // end if major >= 1 and minor >= 2
+        }   // end if version restriction(s)
+        else
+        {
+            println "\u2757\n" +
+                    "\u2757 WARNING: JobLauncher stages skipped due to version restriction.\n" +
+                    "\u2757"
+        }
 
 
         // Stage: Test org.sandia.sems.spifi.Shell
