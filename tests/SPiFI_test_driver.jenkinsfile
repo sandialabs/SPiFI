@@ -41,6 +41,7 @@ properties([
 String jenkins_site = env.JOB_URL.tokenize('/')[1].split("\\.")[0]
 
 // What is the branch name that we want to use
+// - Use branch name if testing, but change to MAJOR.MINOR.RELEASE for released branches.
 String branchName = "master"
 
 
