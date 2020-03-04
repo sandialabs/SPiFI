@@ -188,7 +188,7 @@ def conditionalStage(Map args, Closure stageBody)
     // Shared argumengs for all callbacks
     Map args_shared  = args.containsKey("callbackSharedArgs") ? args.callbackSharedArgs : [:]
 
-    println "\u276ESPIFI\u276F BEGIN conditionalStage(${stageName})"
+    println "\u276ESPiFI\u276F BEGIN conditionalStage(${stageName})"
 
     // Create output variable
     def output = null
@@ -206,7 +206,7 @@ def conditionalStage(Map args, Closure stageBody)
     {
         if(verbose)
         {
-            println "\u276ESPIFI\u276F Additional Verbose Logging"
+            println "\u276ESPiFI\u276F Additional Verbose Logging"
         }
 
         // Stage is skipped
@@ -223,7 +223,7 @@ def conditionalStage(Map args, Closure stageBody)
             }
             else
             {
-                println "\u276ESPIFI\u276F Stage ${stageName} was skipped due to condition failure"
+                println "\u276ESPiFI\u276F Stage ${stageName} was skipped due to condition failure"
                 logger["stageSkippedGenericMessage"] = true
             }
         }
@@ -245,7 +245,7 @@ def conditionalStage(Map args, Closure stageBody)
                 }
                 else
                 {
-                    println "\u276ESPIFI\u276F Stage ${stageName} is in dry-run mode"
+                    println "\u276ESPiFI\u276F Stage ${stageName} is in dry-run mode"
                     logger["dryRunGenericMessage"] = true
                 }
                 output = args.containsKey("dryRunOutput") ? args.dryRunOutput : output
@@ -269,7 +269,7 @@ def conditionalStage(Map args, Closure stageBody)
                 }
                 else
                 {
-                    println "\u276ESPIFI\u276F Stage ${stageName} completed"
+                    println "\u276ESPiFI\u276F Stage ${stageName} completed"
                     logger["stageCompletedGenericMessage"] = true
                 }
             }
@@ -286,6 +286,6 @@ def conditionalStage(Map args, Closure stageBody)
         logger["postStageCallbackExecuted"] = true
     }
 
-    println "\u276ESPIFI\u276F END conditionalStage(${stageName})"
+    println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
     return output
 }
