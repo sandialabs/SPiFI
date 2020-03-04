@@ -10,7 +10,9 @@ node()
     // Minimal Run, closest to standard "stage" command.
     conditionalStage(stageName: "Test 1")
     {
-        println "+++ Hello, from Test 1 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 1 body!\n" +
+                "\u2514"
     }
 
 
@@ -18,26 +20,32 @@ node()
     conditionalStage(stageName: "Test 2",
                      stageCondition: false)
     {
-        println "+++ Hello, from Test 2 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 2 body!\n" +
+                "\u2514"
     }
 
 
     // Skip stage with Callback
     Closure cbSkipped = {
-        println "!!! Hello from cbSkipped"
+        println "\u250C\n" +
+                "\u2502 Hello from test cbSkipped\n" +
+                "\u2514"
     }
     conditionalStage(stageName: "Test 3",
                      stageCondition: false,
                      callbackStageSkipped: cbSkipped)
     {
-        println "+++ Hello, from Test 3 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 3 body!\n" +
+                "\u2514"
     }
 
 
     // Skip stage with Callback + CallbackArgs
     Closure cbSkippedWithArgs = { args=[:], wksp=[:] ->
-        println "!!! Hello from cbSkippedWithArgs\n" +
-                "!!! - args: ${args}"
+        println "\u2502 Hello from cbSkippedWithArgs\n" +
+                "\u2502 - args: ${args}"
     }
     Map cbSkippedArgs = [ "foo": "bar" ]
     conditionalStage(stageName: "Test 4",
@@ -45,39 +53,43 @@ node()
                      callbackStageSkipped: cbSkippedWithArgs,
                      callbackStageSkippedArgs: cbSkippedArgs)
     {
-        println "+++ Hello, from Test 4 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 4 body!\n" +
+                "\u2514"
     }
 
 
     // Execute Stage + callbackPre + callbackPost
     Closure cbPre = {
-        println "!!! [Test 5] Hello from cbPre"
+        println "\u2502 [Test 5] Hello from cbPre"
     }
     Closure cbPost = {
-        println "!!! [Test 5] Hello from cbPost"
+        println "\u2502 [Test 5] Hello from cbPost"
     }
     conditionalStage(stageName: "Test 5",
                      callbackStagePre: cbPre,
                      callbackStagePost: cbPost)
     {
-        println "+++ Hello, from Test 5 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 5 body!\n" +
+                "\u2514"
     }
 
 
     // Execute Stage + callbackPre + callbackPost + Args
     Closure cbPreT6 = {
         cbArgs=[:], cbSharedArgs=[:] ->
-        println "!!! [Test 6] Hello from cbPre\n" +
-                "!!! - cbArgs      : ${cbArgs}\n" +
-                "!!! - cbSharedArgs: ${cbSharedArgs}"
+        println "\u2502 [Test 6] Hello from cbPre\n" +
+                "\u2502 - cbArgs      : ${cbArgs}\n" +
+                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
         cbSharedArgs["foo"] = "bar"
-        println "!!! - cbSharedArgs: ${cbSharedArgs}"
+        println "\u2502 - cbSharedArgs: ${cbSharedArgs}"
     }
     Closure cbPostT6 = {
         cbArgs=[:], cbSharedArgs=[:] ->
-        println "!!! [Test 6] Hello from cbPost\n" +
-                "!!! - cbArgs      : ${cbArgs}\n" +
-                "!!! - cbSharedArgs: ${cbSharedArgs}"
+        println "\u2502 [Test 6] Hello from cbPost\n" +
+                "\u2502 - cbArgs      : ${cbArgs}\n" +
+                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
 
     }
     Map cbSharedArgsT6 = [:]
@@ -86,7 +98,9 @@ node()
                      callbackStagePost: cbPostT6,
                      callbackSharedArgs: cbSharedArgsT6)
     {
-        println "+++ Hello, from Test 6 body"
+        println "\u250C\n" +
+                "\u2502 Hello from test 6 body!\n" +
+                "\u2514"
     }
     println "cbSharedArgsT6: ${cbSharedArgsT6}"
 
@@ -122,6 +136,7 @@ def conditionalStage(Map args, Closure stageBody)
     // TODO: Validate parameters
     Boolean verbose = args.containsKey("verbose") && args.verbose ? true : false
     Boolean dry_run = args.containsKey("dryRun")  && args.dryRun  ? true : false
+    Boolean skip_stage = args.containsKey("stageCondition") && args.stageCondition ? true : false
 
     assert args.containsKey("stageName")
     String stageName = args.stageName
@@ -129,7 +144,7 @@ def conditionalStage(Map args, Closure stageBody)
     // Shared argumengs for all callbacks
     Map args_shared  = args.containsKey("callbackSharedArgs") ? args.callbackSharedArgs : [:]
 
-    println "BEGIN >>> conditionalStage(${stageName})"
+    println "\u276ESPIFI\u276F BEGIN conditionalStage(${stageName})"
 
     // Create output variable
     def output = null
@@ -144,43 +159,48 @@ def conditionalStage(Map args, Closure stageBody)
     {
         if(verbose)
         {
-            // Add additinal logging
+            println "\u276ESPIFI\u276F Additional Verbose Logging"
         }
-        if(dry_run)
+
+        // Stage is skipped
+        if(skip_stage)
         {
-            // Doing a dry run
-            if(args.containsKey("callbackDryRun") && args.callbackStageDryRun instanceof Closure)
+            if(args.containsKey("callbackStageSkipped") && args.callbackStageSkipped instanceof Closure)
             {
-                def args_cb_dry = args.containsKey("callbackStageDryRunArgs") ? args.callbackStageDryRunArgs : [:]
-                args.callbackStageDryRun( args_cb_dry, args_shared )
+                def args_cb_skip = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
+                args.callbackStageSkipped( args_cb_skip, args_shared )
             }
             else
             {
-                println ">>> Stage ${stageName} is in dry-run mode"
-                sleep(5)
+                println "\u276ESPIFI\u276F Stage ${stageName} was skipped due to condition failure"
             }
-        } // if dry-run
+        }
+
+        // Stage is NOT skipped
         else
         {
-            if(args.containsKey("stageCondition") && !args.stageCondition)
+            // If we ARE doing a dry-run:
+            if(dry_run)
             {
-                // Stage is skipped
-                if(args.containsKey("callbackStageSkipped") && args.callbackStageSkipped instanceof Closure)
+                if(args.containsKey("callbackDryRun") && args.callbackStageDryRun instanceof Closure)
                 {
-                    def args_cb_skip = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
-                    args.callbackStageSkipped( args_cb_skip, args_shared )
+                    def args_cb_dry = args.containsKey("callbackStageDryRunArgs") ? args.callbackStageDryRunArgs : [:]
+                    args.callbackStageDryRun( args_cb_dry, args_shared )
                 }
                 else
                 {
-                    println ">>> Stage ${stageName} was skipped due to condition failure"
+                    println "\u276ESPIFI\u276F Stage ${stageName} is in dry-run mode"
+                    sleep(5)
                 }
-            }  // if skipped
-            else if(!args.containsKey("stageCondition") || (args.containsKey("stageCondition") && args.stageCondition))
+            }
+
+            // If we ARE NOT doing a dry-run:
+            else
             {
                 // Execute stage body
                 output = stageBody()
 
-                // execute stage completed callback
+                // Execute stageCompleted callback if one was provided
                 if(args.containsKey("callbackStageCompleted") && args.callbackStageCompleted instanceof Closure)
                 {
                     def args_cb_completed = args.containsKey("callbackStageCompletedArgs") ? args.callbackStageCompletedArgs : [:]
@@ -188,10 +208,10 @@ def conditionalStage(Map args, Closure stageBody)
                 }
                 else
                 {
-                    println ">>> Stage ${stageName} completed"
+                    println "\u276ESPIFI\u276F Stage ${stageName} completed"
                 }
-            }   // else if not skipped
-        } // else dry_run
+            }
+        }
     } // stage
 
 
@@ -201,6 +221,6 @@ def conditionalStage(Map args, Closure stageBody)
         args.callbackStagePost( args_cb_post, args_shared )
     }
 
-    println "END >>> conditionalStage(${stageName})"
+    println "\u276ESPIFI\u276F END conditionalStage(${stageName})"
     return output
 }
