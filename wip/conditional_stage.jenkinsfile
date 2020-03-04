@@ -107,6 +107,24 @@ node()
     println "cbSharedArgsT6: ${cbSharedArgsT6}"
     println "logDebug: ${logDebug}"
 
+
+    // Execute Stage + callbackPre + callbackPost + Args
+    Map cbSharedArgsT7 = [:]
+    Map logDebugT7 = [:]
+    conditionalStage(stageName: "Test 7",
+                     callbackStagePre: cbPreT6,
+                     callbackStagePost: cbPostT6,
+                     callbackSharedArgs: cbSharedArgsT7,
+                     logDebug: logDebugT7)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 7 body!\n" +
+                "\u2502 logDebugT7 = ${logDebugT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
+                "\u2514"
+    }
+    println "cbSharedArgsT7: ${cbSharedArgsT7}"
+    println "logDebug: ${logDebugT7}"
+
 }
 
 
