@@ -1,0 +1,56 @@
+#!/usr/bin/env groovy
+
+
+node()
+{
+    stage("Create File")
+    {
+    }
+
+    stage("Load File")
+    {
+    }
+}
+
+
+
+/**
+ * Loads a delimited text file containg key-value pairs into a map.
+ * Empty lines are skipped.
+ *
+ * @param filename  String containing the name of the file to load.
+ * @param delimiter String containing the delimter.
+ *                  Default: ","
+ * @return          Map containing the key:value pairs from the file.
+ *                  If the file doesn't exist, null is returned
+ * @todo            Could easily be enhanced to ignore lines starting
+ *                  with a '#'... /shrug.
+ * @todo            inconsistent naming with other functions in this file,
+ *                  consider changing naming to camelCase :p
+ */
+Map load_delimited_kvpair_file_to_map(String filename, String delimiter = ",")
+{
+    Map output = null
+    if(fileExists(filename))
+    {
+        output = [:]
+        String lines = readFile(filename).trim()
+
+        if (lines)
+        {
+            lines.split("\n").each
+            { line ->
+                if (line.trim())
+                {
+                    def(key, value) = line.split(delimiter).collect
+                    {
+                        it.trim()
+                    }
+                    output.
+                    "$key" = value
+                }
+            }
+        }
+    }
+    return output
+}
