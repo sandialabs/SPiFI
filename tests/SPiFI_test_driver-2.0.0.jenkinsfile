@@ -179,11 +179,11 @@ node(node_restriction)
             {
                 email_body += "<ol>\n"
 
-                @Library('SPiFI-DEV@v2.0.0') _      // Note: this must be const string, can't parameterize :/
+                @Library('SPiFI-2.0.0') _      // Note: this must be const string, can't parameterize :/
                 //@Library('SPiFI') _               // Default version for production
 
                 spifi_version = gov.sandia.sems.spifi.Info.version()
-                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-DEV@${spifi_version})</li>\n"
+                email_body += "  <li>PASSED: Load SPiFI Library (SPiFI-${spifi_version})</li>\n"
 
                 try
                 {
@@ -221,7 +221,7 @@ node(node_restriction)
             catch(ex)
             {
                 println "ERROR:\n${ex}"
-                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-DEV@${branchName})</li></ol>\n"
+                email_body += "<ol><li>FAILED: Load SPiFI Library (SPiFI-2.0.0)</li></ol>\n"
                 stage_passed = false
             }
 
