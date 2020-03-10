@@ -1,0 +1,311 @@
+#!/usr/bin/groovy
+/**
+ * Test conditionalStage + visitors
+ */
+// Load the SPiFI library
+//def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
+
+println "======================================================\n" +
+        "libspifi = ${libspifi}\n" +
+        "version  = ${libspifi.Info.version()}\n" +
+        "======================================================"
+
+def wip = libspifi.wip.conditionalStage.new()
+
+println "======================================================\n" +
+        "wip = ${wip}\n" +
+        "======================================================"
+
+node()
+{
+    // Clean the workspace every time.
+    cleanWs()
+
+
+    // Minimal Run, closest to standard "stage" command.
+    wip.conditionalStage(stageName: "Test 1")
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 1 body!\n" +
+                "\u2514"
+    }
+
+
+    // Skip stage with generic message
+    wip.conditionalStage(stageName: "Test 2",
+                     stageCondition: false)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 2 body!\n" +
+                "\u2514"
+    }
+
+
+    // Skip stage with Callback
+    Closure cbSkipped = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbSkipped\n" +
+                "\u2514"
+    }
+    wip.conditionalStage(stageName: "Test 3",
+                     stageCondition: false,
+                     callbackStageSkipped: cbSkipped)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 3 body!\n" +
+                "\u2514"
+    }
+
+
+    // Skip stage with Callback + CallbackArgs
+    Closure cbSkippedWithArgs = { args=[:], wksp=[:] ->
+        println "\u2502 Hello from cbSkippedWithArgs\n" +
+                "\u2502 - args: ${args}"
+    }
+    Map cbSkippedArgs = [ "foo": "bar" ]
+    wip.conditionalStage(stageName: "Test 4",
+                     stageCondition: false,
+                     callbackStageSkipped: cbSkippedWithArgs,
+                     callbackStageSkippedArgs: cbSkippedArgs)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 4 body!\n" +
+                "\u2514"
+    }
+
+
+    // Execute Stage + callbackPre + callbackPost
+    Closure cbPre = {
+        println "\u2502 [Test 5] Hello from cbPre"
+    }
+    Closure cbPost = {
+        println "\u2502 [Test 5] Hello from cbPost"
+    }
+    wip.conditionalStage(stageName: "Test 5",
+                     callbackStagePre: cbPre,
+                     callbackStagePost: cbPost)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 5 body!\n" +
+                "\u2514"
+    }
+
+
+    // Execute Stage + callbackPre + callbackPost + Args
+    Closure cbPreT6 = {
+        cbArgs=[:], cbSharedArgs=[:] ->
+        println "\u2502 [Test 6] Hello from cbPre\n" +
+                "\u2502 - cbArgs      : ${cbArgs}\n" +
+                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
+        cbSharedArgs["foo"] = "bar"
+        println "\u2502 - cbSharedArgs: ${cbSharedArgs}"
+    }
+    Closure cbPostT6 = {
+        cbArgs=[:], cbSharedArgs=[:] ->
+        println "\u2502 [Test 6] Hello from cbPost\n" +
+                "\u2502 - cbArgs      : ${cbArgs}\n" +
+                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
+
+    }
+    Map cbSharedArgsT6 = [:]
+    Map logDebug = [:]
+    wip.conditionalStage(stageName: "Test 6",
+                     callbackStagePre: cbPreT6,
+                     callbackStagePost: cbPostT6,
+                     callbackSharedArgs: cbSharedArgsT6,
+                     logDebug: logDebug)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 6 body!\n" +
+                "\u2514"
+    }
+    println "cbSharedArgsT6: ${cbSharedArgsT6}"
+    println "logDebug: ${logDebug}"
+
+
+    // Execute Stage + callbackPre + callbackPost + Args
+    Map cbSharedArgsT7 = [:]
+    Map logDebugT7 = [:]
+    wip.conditionalStage(stageName: "Test 7",
+                     callbackStagePre: cbPreT6,
+                     callbackStagePost: cbPostT6,
+                     callbackSharedArgs: cbSharedArgsT7,
+                     logDebug: logDebugT7)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 7 body!\n" +
+                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
+                "\u2514"
+    }
+    println "cbSharedArgsT7: ${cbSharedArgsT7}"
+    println "logDebug: ${logDebugT7}"
+
+}
+
+
+
+/**
+ * conditionalStage
+ *
+ * @param stageName                  String  [REQUIRED] Name of the stage
+ * @param stageCondition             Boolean [OPTIONAL] Skip stage if false. Default: true
+ * @param callbackStagePre           Closure [OPTIONAL] Execute prior to stage()
+ * @param callbackStagePreArgs       Map     [OPTIONAL]
+ * @param callbackStageSkipped       Closure [OPTIONAL] Executed if a stage is skipped due to stageCondition failure.
+ * @param callbackStageSkippedArgs   Map     [OPTIONAL] Map containing arguments to callbackStageSkipped(args).
+ *                                                      Reserved key names: "stage_name"
+ * @param callbackStageCompleted     Closure [OPTIONAL] Executed if the stage is executed to completion.
+ * @param callbackStageCompletedArgs Map     [OPTIONAL] Map containing arguments to callbackStageCompleted(args).
+ *                                                      Reserved key names: "stage_name", "stage_result"
+ * @param callbackStagePost          Closure [OPTIONAL] Execute after stage()
+ * @param callbackStagePostArgs      Map     [OPTIONAL]
+ * @param dryRun                     Boolean [OPTIONAL] Toggle dry-run mode. Default: false
+ * @param dryRunOutput               Object  [OPTIONAL] What should be RETURNED by the stage body closure if dryRun is true?
+ *                                                      Default: null
+ * @param callbackStageDryRun        Closure [OPTIONAL] Executed if stage is in dry-run mode.
+ *                                                      Stage returns the value returned by the callback (null by default)
+ * @param callbackStageDryRunArgs    Map     [OPTIONAL] Map containing arguments to callbackStageDryRun(args).
+ * @param callbackSharedArgs         Map     [OPTIONAL] Map containing SHARED arguments across ALL callbacks. Default: [:]
+ * @param verbose                    Boolean [OPTIONAL] Enable extra verbosity and logging. Default: false
+ * @param logDebug                   Map     [OPTIONAL] If provided, this will store information about what actions
+ *                                                      conditionalStage performed. Default: null
+ *
+ * @return value returned by the stage body closure executed in the stage if not skipped.
+ */
+ /*
+def conditionalStage(Map args, Closure stageBody)
+{
+    // Validate parameters
+    Boolean verbose = args.containsKey("verbose") && args.verbose ? true : false
+    Boolean dry_run = args.containsKey("dryRun")  && args.dryRun  ? true : false
+    Boolean skip_stage = args.containsKey("stageCondition") && args.stageCondition ? true : false
+
+    Map logger = args.containsKey("logDebug") && args.logDebug instanceof Map ? args.logDebug : [:]
+
+    // stageName is a REQUIRED paramter
+    assert args.containsKey("stageName")
+    String stageName = args.stageName
+
+    // Set up the logger values
+    // - These get toggled in the proper sections if we execute them
+    //   as a execution trace.
+    logger["verbose"]                        = verbose ?: false
+    logger["preStageCallbackExecuted"]       = false
+    logger["stageSkippedCallbackExecuted"]   = false
+    logger["stageSkippedGenericMessage"]     = false
+    logger["dryRun"]                         = false
+    logger["dryRunCallbackExecuted"]         = false
+    logger["dryRunGenericMessage"]           = false
+    logger["stageBodyExecuted"]              = false
+    logger["stageCompletedCallbackExecuted"] = false
+    logger["stageCompletedGenericMessage"]   = false
+    logger["postStageCallbackExecuted"]      = false
+
+    // Shared argumengs for all callbacks
+    Map args_shared  = args.containsKey("callbackSharedArgs") ? args.callbackSharedArgs : [:]
+
+    println "\u276ESPiFI\u276F BEGIN conditionalStage(${stageName})"
+
+    // Create output variable
+    def output = null
+
+    if( args.containsKey("callbackStagePre") )
+    {
+        assert args.callbackStagePre instanceof Closure
+
+        def args_cb_pre = args.containsKey("callbackStagePreArgs") ? args.callbackStagePreArgs : [:]
+        args.callbackStagePre( args_cb_pre, args_shared )
+        logger["preStageCallbackExecuted"] = true
+    }
+
+    stage(stageName)
+    {
+        if(verbose)
+        {
+            println "\u276ESPiFI\u276F Additional Verbose Logging"
+        }
+
+        // Stage is skipped
+        if(skip_stage)
+        {
+            logger["stageSkipped"] = true
+            if( args.containsKey("callbackStageSkipped") )
+            {
+                assert( args.callbackStageSkipped instanceof Closure )
+
+                def args_cb_skip = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
+                args.callbackStageSkipped( args_cb_skip, args_shared )
+                logger["stageSkippedCallbackExecuted"] = true
+            }
+            else
+            {
+                println "\u276ESPiFI\u276F Stage ${stageName} was skipped due to condition failure"
+                logger["stageSkippedGenericMessage"] = true
+            }
+        }
+
+        // Stage is NOT skipped
+        else
+        {
+            // If we ARE doing a dry-run:
+            if( dry_run )
+            {
+                logger["dryRun"] = true
+                if( args.containsKey("callbackDryRun") )
+                {
+                    assert args.callbackStageDryRun instanceof Closure
+
+                    def args_cb_dry = args.containsKey("callbackStageDryRunArgs") ? args.callbackStageDryRunArgs : [:]
+                    output = args.callbackStageDryRun(args_cb_dry, args_shared)
+                    logger["dryRunCallbackExecuted"] = true
+                }
+                else
+                {
+                    println "\u276ESPiFI\u276F Stage ${stageName} is in dry-run mode"
+                    logger["dryRunGenericMessage"] = true
+                }
+                output = args.containsKey("dryRunOutput") ? args.dryRunOutput : output
+            }
+
+            // If we ARE NOT doing a dry-run:
+            else
+            {
+                // Execute stage body
+                logger["stageBodyExecuted"] = true
+                output = stageBody()
+
+                // Execute stageCompleted callback if one was provided
+                if( args.containsKey("callbackStageCompleted") )
+                {
+                    assert args.callbackStageCompleted instanceof Closure
+
+                    def args_cb_completed = args.containsKey("callbackStageCompletedArgs") ? args.callbackStageCompletedArgs : [:]
+                    args.callbackStageCompleted( args_cb_completed, args_shared )
+                    logger["stageCompletedCallbackExecuted"] = true
+                }
+                else
+                {
+                    println "\u276ESPiFI\u276F Stage ${stageName} completed"
+                    logger["stageCompletedGenericMessage"] = true
+                }
+            }
+        }
+    } // stage
+
+    // Call the POST-STAGE callback if one was provided.
+    if( args.containsKey("callbackStagePost") )
+    {
+        assert args.callbackStagePost instanceof Closure
+
+        def args_cb_post = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
+        args.callbackStagePost( args_cb_post, args_shared )
+        logger["postStageCallbackExecuted"] = true
+    }
+
+    println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
+    return output
+}
+
+*/
+

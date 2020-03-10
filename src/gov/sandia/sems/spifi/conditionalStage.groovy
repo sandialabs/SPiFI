@@ -1,131 +1,8 @@
 #!/usr/bin/groovy
 /**
- * A conditional stage wrapper with visitors
- *
- *
- *
+ * Work In Progress !!!
  */
-node()
-{
-    // Minimal Run, closest to standard "stage" command.
-    conditionalStage(stageName: "Test 1")
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 1 body!\n" +
-                "\u2514"
-    }
-
-
-    // Skip stage with generic message
-    conditionalStage(stageName: "Test 2",
-                     stageCondition: false)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 2 body!\n" +
-                "\u2514"
-    }
-
-
-    // Skip stage with Callback
-    Closure cbSkipped = {
-        println "\u250C\n" +
-                "\u2502 Hello from test cbSkipped\n" +
-                "\u2514"
-    }
-    conditionalStage(stageName: "Test 3",
-                     stageCondition: false,
-                     callbackStageSkipped: cbSkipped)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 3 body!\n" +
-                "\u2514"
-    }
-
-
-    // Skip stage with Callback + CallbackArgs
-    Closure cbSkippedWithArgs = { args=[:], wksp=[:] ->
-        println "\u2502 Hello from cbSkippedWithArgs\n" +
-                "\u2502 - args: ${args}"
-    }
-    Map cbSkippedArgs = [ "foo": "bar" ]
-    conditionalStage(stageName: "Test 4",
-                     stageCondition: false,
-                     callbackStageSkipped: cbSkippedWithArgs,
-                     callbackStageSkippedArgs: cbSkippedArgs)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 4 body!\n" +
-                "\u2514"
-    }
-
-
-    // Execute Stage + callbackPre + callbackPost
-    Closure cbPre = {
-        println "\u2502 [Test 5] Hello from cbPre"
-    }
-    Closure cbPost = {
-        println "\u2502 [Test 5] Hello from cbPost"
-    }
-    conditionalStage(stageName: "Test 5",
-                     callbackStagePre: cbPre,
-                     callbackStagePost: cbPost)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 5 body!\n" +
-                "\u2514"
-    }
-
-
-    // Execute Stage + callbackPre + callbackPost + Args
-    Closure cbPreT6 = {
-        cbArgs=[:], cbSharedArgs=[:] ->
-        println "\u2502 [Test 6] Hello from cbPre\n" +
-                "\u2502 - cbArgs      : ${cbArgs}\n" +
-                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
-        cbSharedArgs["foo"] = "bar"
-        println "\u2502 - cbSharedArgs: ${cbSharedArgs}"
-    }
-    Closure cbPostT6 = {
-        cbArgs=[:], cbSharedArgs=[:] ->
-        println "\u2502 [Test 6] Hello from cbPost\n" +
-                "\u2502 - cbArgs      : ${cbArgs}\n" +
-                "\u2502 - cbSharedArgs: ${cbSharedArgs}"
-
-    }
-    Map cbSharedArgsT6 = [:]
-    Map logDebug = [:]
-    conditionalStage(stageName: "Test 6",
-                     callbackStagePre: cbPreT6,
-                     callbackStagePost: cbPostT6,
-                     callbackSharedArgs: cbSharedArgsT6,
-                     logDebug: logDebug)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 6 body!\n" +
-                "\u2514"
-    }
-    println "cbSharedArgsT6: ${cbSharedArgsT6}"
-    println "logDebug: ${logDebug}"
-
-
-    // Execute Stage + callbackPre + callbackPost + Args
-    Map cbSharedArgsT7 = [:]
-    Map logDebugT7 = [:]
-    conditionalStage(stageName: "Test 7",
-                     callbackStagePre: cbPreT6,
-                     callbackStagePost: cbPostT6,
-                     callbackSharedArgs: cbSharedArgsT7,
-                     logDebug: logDebugT7)
-    {
-        println "\u250C\n" +
-                "\u2502 Hello from test 7 body!\n" +
-                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
-                "\u2514"
-    }
-    println "cbSharedArgsT7: ${cbSharedArgsT7}"
-    println "logDebug: ${logDebugT7}"
-
-}
+package gov.sandia.sems.spifi
 
 
 
@@ -193,7 +70,7 @@ def conditionalStage(Map args, Closure stageBody)
     // Create output variable
     def output = null
 
-    if( !dry_run && args.containsKey("callbackStagePre") )
+    if( args.containsKey("callbackStagePre") )
     {
         assert args.callbackStagePre instanceof Closure
 
@@ -277,7 +154,7 @@ def conditionalStage(Map args, Closure stageBody)
     } // stage
 
     // Call the POST-STAGE callback if one was provided.
-    if( !dry_run && args.containsKey("callbackStagePost") )
+    if( args.containsKey("callbackStagePost") )
     {
         assert args.callbackStagePost instanceof Closure
 
@@ -289,3 +166,6 @@ def conditionalStage(Map args, Closure stageBody)
     println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
     return output
 }
+
+
+// return this
