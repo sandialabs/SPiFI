@@ -19,6 +19,9 @@
  *                    - NOT_BUILT : Job was not built
  *
  */
+
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '30')),
@@ -26,8 +29,8 @@ properties([
         string(defaultValue: '10',
                description: 'Sleep time (seconds)',
                name: 'SLEEP_TIME'),
-        string(defaultValue: "RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7 || master",
-               description: "Node restriction, default: ''RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7 || master'",
+        string(defaultValue: node_restriction,
+               description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
         choice(choices: "SUCCESS\nFAILURE\nUNSTABLE\nABORTED\nNOT_BUILT",
                description: 'Possible exit statuses for the job.',
