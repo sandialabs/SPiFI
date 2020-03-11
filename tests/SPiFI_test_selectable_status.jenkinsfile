@@ -24,7 +24,7 @@ String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
-                              daysToKeepStr: '90',       numToKeepStr: '30')),
+                              daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
         string(defaultValue: '10',
                description: 'Sleep time (seconds)',
