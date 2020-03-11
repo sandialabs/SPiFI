@@ -40,8 +40,6 @@ properties([
 
 
 
-String node_restriction = "RHEL7 || RHEL6 || master"
-
 if(params.containsKey("NODE_RESTRICTION"))
 {
   node_restriction = params.NODE_RESTRICTION
