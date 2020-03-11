@@ -45,6 +45,8 @@ if(params.containsKey("NODE_RESTRICTION"))
   node_restriction = params.NODE_RESTRICTION
 }
 
+int sleep_time = params.containsKey("SLEEP_TIME") ? params.SLEEP_TIME : 10
+
 
 
 node(node_restriction)
@@ -61,22 +63,6 @@ node(node_restriction)
         println "WARNING!!!  cleanWs() failed.\n${e}"
     }
 
-    /*
-    stage('Clean Workspace')
-    {
-        println "\u27A4\n" +
-                "\u27A4 Stage: Clean Workspace\n" +
-                "\u27A4"
-        try
-        {
-            cleanWs();
-        }
-        catch(e)
-        {
-            println "WARNING!!!  cleanWs() failed.\n${e}"
-        }
-    }
-    */
 
     stage('Execute')
     {
@@ -84,25 +70,18 @@ node(node_restriction)
                 "\u27A4 Stage: Execute\n" +
                 "\u27A4"
 
-        int delayTime = 10
         String exitStatus = "SUCCESS"
-
-        timeout(time: delayTime*2, unit: "SECONDS")
+        if(params.containsKey("EXIT_STATUS"))
         {
+            exitStatus = params.EXIT_STATUS
+        }
 
-            if(params.containsKey("SLEEP_TIME"))
-            {
-                delayTime = params.SLEEP_TIME as Integer
-            }
-            if(params.containsKey("EXIT_STATUS"))
-            {
-                exitStatus = params.EXIT_STATUS
-            }
+        timeout(time: sleep_time*2, unit: "SECONDS")
+        {
+            println("EXIT_STATUS: ${exitStatus}")
+            println("SLEEP_DELAY: ${sleep_time}")
 
-            println("EXIT_STATUS: ${params.EXIT_STATUS}")
-            println("SLEEP_DELAY: ${params.SLEEP_TIME}")
-
-            sleep delayTime
+            sleep sleep_time
 
             currentBuild.result=exitStatus
 
