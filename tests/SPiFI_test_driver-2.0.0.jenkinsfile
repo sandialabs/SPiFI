@@ -6,7 +6,7 @@
  */
 
 // Configure default node restrictions
-String node_restriction = "master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7"
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 
 
 
