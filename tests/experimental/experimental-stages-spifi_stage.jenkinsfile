@@ -205,7 +205,7 @@ node(node_restriction)
     {
         println "\u250C\n" +
                 "\u2502 Hello from ${stage_name} body!\n" +
-                "\u2502 logDebug = ${cbSharedArgs}\n" +
+                "\u2502 Shared Args = ${cbSharedArgs}\n" +
                 "\u2514"
     }
     println "\u2502 cbSharedArgs: ${cbSharedArgs}\n" +
@@ -238,7 +238,7 @@ node(node_restriction)
     {
         println "\u250C\n" +
                 "\u2502 Hello from ${stage_name} body!\n" +
-                "\u2502 logDebug = ${cbSharedArgs}\n" +
+                "\u2502 Shared Args = ${cbSharedArgs}\n" +
                 "\u2514"
     }
     println "\u2502 cbSharedArgs: ${cbSharedArgs}\n" +
@@ -271,7 +271,7 @@ node(node_restriction)
     {
         println "\u250C\n" +
                 "\u2502 Hello from ${stage_name} body!\n" +
-                "\u2502 logDebug = ${cbSharedArgs}\n" +
+                "\u2502 Shared Args = ${cbSharedArgs}\n" +
                 "\u2514"
     }
     println "\u2502 cbSharedArgs: ${cbSharedArgs}\n" +
@@ -304,7 +304,7 @@ node(node_restriction)
     {
         println "\u250C\n" +
                 "\u2502 Hello from ${stage_name} body!\n" +
-                "\u2502 logDebug = ${cbSharedArgs}\n" +
+                "\u2502 Shared Args = ${cbSharedArgs}\n" +
                 "\u2514"
     }
     println "\u2502 cbSharedArgs: ${cbSharedArgs}\n" +
