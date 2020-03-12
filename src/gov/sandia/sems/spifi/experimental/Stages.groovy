@@ -65,22 +65,32 @@ package gov.sandia.sems.spifi.experimental
  *
  * @param stageName                  String  [REQUIRED] Name of the stage
  * @param stageCondition             Boolean [OPTIONAL] Skip stage if false. Default: true
+ *
  * @param callbackStagePre           Closure [OPTIONAL] Execute prior to stage()
  * @param callbackStagePreArgs       Map     [OPTIONAL] Arguments for the pre-stage callback.
+ *
  * @param callbackStageSkipped       Closure [OPTIONAL] Executed if a stage is skipped due to stageCondition failure.
  * @param callbackStageSkippedArgs   Map     [OPTIONAL] Map containing arguments to callbackStageSkipped(args).
  *                                                      Reserved key names: "stage_name"
- * @param callbackStageCompleted     Closure [OPTIONAL] Executed if the stage is executed to completion.
- * @param callbackStageCompletedArgs Map     [OPTIONAL] Map containing arguments to callbackStageCompleted(args).
- *                                                      Reserved key names: "stage_name", "stage_result"
+ *
+ * @param callbackStageBodyPre      Closure [OPTIONAL] Executes inside `stage() { ... }` prior to stage body execution.
+ * @param callbackStageBodyPreArgs  Map     [OPTIONAL] Map containing arguments specific to callbackStageBodyPre(args).
+ *                                                     Reserved key names: "stage_name", "stage_result"
+ *
+ * @param callbackStageBodyPost     Closure [OPTIONAL] Executes inside `stage() { ... }` after stage body execution completes.
+ * @param callbackStageBodyPostArgs Map     [OPTIONAL] Map containing arguments to callbackStageBodyPost(args).
+ *                                                     Reserved key names: "stage_name", "stage_result"
+ *
  * @param callbackStagePost          Closure [OPTIONAL] Execute after stage()
  * @param callbackStagePostArgs      Map     [OPTIONAL] Arguments for the post-stage callback.
+ *
  * @param simulate                   Boolean [OPTIONAL] Toggle simulation mode. Default: false
  * @param simulateOutput             Object  [OPTIONAL] What should be RETURNED by the stage body closure if simulate is true?
  *                                                      Default: null
  * @param callbackStageSimulate      Closure [OPTIONAL] Executed if stage is in simulate mode.
  *                                                      Stage returns the value returned by the callback (null by default)
  * @param callbackStageSimulateArgs  Map     [OPTIONAL] Map containing arguments to callbackStageSimulate(args).
+ *
  * @param callbackSharedArgs         Map     [OPTIONAL] Map containing SHARED arguments across ALL callbacks. Default: [:]
  * @param verbose                    Boolean [OPTIONAL] Enable extra verbosity and logging. Default: false
  * @param logDebug                   Map     [OPTIONAL] If provided, this will store information about what actions
@@ -112,8 +122,10 @@ def spifi_stage(Map args, Closure stageBody)
     logger["simulateCallbackExecuted"]       = false
     logger["simulateGenericMessage"]         = false
     logger["stageBodyExecuted"]              = false
-    logger["stageCompletedCallbackExecuted"] = false
-    logger["stageCompletedGenericMessage"]   = false
+    logger["stageBodyPreCallbackExecuted"]   = false
+    logger["stageBodyPreGenericMessage"]     = false
+    logger["stageBodyPostCallbackExecuted"]  = false
+    logger["stageBodyPostGenericMessage"]    = false
     logger["postStageCallbackExecuted"]      = false
 
     // Shared argumengs for all callbacks
@@ -128,8 +140,9 @@ def spifi_stage(Map args, Closure stageBody)
     {
         assert args.callbackStagePre instanceof Closure
 
-        def args_cb_pre = args.containsKey("callbackStagePreArgs") ? args.callbackStagePreArgs : [:]
-        args.callbackStagePre( args_cb_pre, args_shared )
+        def args_cb = args.containsKey("callbackStagePreArgs") ? args.callbackStagePreArgs : [:]
+        args_cb["stage_name"] = stageName
+        args_cb["stage_result"] = args.callbackStagePre( args_cb, args_shared )
         logger["preStageCallbackExecuted"] = true
     }
 
@@ -148,8 +161,9 @@ def spifi_stage(Map args, Closure stageBody)
             {
                 assert( args.callbackStageSkipped instanceof Closure )
 
-                def args_cb_skip = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
-                args.callbackStageSkipped( args_cb_skip, args_shared )
+                def args_cb = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
+                args_cb["stage_name"] = stageName
+                args_cb["stage_result"] = args.callbackStageSkipped( args_cb, args_shared )
                 logger["stageSkippedCallbackExecuted"] = true
             }
             else
@@ -162,16 +176,35 @@ def spifi_stage(Map args, Closure stageBody)
         // Stage is NOT skipped
         else
         {
+
+            // Execute stageBodyPre callback if one was provided
+            if( args.containsKey("callbackStageBodyPre") )
+            {
+                assert args.callbackStageBodyPre instanceof Closure
+
+                def args_cb = args.containsKey("callbackStageBodyPreArgs") ? args.callbackStageBodyPreArgs : [:]
+                args_cb["stage_name"] = stageName
+                args_cb["stage_result"] = args.callbackStageBodyPre( args_cb, args_shared )
+                logger["stageBodyPreCallbackExecuted"] = true
+            }
+            else
+            {
+                println "\u276ESPiFI\u276F Stage ${stageName} body pre operation"
+                logger["stageBodyPreGenericMessage"] = true
+            }
+
             // If we ARE doing a simulated run:
-            if( simulate )
+            if(simulate)
             {
                 logger["simulate"] = true
                 if( args.containsKey("callbackSimulate") )
                 {
                     assert args.callbackStageSimulate instanceof Closure
 
-                    def args_cb_sim = args.containsKey("callbackStageSimulateArgs") ? args.callbackStageSimulateArgs : [:]
-                    output = args.callbackStageSimulate(args_cb_sim, args_shared)
+                    def args_cb = args.containsKey("callbackStageSimulateArgs") ? args.callbackStageSimulateArgs : [:]
+                    args_cb["stage_name"] = stageName
+                    args_cb["stage_result"] = args.callbackStageSimulate(args_cb, args_shared)
+                    output = args_cb.stage_result
                     logger["simulateCallbackExecuted"] = true
                 }
                 else
@@ -182,29 +215,33 @@ def spifi_stage(Map args, Closure stageBody)
                 output = args.containsKey("simulateOutput") ? args.simulateOutput : output
             }
 
-            // If we ARE NOT doing a dry-run:
+            // If we ARE NOT doing a simulation:
             else
             {
                 // Execute stage body
                 logger["stageBodyExecuted"] = true
                 output = stageBody()
 
-                // Execute stageCompleted callback if one was provided
-                if( args.containsKey("callbackStageCompleted") )
-                {
-                    assert args.callbackStageCompleted instanceof Closure
+            } // end (not simulated)
 
-                    def args_cb_completed = args.containsKey("callbackStageCompletedArgs") ? args.callbackStageCompletedArgs : [:]
-                    args.callbackStageCompleted( args_cb_completed, args_shared )
-                    logger["stageCompletedCallbackExecuted"] = true
-                }
-                else
-                {
-                    println "\u276ESPiFI\u276F Stage ${stageName} completed"
-                    logger["stageCompletedGenericMessage"] = true
-                }
+            // Execute stageBodyPost callback if one was provided
+            if( args.containsKey("callbackStageBodyPost") )
+            {
+                assert args.callbackStageBodyPost instanceof Closure
+
+                def args_cb = args.containsKey("callbackStageBodyPostArgs") ? args.callbackStageBodyPostArgs : [:]
+                args_cb["stage_name"] = stageName
+                args_cb["stage_result"] = args.callbackStageBodyPost(args_cb, args_shared)
+                logger["stageBodyPostCallbackExecuted"] = true
             }
-        }
+            else
+            {
+                println "\u276ESPiFI\u276F Stage ${stageName} body post operation"
+                logger["stageBodyPostGenericMessage"] = true
+            }
+
+        } // else stage NOT skipped
+
     } // stage
 
     // Call the POST-STAGE callback if one was provided.
@@ -212,14 +249,31 @@ def spifi_stage(Map args, Closure stageBody)
     {
         assert args.callbackStagePost instanceof Closure
 
-        def args_cb_post = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
-        args.callbackStagePost( args_cb_post, args_shared )
+        def args_cb = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
+        args_cb["stage_name"] = stageName
+        args_cb["stage_result"] = args.callbackStagePost(args_cb, args_shared)
         logger["postStageCallbackExecuted"] = true
     }
 
     println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
     return output
 }
+
+
+/**
+ *
+ *
+ */
+def spifi_execute_optional_callback(String stage_name,
+                                    Closure callback,
+                                    Map callback_args=[:],
+                                    Map shared_args=[:])
+{
+    assert callback instanceof Closure
+    callback_args["stage_name"] = stage_name
+    callback_args["cb_result"]  = callback(callback_args, shared_args)
+}
+
 
 
 return this
