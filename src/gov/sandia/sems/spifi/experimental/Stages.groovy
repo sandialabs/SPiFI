@@ -64,7 +64,7 @@ package gov.sandia.sems.spifi.experimental
  * Pipelines.
  *
  * @param stageName                  String  [REQUIRED] Name of the stage
- * @param stageCondition             Boolean [OPTIONAL] Skip stage if false. Default: true
+ * @param skip                       Boolean [OPTIONAL] Skip stage if false. Default: true
  *
  * @param callbackStagePre           Closure [OPTIONAL] Execute prior to stage()
  * @param callbackStagePreArgs       Map     [OPTIONAL] Arguments for the pre-stage callback.
@@ -103,7 +103,7 @@ def spifi_stage(Map args, Closure stageBody)
     // Validate parameters
     Boolean verbose = args.containsKey("verbose") && args.verbose ? true : false
     Boolean simulate = args.containsKey("simulate")  && args.simulate  ? true : false
-    Boolean skip_stage = args.containsKey("stageCondition") && args.stageCondition ? true : false
+    Boolean skip_stage = args.containsKey("skip") && args.skip ? true : false
 
     Map logger = args.containsKey("logDebug") && args.logDebug instanceof Map ? args.logDebug : [:]
 
@@ -119,6 +119,7 @@ def spifi_stage(Map args, Closure stageBody)
     logger["stageSkippedCallbackExecuted"]   = false
     logger["stageSkippedGenericMessage"]     = false
     logger["simulate"]                       = false
+    logger["skip"]                           = false
     logger["simulateCallbackExecuted"]       = false
     logger["simulateGenericMessage"]         = false
     logger["stageBodyExecuted"]              = false
@@ -154,7 +155,7 @@ def spifi_stage(Map args, Closure stageBody)
         // Stage is skipped
         if(skip_stage)
         {
-            logger["stageSkipped"] = true
+            logger["skip"] = true
             if( args.containsKey("callbackStageSkipped") )
             {
                 def args_cb = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
