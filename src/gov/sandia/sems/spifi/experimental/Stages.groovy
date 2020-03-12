@@ -255,6 +255,8 @@ def spifi_execute_optional_callback(String stage_name,
                                     Map shared_args=[:])
 {
     assert callback instanceof Closure : "callback must be a Closure object."
+    if(callback_args.containsKey("stage_name")) callback_args.remove("stage_name")
+    if(callback_args.containsKey("cb_result"))  callback_args.remove("cb_result")
     assert !callback_args.containsKey("stage_name") : "stage_name is a reserved key."
     assert !callback_args.containsKey("cb_result")  : "cb_result is a reserved key."
     callback_args["stage_name"] = stage_name
