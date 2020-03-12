@@ -168,7 +168,7 @@ node(node_restriction)
     {
         println "\u250C\n" +
                 "\u2502 Hello from test 7 body!\n" +
-                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
+                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    // Will this 'see' the changes from cbPreT6?
                 "\u2514"
     }
     println "cbSharedArgsT7: ${cbSharedArgsT7}"
