@@ -45,7 +45,7 @@ node(node_restriction)
         println "\u250C\n" +
                 "\u2502 Hello from cbSkippedWithArgs\n" +
                 "\u2502 - args: ${args}\n" +
-                "\u250C\n"
+                "\u2514"
     }
     Closure cbPre = {
         println "\u250C\n" +
