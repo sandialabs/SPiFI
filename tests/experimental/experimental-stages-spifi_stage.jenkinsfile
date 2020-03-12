@@ -11,10 +11,23 @@
 def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 def spifi_stages = libspifi.experimental.Stages.new()
 
-node()
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL7 || master"
+
+node(node_restriction)
 {
     // Clean the workspace every time.
     cleanWs()
+
+    String stage_name = ""
+
+    Map cbSimArgs      = [:]
+    Map cbSkippedArgs  = [:]
+    Map cbPreArgs      = [:]
+    Map cbPostArgs     = [:]
+    Map cbBodyPreArgs  = [:]
+    Map cbBodyPostArgs = [:]
+    Map cbSharedArgs   = [:]
+    Map logDebug       = [:]
 
     Closure cbSim = {
         println "\u250C\n" +
@@ -53,7 +66,7 @@ node()
                 "\u2514"
     }
 
-
+/*
 
 
     // Minimal Run, closest to standard "stage" command.
@@ -160,31 +173,40 @@ node()
     }
     println "cbSharedArgsT7: ${cbSharedArgsT7}"
     println "logDebug: ${logDebugT7}"
+*/
+
 
 
     // Kitchen Sink! Provide ALL callbacks (non-dry-run)
-    Map cbSharedArgsKS1  = [:]
-    Map cbSkippedArgsKS1 = [:]
-    Map logDebugKS1      = [:]
-    spifi_stages.spifi_stage(stageName: "Kitchen Sink",
+    stage_name   = "Kitchen Sink (1)"
+    logDebug     = [:]
+    cbSharedArgs = [:]
+    spifi_stages.spifi_stage(stageName: stage_name,
                              simulate: false,
                              callbackStagePre: cbPre,
+                             callbackStagePreArgs: cbPreArgs,
                              callbackStageSkipped: cbSkippedWithArgs,
-                             callbackStageSkippedArgs: cbSkippedArgsKS1,
+                             callbackStageSkippedArgs: cbSkippedArgs,
                              callbackStageBodyPre: cbBodyPre,
+                             callbackStageBodyPreArgs: cbBodyPreArgs,
                              callbackStageBodyPost: cbBodyPost,
+                             callbackStageBodyPostArgs: cbBodyPostArgs,
                              callbackStagePost: cbPost,
+                             callbackStagePostArgs: cbPostArgs,
                              callbackStageSimulate: cbSim,
-                             callbackSharedArgs: cbSharedArgsKS1,
-                             logDebug: logDebugT7)
+                             callbackStageSimulateArgs: cbSimArgs,
+                             callbackSharedArgs: cbSharedArgs,
+                             logDebug: logDebug)
     {
         println "\u250C\n" +
-                "\u2502 Hello from test 7 body!\n" +
-                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
+                "\u2502 Hello from ${stage_name} body!\n" +
+                "\u2502 logDebug = ${cbSharedArgs}\n" +
                 "\u2514"
     }
-    println "cbSharedArgsT7: ${cbSharedArgsT7}"
-    println "logDebug: ${logDebugT7}"
+    println "\u2502 cbSharedArgs: ${cbSharedArgs}\n" +
+            "\u2502 logDebug: ${logDebug}"
+
+
 
 
 
