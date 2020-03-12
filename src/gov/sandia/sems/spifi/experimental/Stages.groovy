@@ -75,11 +75,11 @@ package gov.sandia.sems.spifi.experimental
  *
  * @param callbackStageBodyPre      Closure [OPTIONAL] Executes inside `stage() { ... }` prior to stage body execution.
  * @param callbackStageBodyPreArgs  Map     [OPTIONAL] Map containing arguments specific to callbackStageBodyPre(args).
- *                                                     Reserved key names: "stage_name", "stage_result"
+ *                                                     Reserved key names: "stage_name", "cb_result"
  *
  * @param callbackStageBodyPost     Closure [OPTIONAL] Executes inside `stage() { ... }` after stage body execution completes.
  * @param callbackStageBodyPostArgs Map     [OPTIONAL] Map containing arguments to callbackStageBodyPost(args).
- *                                                     Reserved key names: "stage_name", "stage_result"
+ *                                                     Reserved key names: "stage_name", "cb_result"
  *
  * @param callbackStagePost          Closure [OPTIONAL] Execute after stage()
  * @param callbackStagePostArgs      Map     [OPTIONAL] Arguments for the post-stage callback.
@@ -136,13 +136,11 @@ def spifi_stage(Map args, Closure stageBody)
     // Create output variable
     def output = null
 
+    // Pre-Stage callback (if provided)
     if( args.containsKey("callbackStagePre") )
     {
-        assert args.callbackStagePre instanceof Closure
-
         def args_cb = args.containsKey("callbackStagePreArgs") ? args.callbackStagePreArgs : [:]
-        args_cb["stage_name"] = stageName
-        args_cb["stage_result"] = args.callbackStagePre( args_cb, args_shared )
+        spifi_execute_optional_callback(stageName, args.callbackStagePre, args_cb, args_shared)
         logger["preStageCallbackExecuted"] = true
     }
 
@@ -159,11 +157,8 @@ def spifi_stage(Map args, Closure stageBody)
             logger["stageSkipped"] = true
             if( args.containsKey("callbackStageSkipped") )
             {
-                assert( args.callbackStageSkipped instanceof Closure )
-
                 def args_cb = args.containsKey("callbackStageSkippedArgs") ? args.callbackStageSkippedArgs : [:]
-                args_cb["stage_name"] = stageName
-                args_cb["stage_result"] = args.callbackStageSkipped( args_cb, args_shared )
+                spifi_execute_optional_callback(stageName, args.callbackStageSkipped, args_cb, args_shared)
                 logger["stageSkippedCallbackExecuted"] = true
             }
             else
@@ -180,11 +175,8 @@ def spifi_stage(Map args, Closure stageBody)
             // Execute stageBodyPre callback if one was provided
             if( args.containsKey("callbackStageBodyPre") )
             {
-                assert args.callbackStageBodyPre instanceof Closure
-
                 def args_cb = args.containsKey("callbackStageBodyPreArgs") ? args.callbackStageBodyPreArgs : [:]
-                args_cb["stage_name"] = stageName
-                args_cb["stage_result"] = args.callbackStageBodyPre( args_cb, args_shared )
+                spifi_execute_optional_callback(stageName, args.callbackStageBodyPre, args_cb, args_shared)
                 logger["stageBodyPreCallbackExecuted"] = true
             }
             else
@@ -199,12 +191,9 @@ def spifi_stage(Map args, Closure stageBody)
                 logger["simulate"] = true
                 if( args.containsKey("callbackSimulate") )
                 {
-                    assert args.callbackStageSimulate instanceof Closure
-
                     def args_cb = args.containsKey("callbackStageSimulateArgs") ? args.callbackStageSimulateArgs : [:]
-                    args_cb["stage_name"] = stageName
-                    args_cb["stage_result"] = args.callbackStageSimulate(args_cb, args_shared)
-                    output = args_cb.stage_result
+                    spifi_execute_optional_callback(stageName, args.callbackStageSimulate, args_cb, args_shared)
+                    output = args_cb.cb_result
                     logger["simulateCallbackExecuted"] = true
                 }
                 else
@@ -227,11 +216,8 @@ def spifi_stage(Map args, Closure stageBody)
             // Execute stageBodyPost callback if one was provided
             if( args.containsKey("callbackStageBodyPost") )
             {
-                assert args.callbackStageBodyPost instanceof Closure
-
                 def args_cb = args.containsKey("callbackStageBodyPostArgs") ? args.callbackStageBodyPostArgs : [:]
-                args_cb["stage_name"] = stageName
-                args_cb["stage_result"] = args.callbackStageBodyPost(args_cb, args_shared)
+                spifi_execute_optional_callback(stageName, args.callbackStageBodyPost, args_cb, args_shared)
                 logger["stageBodyPostCallbackExecuted"] = true
             }
             else
@@ -244,23 +230,12 @@ def spifi_stage(Map args, Closure stageBody)
 
     } // stage
 
-    // Call the POST-STAGE callback if one was provided.
+    // Post-Stage callback (if provided)
     if( args.containsKey("callbackStagePost") )
     {
-
         def args_cb = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
-
         spifi_execute_optional_callback(stageName, args.callbackStagePost, args_cb, args_shared)
-
         logger["postStageCallbackExecuted"] = true
-
-        /*
-        assert args.callbackStagePost instanceof Closure
-        def args_cb = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
-        args_cb["stage_name"] = stageName
-        args_cb["stage_result"] = args.callbackStagePost(args_cb, args_shared)
-        logger["postStageCallbackExecuted"] = true
-        */
     }
 
     println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
@@ -270,15 +245,17 @@ def spifi_stage(Map args, Closure stageBody)
 
 
 /**
- *
- *
+ * Helper function to execute a callback and set up the 'reserved'
+ * arguments.
  */
 def spifi_execute_optional_callback(String stage_name,
                                     Closure callback,
                                     Map callback_args=[:],
                                     Map shared_args=[:])
 {
-    assert callback instanceof Closure
+    assert callback instanceof Closure : "callback must be a Closure object."
+    assert !callback_args.containsKey("stage_name") : "stage_name is a reserved key."
+    assert !callback_args.containsKey("cb_result")  : "cb_result is a reserved key."
     callback_args["stage_name"] = stage_name
     callback_args["cb_result"]  = callback(callback_args, shared_args)
 }
