@@ -219,7 +219,7 @@ node(node_restriction)
     logDebug     = [:]
     cbSharedArgs = [:]
     spifi_stages.spifi_stage(stageName: stage_name,
-                             simulate: false,
+                             simulate: simulate,
                              skip: skip,
                              callbackStagePre: cbPre,
                              callbackStagePreArgs: cbPreArgs,
@@ -252,7 +252,7 @@ node(node_restriction)
     logDebug     = [:]
     cbSharedArgs = [:]
     spifi_stages.spifi_stage(stageName: stage_name,
-                             simulate: false,
+                             simulate: simulate,
                              skip: skip,
                              callbackStagePre: cbPre,
                              callbackStagePreArgs: cbPreArgs,
@@ -285,7 +285,7 @@ node(node_restriction)
     logDebug     = [:]
     cbSharedArgs = [:]
     spifi_stages.spifi_stage(stageName: stage_name,
-                             simulate: false,
+                             simulate: simulate,
                              skip: skip,
                              callbackStagePre: cbPre,
                              callbackStagePreArgs: cbPreArgs,
