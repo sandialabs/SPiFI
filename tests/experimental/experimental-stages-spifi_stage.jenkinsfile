@@ -279,7 +279,7 @@ node(node_restriction)
 
 
     // Kitchen Sink! Provide ALL callbacks (skipped, simulated)
-    stage_name   = "Kitchen Sink [TF]"
+    stage_name   = "Kitchen Sink [TT]"
     skip         = true
     simulate     = true
     logDebug     = [:]
