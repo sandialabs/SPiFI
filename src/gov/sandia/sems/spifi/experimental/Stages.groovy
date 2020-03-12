@@ -247,17 +247,26 @@ def spifi_stage(Map args, Closure stageBody)
     // Call the POST-STAGE callback if one was provided.
     if( args.containsKey("callbackStagePost") )
     {
-        assert args.callbackStagePost instanceof Closure
 
+        def args_cb = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
+
+        spifi_execute_optional_callback(stageName, args.callbackStagePost, args_cb, args_shared)
+
+        logger["postStageCallbackExecuted"] = true
+
+        /*
+        assert args.callbackStagePost instanceof Closure
         def args_cb = args.containsKey("callbackStagePostArgs") ? args.callbackStagePostArgs : [:]
         args_cb["stage_name"] = stageName
         args_cb["stage_result"] = args.callbackStagePost(args_cb, args_shared)
         logger["postStageCallbackExecuted"] = true
+        */
     }
 
     println "\u276ESPiFI\u276F END conditionalStage(${stageName})"
     return output
 }
+
 
 
 /**
