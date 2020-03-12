@@ -16,6 +16,45 @@ node()
     // Clean the workspace every time.
     cleanWs()
 
+    Closure cbSim = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbSim\n" +
+                "\u2514"
+    }
+    Closure cbSkipped = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbSkipped\n" +
+                "\u2514"
+    }
+    Closure cbSkippedWithArgs = { args=[:], wksp=[:] ->
+        println "\u250C\n" +
+                "\u2502 Hello from cbSkippedWithArgs\n" +
+                "\u2502 - args: ${args}\n" +
+                "\u250C\n"
+    }
+    Closure cbPre = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbPre\n" +
+                "\u2514"
+    }
+    Closure cbPost = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbPost\n" +
+                "\u2514"
+    }
+    Closure cbBodyPre = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbBodyPre\n" +
+                "\u2514"
+    }
+    Closure cbBodyPost = {
+        println "\u250C\n" +
+                "\u2502 Hello from test cbBodyPost\n" +
+                "\u2514"
+    }
+
+
+
 
     // Minimal Run, closest to standard "stage" command.
     spifi_stages.spifi_stage(stageName: "Test 1")
@@ -37,11 +76,7 @@ node()
 
 
     // Skip stage with Callback
-    Closure cbSkipped = {
-        println "\u250C\n" +
-                "\u2502 Hello from test cbSkipped\n" +
-                "\u2514"
-    }
+
     spifi_stages.spifi_stage(stageName: "Test 3",
                              stageCondition: false,
                              callbackStageSkipped: cbSkipped)
@@ -53,10 +88,6 @@ node()
 
 
     // Skip stage with Callback + CallbackArgs
-    Closure cbSkippedWithArgs = { args=[:], wksp=[:] ->
-        println "\u2502 Hello from cbSkippedWithArgs\n" +
-                "\u2502 - args: ${args}"
-    }
     Map cbSkippedArgs = [ "foo": "bar" ]
     spifi_stages.spifi_stage(stageName: "Test 4",
                              stageCondition: false,
@@ -70,12 +101,7 @@ node()
 
 
     // Execute Stage + callbackPre + callbackPost
-    Closure cbPre = {
-        println "\u2502 [Test 5] Hello from cbPre"
-    }
-    Closure cbPost = {
-        println "\u2502 [Test 5] Hello from cbPost"
-    }
+
     spifi_stages.spifi_stage(stageName: "Test 5",
                              callbackStagePre: cbPre,
                              callbackStagePost: cbPost)
@@ -134,6 +160,33 @@ node()
     }
     println "cbSharedArgsT7: ${cbSharedArgsT7}"
     println "logDebug: ${logDebugT7}"
+
+
+    // Kitchen Sink! Provide ALL callbacks (non-dry-run)
+    Map cbSharedArgsKS1  = [:]
+    Map cbSkippedArgsKS1 = [:]
+    Map logDebugKS1      = [:]
+    spifi_stages.spifi_stage(stageName: "Kitchen Sink",
+                             simulate: false,
+                             callbackStagePre: cbPre,
+                             callbackStageSkipped: cbSkippedWithArgs,
+                             callbackStageSkippedArgs: cbSkippedArgsKS1,
+                             callbackStageBodyPre: cbBodyPre,
+                             callbackStageBodyPost: cbBodyPost,
+                             callbackStagePost: cbPost,
+                             callbackStageSimulate: cbSim,
+                             callbackSharedArgs: cbSharedArgsKS1,
+                             logDebug: logDebugT7)
+    {
+        println "\u250C\n" +
+                "\u2502 Hello from test 7 body!\n" +
+                "\u2502 logDebugT7 = ${cbSharedArgsT7}\n" +    /* Will this 'see' the changes from cbPreT6? */
+                "\u2514"
+    }
+    println "cbSharedArgsT7: ${cbSharedArgsT7}"
+    println "logDebug: ${logDebugT7}"
+
+
 
 }
 
