@@ -190,7 +190,7 @@ def spifi_stage(Map args, Closure stageBody)
             if(simulate)
             {
                 logger["simulate"] = true
-                if( args.containsKey("callbackSimulate") )
+                if( args.containsKey("callbackStageSimulate") )
                 {
                     def args_cb = args.containsKey("callbackStageSimulateArgs") ? args.callbackStageSimulateArgs : [:]
                     spifi_execute_optional_callback(stageName, args.callbackStageSimulate, args_cb, args_shared)
