@@ -33,7 +33,7 @@ node("RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master")
 
         // Print out the details table of the job that ran.
         // This provides the status of the individual jobs, etc.
-        println results_util.genResultDetailTable(format: "ASCII", results: results)
+        println results_util.genResultDetails(format: "ASCII", results: results)
 
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
