@@ -1,5 +1,5 @@
-Prototyping
------------
+Experimental
+------------
 
 This is a sandbox for jenkinsfiles to be used when testing out new features, development,
 work-in-progress stuff, etc.
