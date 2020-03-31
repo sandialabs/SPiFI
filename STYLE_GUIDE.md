@@ -5,6 +5,11 @@ SPiFI Coding Conventions and Style
 
 Groovy
 ------
+Generally, we try to follow the [Groovy Style Guide](https://groovy-lang.org/style-guide.html).
+
+The following style constraints apply to SPiFI. In case of a conflict with the
+standard Groovy Style Guide, these rules take priority:
+
 - Add 3 empty lines prior to a `class` definition.
 - Indentation is 4 spaces.
 - Tabs...
