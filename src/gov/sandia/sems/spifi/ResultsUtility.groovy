@@ -60,6 +60,9 @@ package gov.sandia.sems.spifi;
 
 import groovy.json.*
 
+import gov.sandia.sems.spifi.JenkinsTools
+import gov.sandia.sems.spifi.impl.Tools
+
 
 /**
  *
@@ -189,22 +192,24 @@ class ResultsUtility implements Serializable
      *
      * @see gov.sandia.sems.spifi.JobLauncher::launchInParallel()
      *
-     * @param results         [REQUIRED] Map     - Results from a call to
-     *                                             JobLauncher.launchInParallel()
-     * @param format          [OPTIONAL] String  - Type of output table to generate.
-     *                                             Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
-     *                                             Default: ASCII
-     * @param link_to_console [OPTIONAL] Boolean - If true, the links provided by HTML
-     *                                             and Markdown will be to the console
-     *                                             output on Jenkins.  If false, the
-     *                                             links will point at the job itself.
-     *                                             Default: false
-     * @param beautify        [OPTIONAL] Boolean - Toggle beautification of the output to make it more
-     *                                             human-readable.  This option is only used when
-     *                                             format is set to one of: [ JSONL ]
-     *                                             Default: false
-     * @param verbose [OPTIONAL] Boolean - Toggle extra verbosity for debugging. (1.3.1)
-     *                                     Default: false
+     * @param results             [REQUIRED] Map     - Results from a call to
+     *                                                 JobLauncher.launchInParallel()
+     * @param format              [OPTIONAL] String  - Type of output table to generate.
+     *                                                 Must be one of: [ ASCII | HTML | MARKDOWN | JSONL ]
+     *                                                 Default: ASCII
+     * @param link_to_console     [OPTIONAL] Boolean - If true, the links provided by HTML
+     *                                                 and Markdown will be to the console
+     *                                                 output on Jenkins.  If false, the
+     *                                                 links will point at the job itself.
+     *                                                 Default: false
+     * @param beautify            [OPTIONAL] Boolean - Toggle beautification of the output to make it more
+     *                                                 human-readable.  This option is only used when
+     *                                                 format is set to one of: [ JSONL ]
+     *                                                 Default: false
+     * @param format_duration_hms [OPTIONAL] Boolean - Toggle a human readable duration in DD:HH:MM:SS.SS format.
+     *                                                 Default: false
+     * @param verbose             [OPTIONAL] Boolean - Toggle extra verbosity for debugging. (1.3.1)
+     *                                                 Default: false
      *
      * @return String containing the Detail table for results that can be inserted into
      *                the console log, email, etc.
@@ -215,11 +220,12 @@ class ResultsUtility implements Serializable
         //
         // Begin parameter validation
         //
-        Map params_expected = [ "results":         [option: "R"],
-                                "format":          [option: "O"],
-                                "link_to_console": [option: "O"],
-                                "beautify":        [option: "O"],
-                                "verbose":         [option: "O"]
+        Map params_expected = [ "results":             [option: "R"],
+                                "format":              [option: "O"],
+                                "link_to_console":     [option: "O"],
+                                "beautify":            [option: "O"],
+                                "verbose":             [option: "O"],
+                                "format_duration_hms": [option: "O"]
                               ]
         Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
                                                                                    params_expected: params_expected,
@@ -231,21 +237,13 @@ class ResultsUtility implements Serializable
             throw new Exception("SPiFI ERROR: parameter check failed for ResultsUtility.genResultDetails()")
         }
 
-        // If format isn't provided, make it ASCII
-        if(!params.containsKey("format"))
-        {
-            params["format"] = "ASCII"
-        }
-        // Set link_to_console if it's not already set.
-        if(!params.containsKey("link_to_console"))
-        {
-            params["link_to_console"] = false
-        }
-        // If unspecified, set the beautify parameter to false.
-        if(!params.containsKey("beautify"))
-        {
-            params["beautify"] = false
-        }
+        // Check parameters, set defaults where needed.
+        def tools = new gov.sandia.sems.spifi.JenkinsTools()
+        tools.spifi_checked_get_parameter(env: _env, params: params, key: "format", default: "ASCII", in_place: true)
+        tools.spifi_checked_get_parameter(env: _env, params: params, key: "link_to_console", default: false, in_place: true)
+        tools.spifi_checked_get_parameter(env: _env, params: params, key: "beautify", default: false, in_place: true)
+        tools.spifi_checked_get_parameter(env: _env, params: params, key: "format_duration_hms", default: false, in_place: true)
+
         //
         // Completed parameter validation
         //
@@ -422,7 +420,6 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    @NonCPS
     def _genResultDetailTableHTML(params)
     {
         String output = """
@@ -452,7 +449,13 @@ class ResultsUtility implements Serializable
             String msg = ""
             msg += "    <tr class='${r.value.status}'>\n"
             msg += "        <td>${r.value.status}</td>\n"
-            msg += "        <td>${r.value.duration}</td>\n"
+
+            String duration = sprintf("%14.2f", [r.value.duration])
+            if(params.format_duration_hms)
+            {
+                duration = gov.sandia.sems.spifi.impl.Tools.spifi_convert_seconds_to_hms(r.value.duration)
+            }
+            msg += "        <td>${duration}</td>\n"
 
             // If dry run, note that in "link"
             if(true == r.value.dry_run)
@@ -496,12 +499,11 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    @NonCPS
     def _genResultDetailTableASCII(params)
     {
         String output = """
-                           Status      |   Duration   |   Job Name
-                        ---------------+--------------|-----------------------------------------------------------------------
+                           Status      |   Duration         |   Job Name
+                        ---------------+--------------------|---------------------------------------------------------------
                         """.stripIndent()
         params.results.each
         {   r ->
@@ -523,9 +525,12 @@ class ResultsUtility implements Serializable
                 job_name += " #${r.value.id}"
             }
 
-            Float duration = r.value.duration
-
-            output += sprintf("   %-9s   |   %10.2f |   %-70s\n", [r.value.status, duration, job_name])
+            String duration = sprintf("%14.2f", [r.value.duration])
+            if(params.format_duration_hms)
+            {
+                duration = gov.sandia.sems.spifi.impl.Tools.spifi_convert_seconds_to_hms(r.value.duration)
+            }
+            output += sprintf("   %-9s   |   %14s   |   %-70s\n", [r.value.status, duration, job_name])
         }
         return output
     }
@@ -539,7 +544,6 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted results
      */
-    @NonCPS
     def _genResultDetailTableJSONL(params)
     {
         def timestamp = new Date()
@@ -558,12 +562,22 @@ class ResultsUtility implements Serializable
             assert r.value.containsKey("url")
             assert r.value.containsKey("dry_run")
 
-            Float duration = r.value.duration
             output += "{"
             output += "\"name\": \"${r.value.job}\", "
             output += sprintf("\"id\": \"%s\", ", r.value.id)
             output += "\"status\": \"${r.value.status}\", "
-            output += sprintf("\"duration\": %.2f,", duration)
+
+            if(params.format_duration_hms)
+            {
+
+                String duration = gov.sandia.sems.spifi.impl.Tools.spifi_convert_seconds_to_hms(r.value.duration)
+                output += sprintf("\"duration\": \"%s\",", duration)
+            }
+            else
+            {
+                output += sprintf("\"duration\": %.2f,", r.value.duration)
+            }
+
             output += "\"dry_run\": ${r.value.dry_run},"
             output += "\"url\": \"${r.value.url}\""
             output += "}"
@@ -598,13 +612,12 @@ class ResultsUtility implements Serializable
      *
      * @return String containing the formatted table of results
      */
-    @NonCPS
     def _genResultDetailTableMarkdown(params)
     {
         // this._env.println "[SPiFI-DEBUG]> Entering ResultsUtility::_genResultDetailTableMarkdown(params)"
         String output = """
-                        | Status     | Duration (s) | Job Name |
-                        |:----------:|:------------:| -------- |
+                        | Status     | Duration (s)   | Job Name |
+                        |:----------:|:--------------:| -------- |
                         """.stripIndent()
         params.results.each
         {   r ->
@@ -622,9 +635,13 @@ class ResultsUtility implements Serializable
                 link += "/console"
             }
 
-            Float duration = r.value.duration
+            String duration = sprintf("%14.2f", [r.value.duration])
+            if(params.format_duration_hms)
+            {
+                duration = gov.sandia.sems.spifi.impl.Tools.spifi_convert_seconds_to_hms(r.value.duration)
+            }
 
-            output += sprintf("| %10s | %12.2f |", [r.value.status, duration])
+            output += sprintf("| %10s | %14s |", [r.value.status, duration])
             // If dry run, note that in link
             if(r.value.dry_run == true)
             {
@@ -646,7 +663,6 @@ class ResultsUtility implements Serializable
         }
         return output
     }
-
 
 
 } // class ResultsUtility

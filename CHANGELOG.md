@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Next version will be v2.1.0
+
+### Added
+- Add `format_duration_hms` to `ResultsUtility.genResultDetails()` which causes the
+  duration value to be reported as `DD:HH:MM:SS.SS`
+  - For JSONL output, the `duration` field will be a string if using HMS.
+  - For JSONL output, the `duration` field remains a float if not using HMS.
+  - Resolves Issue #34
+- Add new parameter `in_place` to `JenkinsTools.spifi_checked_get_parameter()` which enables
+  in-place setting of Aparameters.
+
+### Changed
+### Removed
 
 
 ## [2.0.0] - 2020-02-17
@@ -60,11 +73,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    * @param env       [REQUIRED] Object - Jenkins environment (use 'this' from the Jenkins pipeline).
    * @param exception [REQUIRED] Exception - Groovy exception object.
    *
-   * @return 
+   * @return
    */
   def spifi_get_exception_stacktrace_pretty(Map args)
   ```
-  
+
 ### Changed
 - ISSUE #23: Address issue where aborted dry-run jobs report 0 time for duration and provided
              a bogus link.
@@ -143,8 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-<!-- 
-- Links 
+<!--
+- Links
 -->
 [1]: https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home
 [2]: https://jenkins.io/doc/book/pipeline/
