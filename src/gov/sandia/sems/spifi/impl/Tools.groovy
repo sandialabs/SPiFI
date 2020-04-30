@@ -45,8 +45,8 @@
 /**
  * Tools.groovy
  *
- * Utility functions used internally within SPiFI.  
- * 
+ * Utility functions used internally within SPiFI.
+ *
  * Ordinarily these will not be exposed to users of the library.
  *
  * @author  William McLendon
@@ -76,8 +76,8 @@ package gov.sandia.sems.spifi.impl
  *       }
  *
  *       Boolean OK = parameter_check(env: args.env, params_received: args, params_expected: args_expected)
- *       if (!OK) 
- *       {    
+ *       if (!OK)
+ *       {
  *           throw new Exception("ERROR: parameter check failed in my_function")
  *       }
  *
@@ -108,7 +108,7 @@ static Boolean spifi_parameter_check(Map args)
     Boolean verbose = false
 
     assert args.containsKey("env"), "Missing required parameter: env"
-    
+
     if( !args.containsKey("params_received") )
     {
         args.env.println "Missing required parameter: params_received"
@@ -129,7 +129,7 @@ static Boolean spifi_parameter_check(Map args)
         args.params_expected.each
         { key,value ->
 
-            if(verbose) 
+            if(verbose)
             {
                 args.env.println "[SPiFI]> Checking expected parameter: (${value.option}) ${key}"
             }
@@ -172,5 +172,32 @@ static Boolean spifi_parameter_check(Map args)
 
 
 
+static String spifi_convert_seconds_to_hms(def duration)
+{
+    String output = "";
+    Float seconds = duration as Float
 
+    Integer days    = duration / 86400 as Integer
+    duration -= days * 86400
+    Integer hours   = duration / 3600  as Integer
+    duration -= hours * 3600
+    Integer minutes = duration / 60    as Integer
+    duration -= minutes * 60
+
+    if(days>0)
+    {
+        output = sprintf("%02d:", [days])
+    }
+    if(output != "" || hours>0)
+    {
+        output += sprintf("%02d:", [hours])
+    }
+    if(output != "" || minutes>0)
+    {
+        output += sprintf("%02d:", [minutes])
+    }
+    output += sprintf("%05.2f", [duration])
+
+    return output
+}
 

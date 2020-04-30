@@ -65,7 +65,7 @@ package gov.sandia.sems.spifi
  * @param env       [REQUIRED] Object - Jenkins environment (use 'this' from the Jenkins pipeline).
  * @param exception [REQUIRED] Exception - Groovy exception object.
  *
- * @return 
+ * @return
  */
 static def spifi_get_exception_stacktrace_pretty(Map args)
 {
@@ -96,13 +96,15 @@ static def spifi_get_exception_stacktrace_pretty(Map args)
 
 /**
  * Load a Jenkins parameter if it exists.
- * 
+ *
  * @param env      [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline).
  * @param params   [REQUIRED] Object  - Jenkins job params object (params in a jenkins job).
  * @param key      [REQUIRED] String  - Name of the parameter that we're searching for.
- * @param default  [OPTIONAL] String  - Default value to return if parameter does not exist. Default="".
+ * @param default  [OPTIONAL] Object  - Default value to return if parameter does not exist. Default="".
  * @param required [OPTIONAL] Boolean - If true, this parameter is required and an error will be thrown
  *                                      if it's not found. Default=false
+ * @param in_place [OPTIONAL] Boolean - If true AND the parameter value is missing, adds the default value to params.
+ *                                      Default: false
  *
  * @return Object containing the value of the parameter returned.
  */
@@ -116,48 +118,58 @@ static def spifi_checked_get_parameter(Map args)
     def     env           = args.env
     def     default_value = null
     Boolean is_required   = false
+    Boolean in_place      = false
 
     env.println "[SPiFI]> checked_get_parameter()"
 
     if( !args.containsKey("params") )
-    {   
+    {
         throw new Exception("[SPiFI ERROR]> Missing required parameter 'params' to checked_get_parameter()")
-    }   
+    }
     if( !args.containsKey("key") )
-    {   
+    {
         throw new Exception("[SPiFI ERROR]> Missing required parameter 'key' to checked_get_parameter()")
-    }   
+    }
     if( args.containsKey("default") )
-    {   
+    {
         default_value = args.default
-    }   
+    }
     if( args.containsKey("required") )
-    {   
+    {
         is_required = args.required
-    }   
+    }
+    if( args.containsKey("in_place") )
+    {
+        in_place = args.in_place
+    }
     env.println "[SPiFI]> - key      : ${args.key}\n" +
                 "[SPiFI]> - default  : ${default_value}\n" +
-                "[SPiFI]> - required : ${is_required}"
+                "[SPiFI]> - required : ${is_required}\n" +
+                "[SPiFI]> - in_place : ${in_place}"
 
     if( args.params.containsKey(args.key) )
-    {   
-        try 
-        {   
+    {
+        try
+        {
             return args.params[args.key]
-        }   
-        catch(ex) 
-        {   
+        }
+        catch(ex)
+        {
             throw new Exception("[SPiFI ERROR]> An error occurred trying to retrieve `${args.key}` in checked_get_parameter()\n${ex}")
-        }   
-    }   
+        }
+    }
     else
-    {   
+    {
         if( is_required )
-        {   
+        {
             throw new Exception("[SPiFI ERROR]> Missing required parameter '${args.key}'.")
-        }   
+        }
+        if(in_place)
+        {
+            args.params[args.key] = default_value
+        }
         return default_value
-    }   
+    }
 }
 
 
