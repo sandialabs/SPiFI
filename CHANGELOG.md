@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!--
+## [X.Y.Z] - YYYY-MM-DD or [Unreleased]
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+-->
+
+
 ## [Unreleased]
 - Next version will be v2.1.0
 
@@ -17,12 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in-place setting of Aparameters.
 
 ### Changed
+### Deprecated
 ### Removed
 
 
 ## [2.0.0] - 2020-02-17
 - v2.0.0 branch released as the first branch in the 2.x line.
 
+### Deprecated
 ### Removed
 - deprecations from v1.x are removed.
 
@@ -44,8 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update `HTMLUtility` functions to use `gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check()`
+
+### Fixed
 - Bug fix for [Issue 27][5] : Fixed alternating color bug in the HTML generated tables.
 
+### Deprecated
 ### Removed
 
 
@@ -56,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `shallow` - enable a shallow clone of the repositories (limit depth to 50)
 
 ### Changed
+### Deprecated
 ### Removed
 
 
@@ -79,19 +96,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
 
 ### Changed
-- ISSUE #23: Address issue where aborted dry-run jobs report 0 time for duration and provided
-             a bogus link.
-  - FEATURE: Add `dry_run` entry to the `Map` returned by `JobLauncher.launchInParallel()`
-             as a boolean value to capture whether or not the build was in DRY-RUN mode.
-  - FEATURE: If in `dry_run` mode, the `duration` entry returned by `JobLauncher.launchInParallel()`
-             will reflect the value of `dry_run_delay`.
+- FEATURE: Add `dry_run` entry to the `Map` returned by `JobLauncher.launchInParallel()`
+           as a boolean value to capture whether or not the build was in DRY-RUN mode.
+- FEATURE: If in `dry_run` mode, the `duration` entry returned by `JobLauncher.launchInParallel()`
+           will reflect the value of `dry_run_delay`.
 - STYLE: Minor tweaks to ResultsUtility
   - Don't add a link to HTML, Markdown entries if the job was run in dry run and indicate it
     was a dry-run by formatting the usual build-id (`#<build_id>`) to show dry-run as `#dry_run`.
+
+### Fixed
 - Issue #7 fixes.
+- ISSUE #23: Address issue where aborted dry-run jobs report 0 time for duration and provided
+             a bogus link.
+
+### Deprecated
+- Deprecation: `JenkinsTools.checked_get_parameter` is now `JenkinsTools.spifi_checked_get_parameter`
 
 ### Removed
-- Deprecation: `JenkinsTools.checked_get_parameter` is now `JenkinsTools.spifi_checked_get_parameter`
 
 
 ## [1.2.2] - 2019-12-18
@@ -101,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     parameters provided to jobs.
 
 ### Changed
+### Deprecated
 ### Removed
 
 
@@ -114,9 +136,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - If set to true, it tries to beautify the output to make it more human readable.
   - Is NOT available to `ResultsUtility::genResultDetailTable()` since that is going away.
 
+### Deprecated
+- class `ParallelJobLauncher` changed to `JobLauncher`
+- `ResultsUtility::genResultDetailTable()` replaced with `ResultsUtility::genResultDetails()`
+
 ### Removed
-- Deprecation: class `ParallelJobLauncher` changed to `JobLauncher`
-- DEPRECATION: `ResultsUtility::genResultDetailTable()` replaced with `ResultsUtility::genResultDetails()`
 
 
 ## [1.1.4] - 2019-03-26
@@ -144,7 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `retry_conditions: List<gov.sandia.sems.spifi.DelayedRetryOnRegex>`: List of conditions to check.
   - Omitting retry-on-regex-in-console-log options does not change previous behavior.
 
-### Removed
+### Deprecated
 - DEPRECATION: ParallelJobLauncher constructor with signature `ParallelJobLauncher(env)` will be replaced by a variant that uses
   a Map parameter to be consistent with the other classes and functions in SPiFI.  Use the form: `ParallelJobLauncher(env: <env>)`
   This consturctor will be deprecated in version 2.0.0
@@ -153,6 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - DEPRECATION: The only deprecation notice for this change is that the timeouts are always using MINUTES so we're removing
     the `timeout_delay_units` parameter, which doesn't really change anything since it was ignored previously anyways. Nothing
     will break if it's added however.
+
+### Removed
 
 
 
