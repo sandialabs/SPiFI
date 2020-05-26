@@ -491,7 +491,7 @@ class JobLauncher
             {
                 strJobs += "[SPiFI]>               " + param + "\n"
             }
-            if(job.value.retry_conditions != null)                                                                                  // SCAFFOLDING
+            if(job.value.retry_conditions != null)
             {
                 strJobs += "[SPiFI]>   - retry_lines_to_check    : ${job.value.retry_lines_to_check}\n"
                 strJobs += "[SPiFI]>   - retry_max_limit         : ${job.value.retry_max_limit}\n"
@@ -499,7 +499,7 @@ class JobLauncher
                 strJobs += "[SPiFI]>   - retry_conditions        : \n"
                 for(cond in job.value.retry_conditions)
                 {
-                    strJobs += "[SPiFI]>               ${cond.asString()}\n"                                                        // SCAFFOLDING
+                    strJobs += "[SPiFI]>               ${cond.asString()}\n"
                 }
             }
         }
@@ -598,6 +598,14 @@ class JobLauncher
                                                  wait       : true
 
                         // ... build() blocks until all the jobs have returned ...
+                        /* DEBUGGING CODE
+                        this._env.println "[SPiFI]> -------------------\n" +
+                                          "[SPiFI]>  Duration         : ${status.getDuration()}\n" +
+                                          "[SPiFI]>  DurationString   : ${status.getDurationString()}\n" +
+                                          "[SPiFI]>  StartTimeInMillis: ${status.getStartTimeInMillis()}\n" +
+                                          "[SPiFI]>  TimeInMillis     : ${status.getTimeInMillis()}\n" +
+                                          "[SPiFI]> -------------------"
+                        */
 
                         duration_seconds = utility.convertDurationToSeconds(status.getDuration(), "MILLISECONDS")
                         jobStatus        = status.getResult()
@@ -682,11 +690,14 @@ class JobLauncher
                 this._env.println "[SPiFI]> ${job.value.jenkins_job_name} = ${results[job.key]}"
             }  // End Timeout
 
-            // TODO: Detect that the timeout was hit???
-
-            // TODO: See if we can identify the job build id and url, etc. even when jobs timeout...
-            //       maybe launch in non-blocking mode, get the info, and then block on results?
-            //       (if this is possible in Jenkins' groovy).
+            // TODO:
+            // If a job times out or is interrupted somehow, we don't get the `status` object from
+            // the `build` command. Since that is what contains the RunWrapper object that has the
+            // information about build id, url, etc. we can't report it when there's an interruption.
+            // We should investigate if there's some way to get access to the jobs that had been *launched*
+            // but didn't return yet. I have my suspicions that such an object may not be whitelisted to
+            // prevent someone from messing with the job while it's in-progress, but I haven't confirmed
+            // this yet.
 
         }      // End Try
         catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e)
@@ -707,9 +718,10 @@ class JobLauncher
             // Many things can cause a FlowInterruptedException so let's check the stack trace
             // to try and identify what caused it.
             // WARNING: This might be brittle if Jenkins changes things up, but for now there's
-            //          no way I know of to differentiate what interrupted the sub-job.
-            def tools = new gov.sandia.sems.spifi.JenkinsTools()                                             /* DEBUGGING */
-            this._env.println tools.spifi_get_exception_stacktrace_pretty(env: this._env, exception: e)      /* DEBUGGING */
+            //          no way I know of to differentiate what interrupted the sub-job without
+            //          checking the call stack -_-
+            def tools = new gov.sandia.sems.spifi.JenkinsTools()
+            this._env.println tools.spifi_get_exception_stacktrace_pretty(env: this._env, exception: e)
 
             String interrupt_reason="UNKNOWN"
             strace.find
@@ -729,7 +741,8 @@ class JobLauncher
                     throw e
                     return true
                 }
-                // Sometimes we get this in the stacktrace... I don't fully understand when this is triggered vs. the above one.
+                // Sometimes we get this in the stacktrace on an abort.
+                // I don't fully understand when this is triggered vs. the above one.
                 else if( it.getClassName().toString().contains("workflow.cps.CpsFlowExecution") && it.getMethodName().toString() == "interrupt" )
                 {
                     interrupt_reason = "ABORTED"
@@ -739,13 +752,14 @@ class JobLauncher
                 return false
             }
 
-            // TODO: In this case, when we can tell that the pipeline itself was aborted, we do what Jenkins will do and
-            //       we pass the exception up and just kill the whole pipeline. It will abort the sub-jobs and exit.
-            //       There won't be any emails or anything else sent because things die.
-            //       We could investigate some optional settings to JobLauncher to prevent killing the pipeline from
-            //       immediately aborting the whole pipeline but rather have it pass up some flag or status to note
-            //       that the pipeline was killed here (though, a check for that should probably be put somewhere
-            //       higher than in _jobBody).
+            // TODO:
+            // In this case, when we can tell that the pipeline itself was aborted, we do what Jenkins will do and
+            // we pass the exception up and just kill the whole pipeline. It will abort the sub-jobs and exit.
+            // There won't be any emails or anything else sent because things die.
+            // We could investigate some optional settings to JobLauncher to prevent killing the pipeline from
+            // immediately aborting the whole pipeline but rather have it pass up some flag or status to note
+            // that the pipeline was killed here (though, a check for that should probably be put somewhere
+            // higher than in _jobBody).
 
             results[job.key]["status"] = interrupt_reason
         }
