@@ -125,6 +125,10 @@ class JobLauncher
         List    retry_conditions     = null           // Retry conditions is a list of gov.sandia.sems.spifi.DelayedRetryOnRegex
                                                       // - data members are:  retry_delay, retry_delay_units, retry_regex
 
+        // pre-delay parameters
+        Integer pre_delay       = 0                   // Pre-Delay sleep time for launching a job.
+        String  pre_delay_units = "SECONDS"           // Pre-Delay units (MINUTES, SECONDS, HOURS)
+
         // Debugging / Development helpers
         Boolean verbose = false
     }
@@ -229,6 +233,10 @@ class JobLauncher
      *                                                     a re-run of the job. Currently this must be a list of DelayedRetryOnRegex
      *                                                     objects.
      *                                                     Only the FINAL attempt's results will be reported.
+     *
+     * @param pre_delay               [OPTIONAL] Integer - Add a pre-delay to a job before launching it. Default: 0
+     * @param pre_delay_units         [OPTIONAL] String  - Units to use with `pre_delay`. Default: "SECONDS"
+     *
      * @param verbose                 [OPTIONAL] Boolean - Toggle extra verbosity for debugging.  (v1.3.1)
      *                                                     Default: false
      *
@@ -258,6 +266,8 @@ class JobLauncher
                                 "retry_max_count":         [ option: "O" ],
                                 "retry_lines_to_check":    [ option: "O" ],
                                 "retry_conditions":        [ option: "O" ],
+                                "pre_delay":               [ option: "O" ],
+                                "pre_delay_units":         [ option: "O" ],
                                 "verbose":                 [ option: "O" ]
                             ]
         Boolean params_ok = gov.sandia.sems.spifi.impl.Tools.spifi_parameter_check(env: this._env,
@@ -298,6 +308,14 @@ class JobLauncher
         if(params.containsKey("expected_duration_max"))   { job.expected_duration_max   = params.expected_duration_max   }
         if(params.containsKey("expected_duration_units")) { job.expected_duration_units = params.expected_duration_units }
 
+        // Process pre_delay parameters
+        if(params.containsKey("pre_delay"))
+        {
+            if(params.pre_delay < 0) { job.pre_delay = 0                }
+            else                     { job.pre_delay = params.pre_delay }
+        }
+        if(params.containsKey("pre_delay_units")) { job.pre_delay_units = params.pre_delay_units }
+
         // Process optional retry-conditions parameter(s)
         if(params.containsKey("retry_lines_to_check"))
         {
@@ -324,14 +342,21 @@ class JobLauncher
         }
 
         // Validate parameter value(s)
-        if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
-        {
-            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter timeout_unit provided: ${job.timeout_unit}")
-        }
-        if( !("SECONDS"==job.expected_duration_units || "MINUTES"==job.expected_duration_units || "HOURS"==job.expected_duration_units) )
-        {
-            throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter expected_duration_units provided: ${job.timeout_unit}")
-        }
+        this._validate_time_units("gov.sandia.sems.spifi.JobLauncher::appendJob(timeout_unit)", job.timeout_unit)
+        //if( !("SECONDS"==job.timeout_unit || "MINUTES"==job.timeout_unit || "HOURS"==job.timeout_unit) )
+        //{
+        //    throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter timeout_unit provided: ${job.timeout_unit}")
+        //}
+        this._validate_time_units("gov.sandia.sems.spifi.JobLauncher::appendJob(expected_duration_units)", job.expected_duration_units)
+        //if( !("SECONDS"==job.expected_duration_units || "MINUTES"==job.expected_duration_units || "HOURS"==job.expected_duration_units) )
+        //{
+        //    throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter expected_duration_units provided: ${job.timeout_unit}")
+        //}
+        this._validate_time_units("gov.sandia.sems.spifi.JobLauncher::appendJob(pre_delay_units)", job.pre_delay_units)
+        //if( !("SECONDS"==job.pre_delay_units || "MINUTES"==job.pre_delay_units || "HOURS"==job.pre_delay_units) )
+        //{
+        //    throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob invalid parameter pre_delay_units provided: ${job.timeout_unit}")
+        //}
         if(job.expected_duration_max > 0 && job.expected_duration_min >= job.expected_duration_max)
         {
             throw new Exception("gov.sandia.sems.spifi.JobLauncher::appendJob expected_duration_min >= expected_duration_max")
@@ -363,7 +388,9 @@ class JobLauncher
                                      retry_lines_to_check:    job.retry_lines_to_check,
                                      retry_max_limit:         job.retry_max_limit,
                                      retry_max_count:         job.retry_max_count,
-                                     retry_conditions:        job.retry_conditions
+                                     retry_conditions:        job.retry_conditions,
+                                     pre_delay:               job.pre_delay,
+                                     pre_delay_units:         job.pre_delay_units
                                    ]
     }
 
@@ -502,6 +529,8 @@ class JobLauncher
                     strJobs += "[SPiFI]>               ${cond.asString()}\n"
                 }
             }
+            strJobs += "[SPiFI]>   - pre_delay               : ${job.value.pre_delay}\n"
+            strJobs += "[SPiFI]>   - pre_delay_units         : ${job.value.pre_delay_units}\n"
         }
         // Strip off trailing newline...
         strJobs = strJobs.replaceAll("\\s\$","")
@@ -584,6 +613,15 @@ class JobLauncher
                         this._env.println "[SPiFI]> -------------------\n" +
                                           "[SPiFI]> Attempt ${attempt_number} of ${attempt_limit}\n" +
                                           "[SPiFI]> -------------------"
+
+                        // Add the pre-delay
+                        if(job.value.pre_delay > 0)
+                        {
+                            this._env.println "[SPiFI]> Job '${job.value.jenkins_job_name}' has a pre-delay " +
+                                              "of ${job.value.pre_delay} ${job.value.pre_delay_units}"
+                            this._env.sleep(time: job.value.pre_delay,
+                                            unit: job.value.pre_delay_units)
+                        }
 
                         //
                         // Launch the job here
@@ -846,6 +884,27 @@ class JobLauncher
         String statusKey = "NUM" + status
         this._lastResultSummary[statusKey] += 1
     }
+
+
+
+    /**
+     * Check a value that should contain a time unit containing
+     * one of  "HOURS", "MINUTES" or "SECONDS". Throw an error
+     * if the value doesn't match.
+     *
+     * @param label [REQUIRED] String - A label to include in the exception message if the check fails.
+     * @param value [REQUIRED] String - The value containing a unit of time that we're checking.
+     * @return 0 if ok. Raises an exception if the value check fails.
+     */
+    def _validate_time_units(String label, String value)
+    {
+        if( !("SECONDS"==value || "MINUTES"==value || "HOURS"==value) )
+        {
+            throw new Exception("invalid parameter to '${label}'. Expected 'HOURS'|'MINUTES'|'SECONDS' but got: '${value}'")
+        }
+        return 0
+    }
+
 
 }  // class JobLauncher
 
