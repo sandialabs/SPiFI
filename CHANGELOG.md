@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Next version will be v2.1.0
 
 ### Added
+- Add a "Pre-Delay" option to the ParallelJobLauncher.
+  - Add `pre_delay` option to `JobLauncher::appendJob()`. 
+    This is an integer value that must be >= 0.
+    Values less than 0 will be set to 0, which means no pre-delay.
+  - Add `pre_delay_units` parameter to `JobLauncher::appendJob()`
+    Default value is 'SECONDS', allowable values are "SECONDS","MINUTES","HOURS"
 - Add `format_duration_hms` to `ResultsUtility.genResultDetails()` which causes the
   duration value to be reported as `DD:HH:MM:SS.SS`
   - For JSONL output, the `duration` field will be a string if using HMS.
