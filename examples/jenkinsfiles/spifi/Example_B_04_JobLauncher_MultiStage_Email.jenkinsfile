@@ -77,14 +77,14 @@ Boolean param_clean_workspace = libspifi.JenkinsTools.spifi_checked_get_paramete
                                                                                   key: "PARAM_CLEAN_WORKSPACE",
                                                                                   default: false, 
                                                                                   required: true)
-Boolean param_email_replyto   = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                  params: params, 
-                                                                                  key: "PARAM_EMAIL_REPLYTO",
-                                                                                  default: "wcmclen@sandia.gov")
-Boolean param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                  params: params, 
-                                                                                  key: "PARAM_EMAIL_DEVOPS",
-                                                                                  default: "wcmclen@sandia.gov")
+String param_email_replyto   = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                 params: params, 
+                                                                                 key: "PARAM_EMAIL_REPLYTO",
+                                                                                 default: "wcmclen@sandia.gov")
+String param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
+                                                                                 params: params, 
+                                                                                 key: "PARAM_EMAIL_DEVOPS",
+                                                                                 default: "wcmclen@sandia.gov")
 
 // Create other variables that we wish to keep around to pass information across stages.
 String email_body = "<H1>Summary</H1>"
