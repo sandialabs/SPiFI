@@ -53,8 +53,10 @@
  */
 package gov.sandia.sems.spifi
 
-import org.apache.commons.lang.RandomStringUtils
-
+//import org.apache.commons.lang.RandomStringUtils
+import java.lang.Number
+import java.util.Random
+import java.util.UUID
 
 class Utility
 {
@@ -63,15 +65,20 @@ class Utility
      * Generate a random alphanumeric string
      *
      * @param length [REQUIRED] Integer - Length of string to generate.
+     *                          UPDATE: This is no longer used
      *
-     * @return String of random alphanumeric characters (CAPS only). i.e., "AC8ZF9ORQ51G7"
+     * @return String containing a randomly generated UUID string.
+     *
+     * TODO: @ WCMCLEN / SCAFFOLDING we may just want to remove this and use the UUID string
+     *       directly inside the Shell.execute() function since this didn't play well with
+     *       the sandobx... for now just returning a random UUID appears to be ok.
      */
     def randomString(Integer length)
     {
-        //String charset = (('A'..'Z') + ('0'..'9')).join()
-        String charset = "abcdef0123456789"
-        String randomString = RandomStringUtils.random(length, charset.toCharArray())
-        return randomString
+        //String alphabet = "0123456789abcdef"
+        //String output = RandomStringUtils.random(length, alphabet.toCharArray())
+        String output = java.util.UUID.randomUUID().toString()
+        return output
     }
 
 
