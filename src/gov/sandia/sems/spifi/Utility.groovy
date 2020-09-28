@@ -45,7 +45,7 @@
 /**
  * Utility.groovy
  *
- * Utility functions used internally within SPiFI.  
+ * Utility functions used internally within SPiFI.
  * Ordinarily these will not be exposed to users of the library.
  *
  * @author  William McLendon
@@ -68,7 +68,8 @@ class Utility
      */
     def randomString(Integer length)
     {
-        String charset = (('A'..'Z') + ('0'..'9')).join()
+        //String charset = (('A'..'Z') + ('0'..'9')).join()
+        String charset = "abcdef0123456789"
         String randomString = RandomStringUtils.random(length, charset.toCharArray())
         return randomString
     }
@@ -79,7 +80,7 @@ class Utility
      * Normalize time from HOURS or MINUTES into SECONDS
      *
      * @param time  [REQUIRED] Float  - The amount of time units to convert.
-     * @param units [REQUIRED] String - The unit of measurement of the time.  
+     * @param units [REQUIRED] String - The unit of measurement of the time.
      *                                  (HOURS, MINUTES, SECONDS, MILLISECONDS)
      *
      * @return Float value of time converted into seconds.
