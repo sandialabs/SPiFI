@@ -1,0 +1,159 @@
+#!/usr/bin/env groovy
+/*
+ *  SEMS Pipeline Framework Infrastructure (SPiFI)
+ *
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * LICENSE (3-Clause BSD)
+ * ----------------------
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Contact
+ * -------
+ * William C. McLendon III (wcmclen@sandia.gov)
+ */
+
+/**
+ * Unittest: SPiFI_test_driver_version
+ *
+ * This test is the main driver test for a specified VERSION of SPiFI
+ * - This test will load in and use the JobLauncher as part of
+ *   its core work, but will use minimal features from this tool. If
+ *   something is broken with the minimal JobLauncher class we'll see
+ *   this evidenced by just about everything failing.
+ *
+ */
+properties([
+    parameters([
+        string(name: 'SPiFI_VERSION',
+               defaultValue: 'SPiFI-DEV@master',
+               trim: true,
+               description: 'The SPiFI version to load')
+    ]),
+])
+
+String param_spifi_version = "SPiFI@master"
+if( params.containsKey("SPiFI_VERSION") )
+{
+    param_spifi_version = params.SPiFI_VERSION
+}
+
+
+// Grab a handle to all of SPiFI
+def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+
+
+// Print timestamps to console log
+timestamps()
+{
+
+
+node()
+{
+
+    /**
+     * Executes 'helpers'
+     *
+     */
+    stage("Test Helpers")
+    {
+        // Note: the `build` command returns a RunWrapper object. Information on RunWrapper's API
+        //       is here: https://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+
+        // Test the selectable_status helper.
+        def rval = null
+        rval = run_simple_job("SPiFI_test_helper_sample_job")
+        rval = run_simple_job("SPiFI_test_helper_selectable_status")
+
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+
+    }   // End Stage
+
+
+    stage("Test SPiFI Core")
+    {
+    }   // End Stage
+
+
+    stage("Test Examples")
+    {
+    }   // End Stage
+
+
+    stage("Test Experimental")
+    {
+    }   // End Stage
+
+
+    stage("Reporting")
+    {
+    }   // End Stage
+
+}   // End Node
+} // End Timestamps
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// H E L P E R   F U N C T I O N S
+//
+////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ *
+ *
+ */
+Map run_simple_job(String job_name)
+{
+    Map output = [:]
+    output.raw = build(job: job_name, propagate: false, wait: true)
+
+    if( "SUCCESS" == output.raw.getResult() )
+    {
+        // TODO: handle job success
+        output.body = "Job `${job_name}` was successful (${output.raw.getResult()})"
+    }
+    else
+    {
+        // TODO: handle job failure
+        output.body = "Job `${job_name}` did not succeed (${output.raw.getResult()})"
+    }
+
+    return output
+}
+
+
+

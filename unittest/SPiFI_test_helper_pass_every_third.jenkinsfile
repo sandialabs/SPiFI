@@ -43,7 +43,7 @@
  */
 
 /**
- * SPiFI_test_pass_every_third.jenkinsfile
+ * SPiFI_test_helper_pass_every_third.jenkinsfile
  *
  * This jenkinsfile defines a pipeline job that is used for testing
  * and debugging other pipelines.
@@ -57,6 +57,7 @@
  */
 properties([
     disableConcurrentBuilds(),
+    copyArtifactPermission("*"),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
@@ -81,7 +82,7 @@ if(params.containsKey("NODE_RESTRICTION"))
 }
 if(params.containsKey("PARAM_THRESHOLD"))
 {
-    try 
+    try
     {
         threshold = params.PARAM_THRESHOLD.toInteger()
     }
@@ -110,11 +111,21 @@ node(node_restriction)
                 "\u27A4 Stage: Load Artifact\n" +
                 "\u27A4"
 
-        copyArtifacts filter: 'counter.txt', 
-                      fingerprintArtifacts: true, 
-                      optional: true, 
-                      projectName: 'SPiFI_test_pass_every_third', 
-                      selector: lastCompleted()
+        try
+        {
+            copyArtifacts filter: "counter.txt",
+                          projectName: "${JOB_NAME}",
+                          selector: lastCompleted(),
+                          optional: true
+
+            println("Artifact loaded successfully")
+        }
+        catch(ex)
+        {
+            println("Artifact was not loaded.")
+            //Integer counter = 0
+            //writeFile file: 'counter.txt', text: "${counter}"
+        }
     }
 
 
@@ -135,7 +146,7 @@ node(node_restriction)
         }
         else
         {
-            println ">>> counter.txt exists   : YES" 
+            println ">>> counter.txt exists   : YES"
             def text = readFile "counter.txt"
             Integer counter = 1
             try
@@ -146,7 +157,7 @@ node(node_restriction)
             }
             counter++
             println ">>> counter value        : ${counter}"
-            
+
             sh(script: 'rm counter.txt', returnStatus: true)
             writeFile file: 'counter.txt', text: "${counter}"
 
@@ -180,7 +191,7 @@ node(node_restriction)
                 "\u27A4 Stage: Save Artifact\n" +
                 "\u27A4"
 
-        archiveArtifacts allowEmptyArchive: true, 
+        archiveArtifacts allowEmptyArchive: true,
                          artifacts: 'counter.txt'
     } // stage Save Artifact
 
