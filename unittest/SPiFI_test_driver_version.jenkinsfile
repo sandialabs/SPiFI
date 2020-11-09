@@ -91,12 +91,15 @@ node()
 
         // Test the selectable_status helper.
         def rval = null
-        rval = run_simple_job("SPiFI_test_helper_sample_job")
         rval = run_simple_job("SPiFI_test_helper_selectable_status")
 
         rval = run_simple_job("SPiFI_test_helper_pass_every_third")
         rval = run_simple_job("SPiFI_test_helper_pass_every_third")
         rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+
+        rval = run_simple_job("SPiFI_test_helper_sample_job_01")
+        rval = run_simple_job("SPiFI_test_helper_sample_job_02")
+        rval = run_simple_job("SPiFI_test_helper_sample_job_03")
 
     }   // End Stage
 
