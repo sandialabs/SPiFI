@@ -1,4 +1,3 @@
-#!/usr/bin/env groovy
 /*
  *  SEMS Pipeline Framework Infrastructure (SPiFI)
  *
@@ -41,16 +40,13 @@
  * -------
  * William C. McLendon III (wcmclen@sandia.gov)
  */
-
 /**
- * Unittest: SPiFI_test_driver_version
+ * Unittest: SPiFI_test_core_JobLauncher_Min
  *
- * This test is the main driver test for a specified VERSION of SPiFI
- * - This test will load in and use the JobLauncher as part of
- *   its core work, but will use minimal features from this tool. If
- *   something is broken with the minimal JobLauncher class we'll see
- *   this evidenced by just about everything failing.
- *
+ * This test is designed to test a _minimal_ JobLauncher
+ * The purpose is to do a minimal test on the JobLauncher
+ * so that we can use it later to launch multiple SPiFI
+ * core tests, etc.
  */
 properties([
     parameters([
@@ -61,6 +57,7 @@ properties([
     ]),
 ])
 
+
 String param_spifi_version = "SPiFI@master"
 if( params.containsKey("SPiFI_VERSION") )
 {
@@ -68,95 +65,65 @@ if( params.containsKey("SPiFI_VERSION") )
 }
 
 
-
 // Print timestamps to console log
 timestamps()
 {
 
 
-node()
+/**
+ * Launch a set of jobs in parallel using SPiFI
+ *
+ */
+node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 {
-    // Load the base SPiFI library
+    // Load in the base SPiFI library.
     def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
 
 
-    /**
-     * Executes 'helpers'
-     *
-     */
-    stage("Test Helpers")
+    // Pipeline Stage
+    stage("Stage 1")
     {
-        // Note: the `build` command returns a RunWrapper object. Information on RunWrapper's API
-        //       is here: https://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
+        // Instantiate a JobLauncher
+        def spifi_jl = libspifi.JobLauncher.new(env: this)
 
-        // Test the selectable_status helper.
-        def rval = null
-        rval = run_simple_job("SPiFI_test_helper_selectable_status")
+        // Add some jobs to run
+        spifi_jl.appendJob(label: "Job-1", job_name: "SPiFI_test_helper_sample_job_01")
+        spifi_jl.appendJob(label: "Job-2", job_name: "SPiFI_test_helper_sample_job_02")
+        spifi_jl.appendJob(label: "Job-3", job_name: "SPiFI_test_helper_sample_job_03")
 
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+        // Pretty Print the list of jobs to console output
+        spifi_jl.printJobList()
 
-        rval = run_simple_job("SPiFI_test_helper_sample_job_01")
-        rval = run_simple_job("SPiFI_test_helper_sample_job_02")
-        rval = run_simple_job("SPiFI_test_helper_sample_job_03")
+        // Launch the jobs
+        def results = spifi_jl.launchInParallel()
 
-    }   // End Stage
+        // Get the summary stats of the run
+        def summary = spifi_jl.getLastResultSummary()
 
+        println("+--------------------------------------+\n" +
+                "| R E S U L T S\n" +
+                "+--------------------------------------+\n" +
+                results)
 
-    stage("Test SPiFI Core")
-    {
-    }   // End Stage
+        println("+--------------------------------------+\n" +
+                "| S U M M A R Y\n" +
+                "+--------------------------------------+\n" +
+                summary)
 
-
-    stage("Test Examples")
-    {
-    }   // End Stage
-
-
-    stage("Test Experimental")
-    {
-    }   // End Stage
-
-
-    stage("Reporting")
-    {
-    }   // End Stage
-
-}   // End Node
-} // End Timestamps
+        // Check the summary
+        // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
+        if(summary.NUMJOBS != summary.NUMSUCCESS)
+        {
+            // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
+            currentBuild.result = 'FAILURE'
+            return
+        }
+    }  // End Stage
 
 
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// H E L P E R   F U N C T I O N S
-//
-////////////////////////////////////////////////////////////////////////////////
+}  // End Node()
 
 
-/**
- *
- *
- */
-Map run_simple_job(String job_name)
-{
-    Map output = [:]
-    output.raw = build(job: job_name, propagate: false, wait: true)
-
-    if( "SUCCESS" == output.raw.getResult() )
-    {
-        // TODO: handle job success
-        output.body = "Job `${job_name}` was successful (${output.raw.getResult()})"
-    }
-    else
-    {
-        // TODO: handle job failure
-        output.body = "Job `${job_name}` did not succeed (${output.raw.getResult()})"
-    }
-
-    return output
-}
-
+}  // End Timestamps()
 
 
