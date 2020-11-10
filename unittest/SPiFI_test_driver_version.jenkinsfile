@@ -102,14 +102,21 @@ node(params.NODE_RESTRICTION)
         // Test the selectable_status helper.
         def rval = null
         rval = run_simple_job("SPiFI_test_helper_selectable_status", job_params)
+        println("rval: ${rval}\n")
 
         rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
+        println("rval: ${rval}\n")
         rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
+        println("rval: ${rval}\n")
         rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
+        println("rval: ${rval}\n")
 
         rval = run_simple_job("SPiFI_test_helper_sample_job_01", job_params)
+        println("rval: ${rval}\n")
         rval = run_simple_job("SPiFI_test_helper_sample_job_02", job_params)
+        println("rval: ${rval}\n")
         rval = run_simple_job("SPiFI_test_helper_sample_job_03", job_params)
+        println("rval: ${rval}\n")
 
     }   // End Stage
 
@@ -119,7 +126,9 @@ node(params.NODE_RESTRICTION)
         print_banner("Stage: Test JobLauncher Min")
 
         rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
+        println("rval: ${rval}\n")
         rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
+        println("rval: ${rval}\n")
     }
 
 
@@ -183,8 +192,9 @@ Map run_simple_job(String job_name, Map params)
                             ]
                        )
 
-    // params.UNIQUEIFY
-    // params.SPiFI_VERSION
+    // Save some quick-access results without requiring the api to the 'raw' entry,
+    // which is a `org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper` object.
+    output.status = output.raw.getResult()
 
     if( "SUCCESS" == output.raw.getResult() )
     {
