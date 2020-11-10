@@ -94,6 +94,8 @@ node(params.NODE_RESTRICTION)
      */
     stage("Test Helpers")
     {
+        print_banner("Stage: Test Helpers")
+
         // Note: the `build` command returns a RunWrapper object. Information on RunWrapper's API
         //       is here: https://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
 
@@ -114,6 +116,8 @@ node(params.NODE_RESTRICTION)
 
     stage("Test JobLauncher Min")
     {
+        print_banner("Stage: Test JobLauncher Min")
+
         rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
         rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
     }
@@ -121,21 +125,25 @@ node(params.NODE_RESTRICTION)
 
     stage("Test SPiFI Core")
     {
+        print_banner("Stage: Test SPiFI Core")
     }   // End Stage
 
 
     stage("Test Examples")
     {
+        print_banner("Stage: Test Examples")
     }   // End Stage
 
 
     stage("Test Experimental")
     {
+        print_banner("Stage: Test Experimental")
     }   // End Stage
 
 
     stage("Reporting")
     {
+        print_banner("Stage: Reporting")
     }   // End Stage
 
 }   // End Node
@@ -148,6 +156,15 @@ node(params.NODE_RESTRICTION)
 // H E L P E R   F U N C T I O N S
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+
+
+def print_banner(String text)
+{
+    println("+==============================================================================+\n" +
+            "| ${text}\n" +
+            "+==============================================================================+")
+}
 
 
 /**
