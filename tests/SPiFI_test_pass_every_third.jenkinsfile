@@ -55,13 +55,15 @@
  * setting is 3 since the first two will always be FAILURE, UNSTABLE
  *
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+
 properties([
     disableConcurrentBuilds(),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
-        string(defaultValue: 'RHEL7 || RHEL6 || master',
-               description: "Node restriction, default: 'RHEL7 || RHEL6 || master'",
+        string(defaultValue: node_restriction,
+               description: "Node restriction, default: '${node_restriction}'",
                name: 'NODE_RESTRICTION'),
         string(defaultValue: '3',
                description: "Set the length of the [FAILURE, ..., FAILURE, SUCCESS] sequence",
@@ -69,9 +71,6 @@ properties([
     ])
 ])
 
-
-
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 
 Integer threshold = 3
 
@@ -81,7 +80,7 @@ if(params.containsKey("NODE_RESTRICTION"))
 }
 if(params.containsKey("PARAM_THRESHOLD"))
 {
-    try 
+    try
     {
         threshold = params.PARAM_THRESHOLD.toInteger()
     }
@@ -110,10 +109,10 @@ node(node_restriction)
                 "\u27A4 Stage: Load Artifact\n" +
                 "\u27A4"
 
-        copyArtifacts filter: 'counter.txt', 
-                      fingerprintArtifacts: true, 
-                      optional: true, 
-                      projectName: 'SPiFI_test_pass_every_third', 
+        copyArtifacts filter: 'counter.txt',
+                      fingerprintArtifacts: true,
+                      optional: true,
+                      projectName: 'SPiFI_test_pass_every_third',
                       selector: lastCompleted()
     }
 
@@ -135,7 +134,7 @@ node(node_restriction)
         }
         else
         {
-            println ">>> counter.txt exists   : YES" 
+            println ">>> counter.txt exists   : YES"
             def text = readFile "counter.txt"
             Integer counter = 1
             try
@@ -146,7 +145,7 @@ node(node_restriction)
             }
             counter++
             println ">>> counter value        : ${counter}"
-            
+
             sh(script: 'rm counter.txt', returnStatus: true)
             writeFile file: 'counter.txt', text: "${counter}"
 
@@ -180,7 +179,7 @@ node(node_restriction)
                 "\u27A4 Stage: Save Artifact\n" +
                 "\u27A4"
 
-        archiveArtifacts allowEmptyArchive: true, 
+        archiveArtifacts allowEmptyArchive: true,
                          artifacts: 'counter.txt'
     } // stage Save Artifact
 

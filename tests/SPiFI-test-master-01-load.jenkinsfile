@@ -49,13 +49,13 @@
  */
 
 // Configure default node restrictions
-String node_restriction = "RHEL7 || RHEL6 || master"
+String node_restriction = "OS_RHEL7 || RHEL7 || OS_RHEL6 || RHEL6 || master"
 
 
 properties([
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', 
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '',
                               artifactNumToKeepStr: '',
-                              daysToKeepStr: '365',       
+                              daysToKeepStr: '365',
                               numToKeepStr: '90')),
     disableConcurrentBuilds(),
     parameters([
@@ -91,7 +91,7 @@ node(node_restriction)
 
             try
             {
-                @Library('SPiFI-DEV@master') _ 
+                @Library('SPiFI-DEV@master') _
 
                 println "\u2705 SPiFI library loaded successfully"
 

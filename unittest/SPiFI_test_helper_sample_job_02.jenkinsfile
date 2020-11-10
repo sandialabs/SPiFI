@@ -49,18 +49,44 @@
  * We would use this to test the Job Launcher or Examples
  *
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+
+properties([
+    parameters([
+        string(defaultValue: 'TEST',
+                name: "UNIQUEIFY",
+                trim: true,
+                description: "If the same job is loaded multiple times with the same " +
+                             "parameter within a certain amount of time, Jenkins will " +
+                             "only launch one instance. This parameter gives the option to " +
+                             "provide a randomized string that will make Jenkins spawn " +
+                             "separate jobs for parallel testing."),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
+    ])
+])
+
+
+
 timestamps()
 {
 
-node()
+
+
+node(params.NODE_RESTRICTION)
 {
 
     stage("A")
     {
-        println("Stage A executed")
+        println("Stage A executed // ${params.UNIQUEIFY}")
     }
 
 } // End stage node
 
+
+
 } // End stage timestamps
+
 

@@ -49,7 +49,7 @@
  */
 
 // Configure default node restrictions
-String node_restriction = "RHEL7 || RHEL6 || master"
+String node_restriction = "OS_RHEL7 || RHEL7 || OS_RHEL6 || RHEL6 || master"
 
 
 
@@ -1109,7 +1109,7 @@ node(node_restriction)
         launcher_results = null
         launcher_summary = null
 
-        }   // end if major version < 2  
+        }   // end if major version < 2
         */
         // END DEPRECATED TESTS ====================================================================================================
 
@@ -2225,18 +2225,18 @@ node(node_restriction)
                 //            userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052',
                 //                                url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
                 //        ])
-                checkout changelog: false, 
-                         poll: false, 
-                         scm: [$class: 'GitSCM', 
-                               branches: [[name: '*/master']], 
-                               doGenerateSubmoduleConfigurations: false, 
-                               extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'], 
-                                            [$class: 'CheckoutOption'], 
-                                            [$class: 'CloneOption', noTags: false, reference: '', shallow: true, timeout: 10]], 
-                               submoduleCfg: [], 
-                               userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052', 
+                checkout changelog: false,
+                         poll: false,
+                         scm: [$class: 'GitSCM',
+                               branches: [[name: '*/master']],
+                               doGenerateSubmoduleConfigurations: false,
+                               extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'SPiFI'],
+                                            [$class: 'CheckoutOption'],
+                                            [$class: 'CloneOption', noTags: false, reference: '', shallow: true, timeout: 10]],
+                               submoduleCfg: [],
+                               userRemoteConfigs: [[credentialsId: '0aacc0f3-7e90-4b0f-9eda-068f1d6ce052',
                                                     url: 'git@gitlab-ex.sandia.gov:SEMS/sems-pipeline-framework-infrastructure.git']]
-                              ]                          
+                              ]
 
                 def output = shell.execute(env: this,
                                            command: "SPiFI/tests/snlgitlab-clone-test.sh ${repository_url}",

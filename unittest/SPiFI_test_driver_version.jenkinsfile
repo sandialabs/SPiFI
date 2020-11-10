@@ -52,12 +52,17 @@
  *   this evidenced by just about everything failing.
  *
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
                defaultValue: 'SPiFI-DEV@master',
                trim: true,
-               description: 'The SPiFI version to load')
+               description: 'The SPiFI version to load'),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
     ]),
 ])
 
@@ -73,11 +78,14 @@ if( params.containsKey("SPiFI_VERSION") )
 timestamps()
 {
 
-
-node()
+node(params.NODE_RESTRICTION)
 {
     // Load the base SPiFI library
     def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+
+    Map job_params = [:]
+    job_params.UNIQUEIFY     = "Testing Version ${param_spifi_version}"
+    job_params.SPiFI_VERSION = param_spifi_version
 
 
     /**
@@ -91,17 +99,24 @@ node()
 
         // Test the selectable_status helper.
         def rval = null
-        rval = run_simple_job("SPiFI_test_helper_selectable_status")
+        rval = run_simple_job("SPiFI_test_helper_selectable_status", job_params)
 
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
-        rval = run_simple_job("SPiFI_test_helper_pass_every_third")
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
+        rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
 
-        rval = run_simple_job("SPiFI_test_helper_sample_job_01")
-        rval = run_simple_job("SPiFI_test_helper_sample_job_02")
-        rval = run_simple_job("SPiFI_test_helper_sample_job_03")
+        rval = run_simple_job("SPiFI_test_helper_sample_job_01", job_params)
+        rval = run_simple_job("SPiFI_test_helper_sample_job_02", job_params)
+        rval = run_simple_job("SPiFI_test_helper_sample_job_03", job_params)
 
     }   // End Stage
+
+
+    stage("Test JobLauncher Min")
+    {
+        rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
+        rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
+    }
 
 
     stage("Test SPiFI Core")
@@ -139,10 +154,20 @@ node()
  *
  *
  */
-Map run_simple_job(String job_name)
+Map run_simple_job(String job_name, Map params)
 {
     Map output = [:]
-    output.raw = build(job: job_name, propagate: false, wait: true)
+    output.raw = build(job: job_name,
+                       propagate: false,
+                       wait: true,
+                       parameters: [
+                            string(name: "UNIQUEIFY", value: params.UNIQUEIFY),
+                            string(name: "SPiFI_VERSION", value: params.SPiFI_VERSION)
+                            ]
+                       )
+
+    // params.UNIQUEIFY
+    // params.SPiFI_VERSION
 
     if( "SUCCESS" == output.raw.getResult() )
     {

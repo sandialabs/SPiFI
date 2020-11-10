@@ -55,31 +55,28 @@
  * setting is 3 since the first two will always be FAILURE, UNSTABLE
  *
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 properties([
     disableConcurrentBuilds(),
     copyArtifactPermission("*"),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
-        string(defaultValue: 'RHEL7 || RHEL6 || master',
-               description: "Node restriction, default: 'RHEL7 || RHEL6 || master'",
-               name: 'NODE_RESTRICTION'),
-        string(defaultValue: '3',
-               description: "Set the length of the [FAILURE, ..., FAILURE, SUCCESS] sequence",
-               name: 'PARAM_THRESHOLD')
+        string(name: "PARAM_THRESHOLD",
+               defaultValue: '3',
+               trim: true,
+               description: "Set the length of the [FAILURE, ..., FAILURE, SUCCESS] sequence"),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
     ])
 ])
 
 
-
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
-
 Integer threshold = 3
 
-if(params.containsKey("NODE_RESTRICTION"))
-{
-  node_restriction = params.NODE_RESTRICTION
-}
+
 if(params.containsKey("PARAM_THRESHOLD"))
 {
     try
@@ -99,7 +96,7 @@ if(threshold < 3)
 
 
 
-node(node_restriction)
+node(params.NODE_RESTRICTION)
 {
     timestamps()
     {

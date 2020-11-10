@@ -48,14 +48,20 @@
  * This just tests loading SPiFI and exits.
  *
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
                defaultValue: 'SPiFI@master',
                trim: true,
-               description: 'The SPiFI version to load')
+               description: 'The SPiFI version to load'),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
     ]),
 ])
+
 
 String param_spifi_version = "SPiFI@master"
 if( params.containsKey("SPiFI_VERSION") )
@@ -67,7 +73,7 @@ if( params.containsKey("SPiFI_VERSION") )
 def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
 
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node(params.NODE_RESTRICTION)
 {
 
     stage("A")

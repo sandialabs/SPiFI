@@ -46,12 +46,18 @@
  * This test loads SPiFI using a specific version and accesses / prints out
  * the version number.
  */
+String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
                defaultValue: 'SPiFI@master',
                trim: true,
-               description: 'The SPiFI version to load')
+               description: 'The SPiFI version to load'),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
     ]),
 ])
 
@@ -63,7 +69,7 @@ assert params.containsKey("SPiFI_VERSION"), "Missing required parameter: SPiFI_V
 def libspifi = library(params.SPiFI_VERSION).gov.sandia.sems.spifi
 
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node(params.NODE_RESTRICTION)
 {
     stage("Get Version")
     {
