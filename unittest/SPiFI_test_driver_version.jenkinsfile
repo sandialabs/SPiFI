@@ -98,37 +98,66 @@ node(params.NODE_RESTRICTION)
 
         // Test the selectable_status helper.
 
+        Map sub_stage_results = [:]
         Map sub_stages = [:]
         sub_stages["Test Helpers (A)"] = {
-            def rval = null
-            rval = run_simple_job("SPiFI_test_helper_selectable_status", job_params)
-            println("rval: ${rval}\n")
+            String job_name = "SPiFI_test_helper_selectable_status"
+            def rval = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name] = rval
+            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (B)"] = {
-            def rval = null
-            rval = run_simple_job("SPiFI_test_helper_sample_job_01", job_params)
-            println("rval: ${rval}\n")
+            String job_name = "SPiFI_test_helper_sample_job_01"
+            def rval = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name] = rval
+            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (C)"] = {
-            def rval = null
-            rval = run_simple_job("SPiFI_test_helper_sample_job_02", job_params)
-            println("rval: ${rval}\n")
+            String job_name = "SPiFI_test_helper_sample_job_02"
+            def rval = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name] = rval
+            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (D)"] = {
-            def rval = null
-            rval = run_simple_job("SPiFI_test_helper_sample_job_03", job_params)
-            println("rval: ${rval}\n")
+            String job_name = "SPiFI_test_helper_sample_job_03"
+            def rval = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name] = rval
+            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (E)"] = {
-            def rval = null
-            rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
-            println("rval: ${rval}\n")
-            rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
-            println("rval: ${rval}\n")
-            rval = run_simple_job("SPiFI_test_helper_pass_every_third", job_params)
-            println("rval: ${rval}\n")
+            String job_name = "SPiFI_test_helper_pass_every_third"
+            def rval1 = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name+"::01"] = rval1
+
+            def rval2 = run_simple_job(job_name, job_params)
+            sub_stage_results[job_name+"::02"] = rval2
+            // Retry the third attempt up to 4 times to find the SUCCESS if it's out of sync.
+            def rval3 = null
+            Boolean attempt_failed = true
+            Integer attempt_number = 0
+            while(attempt_failed && attempt_number < 4)
+            {
+                attempt_number += 1
+                rval3 = run_simple_job(job_name, job_params)
+                if(rval3.status == "SUCCESS")
+                {
+                    attempt_failed = false
+                }
+                //assert rval3.status == "SUCCESS" : "Expected SUCCESS but got ${rval3.status}"
+            }
+            sub_stage_results[job_name+"::03"] = rval3
         }
         parallel(sub_stages)
+        println(sub_stage_results)
+
+        String html_snip = ""
+        sub_stage_results.each { key,value ->
+            println("---[ ${key} ]---")
+            print_result_summary(value)
+        }
+
+
+
 
     }   // End Stage
 
@@ -199,7 +228,9 @@ node(params.NODE_RESTRICTION)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-
+/**
+ *
+ */
 def print_banner(String text)
 {
     println("+==============================================================================+\n" +
@@ -210,10 +241,7 @@ def print_banner(String text)
 }
 
 
-
-
 /**
- *
  *
  */
 Map run_simple_job(String job_name, Map params)
@@ -230,11 +258,11 @@ Map run_simple_job(String job_name, Map params)
 
     // Save some quick-access results without requiring the api to the 'raw' entry,
     // which is a `org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper` object.
+    output.job       = job_name
     output.status    = output.raw.getResult()
     output.duration  = output.raw.getDuration()/1000.0
     output.buildid   = output.raw.getId()
     //output.getLog100 = output.raw.getRawBuild().getLog(100)
-
 
     if( "SUCCESS" == output.raw.getResult() )
     {
@@ -246,15 +274,20 @@ Map run_simple_job(String job_name, Map params)
         // TODO: handle job failure
         output.body = "Job `${job_name}` did not succeed (${output.raw.getResult()})"
     }
-
-    String strout = ""
-    output.each { key,value ->
-        strout += "- ${key}: ${value}\n"
-    }
-    println(strout)
-
     return output
 }
 
+
+/**
+ *
+ */
+def print_result_summary(Map result)
+{
+    String output = ""
+    result.each { key,value ->
+        output += "- ${key}: ${value}\n"
+    }
+    println(output)
+}
 
 
