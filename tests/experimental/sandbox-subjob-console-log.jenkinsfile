@@ -147,7 +147,7 @@ node("rhel7")
                                job_name: "SPiFI_test_pass_every_third",
                                timeout: 6,
                                timeout_unit: "MINUTES",
-                               parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                               parameters: [ (string(name:"NODE_RESTRICTION", value: "OS_RHEL7 || RHEL7 || master")),
                                              (string(name:"PARAM_THRESHOLD",  value: "3"))
                                            ],
                                dry_run: false,
@@ -188,7 +188,7 @@ node("rhel7")
                                job_name: "SPiFI_test_pass_every_third",
                                timeout: 6,
                                timeout_unit: "MINUTES",
-                               parameters: [ (string(name:"NODE_RESTRICTION", value: "RHEL7 || RHEL6 || master || coeus")),
+                               parameters: [ (string(name:"NODE_RESTRICTION", value: "OS_RHEL7 || RHEL7 || master")),
                                              (string(name:"PARAM_THRESHOLD",  value: "5"))      // SUCCESS on 5th run
                                            ],
                                dry_run: false,

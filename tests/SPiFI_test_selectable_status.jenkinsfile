@@ -63,7 +63,7 @@
  *
  */
 
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
 
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
@@ -96,7 +96,7 @@ node(node_restriction)
 {
     timestamps()
     {
-    
+
     try
     {
         cleanWs()
