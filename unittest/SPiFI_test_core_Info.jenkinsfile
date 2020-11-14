@@ -46,7 +46,7 @@
  * This test loads SPiFI using a specific version and accesses / prints out
  * the version number.
  */
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
 
 properties([
     parameters([

@@ -49,7 +49,7 @@
  * We would use this to test the Job Launcher or Examples
  *
  */
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
 
 properties([
     parameters([

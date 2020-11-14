@@ -52,7 +52,7 @@
  *   this evidenced by just about everything failing.
  *
  */
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
@@ -84,6 +84,8 @@ node(params.NODE_RESTRICTION)
     Map job_params = [:]
     job_params.UNIQUEIFY     = "Testing Version ${param_spifi_version}"
     job_params.SPiFI_VERSION = param_spifi_version
+
+    String summary_email_body = ""
 
 
     /**

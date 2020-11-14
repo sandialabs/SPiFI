@@ -55,7 +55,7 @@
  * setting is 3 since the first two will always be FAILURE, UNSTABLE
  *
  */
-String node_restriction = "RHEL7 || OS_RHEL7 || RHEL6 || OS_RHEL6 || master"
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
 properties([
     disableConcurrentBuilds(),
     copyArtifactPermission("*"),
