@@ -53,7 +53,7 @@ String node_restriction = "RHEL7 || OS_RHEL7 || master"
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
-               defaultValue: 'SPiFI-DEV@master',
+               defaultValue: 'SPiFI@master',
                trim: true,
                description: 'The SPiFI version to load'),
         string(name: 'NODE_RESTRICTION',
