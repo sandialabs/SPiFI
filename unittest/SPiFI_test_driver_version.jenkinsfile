@@ -171,12 +171,16 @@ node(params.NODE_RESTRICTION)
     stage("Test JobLauncher Min")
     {
         print_banner("Stage: Test JobLauncher Min")
+        def rval = null
 
         rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
         println("rval: ${rval}\n")
+        print_result_summary(rval)
 
         rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
         println("rval: ${rval}\n")
+        print_result_summary(rval)
+
     }
 
 
