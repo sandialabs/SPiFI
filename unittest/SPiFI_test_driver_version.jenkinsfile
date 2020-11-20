@@ -78,6 +78,7 @@ if( params.containsKey("SPiFI_VERSION") )
 timestamps()
 {
 
+
 node(params.NODE_RESTRICTION)
 {
     // Global vars for node() { ... }
@@ -150,11 +151,41 @@ node(params.NODE_RESTRICTION)
         parallel(sub_stages)
         println(sub_stage_results)
 
-        String html_snip = ""
+        Boolean stage_failed = false
+        //summary_email_body += "<H3>Stage: Test Helpers</H3>\n"
+
+        // generate details
+        String summary_email_details = "<UL>\n"
         sub_stage_results.each { key,value ->
             println("---[ ${key} ]---")
             print_result_summary(value)
+            summary_email_details += "<LI><B>${value.job}</B>: <SPAN>${value.status}</SPAN></LI>\n"
+            if( value.status != "SUCCESS" )
+            {
+                stage_failed = true
+            }
         }
+        summary_email_details += "</UL>\n"
+
+        // Append to summary email body.
+        summary_email_body += "<H3>"
+        if(stage_failed)
+        {
+            summary_email_body += "&#10060; "
+        }
+        else
+        {
+            summary_email_body += "&#9989; "
+        }
+        summary_email_body += "Stage: Test Helpers</H3>\n"
+        summary_email_body += "<DIV>\n"
+        summary_email_body += "<DETAILS>\n"
+        summary_email_body += "<SUMMARY>Details</SUMMARY>\n"
+        summary_email_body += "${summary_email_details}\n"
+        summary_email_body += "</DETAILS>\n"
+        summary_email_body += "</DIV>\n"
+
+
     }   // End Stage
 
 
@@ -214,6 +245,37 @@ node(params.NODE_RESTRICTION)
     stage("Reporting")
     {
         print_banner("Stage: Reporting")
+
+        // Assemble HTML body
+        String summary_email_header = """<!DOCTYPE html>
+                <HTML>
+                <HEAD>
+                <STYLE>
+                /* Defined <span/> blocks to allow in-line coloring/formatting of text */
+                span.bold   { font-weight: bolder; }
+                span.gray   { color: gray;    }
+                span.red    { color: #990000; }
+                span.green  { color: #009900; }
+                span.blue   { color: #000099; }
+                span.yellow { color: #999900; }
+                </STYLE>
+                </HEAD>
+
+                <BODY>
+                """.stripIndent()
+
+        summary_email_body = summary_email_header +
+                             summary_email_body   +
+                             "\n</BODY>\n"
+
+        println(summary_email_body)
+
+        mail to: "wcmclen@sandia.gov",
+             replyTo: "wcmclen@sandia.gov",
+             subject: "SPiFI Test Summary",
+             body: summary_email_body,
+             mimeType: "text/html"
+
     }   // End Stage
 
 }   // End Node
