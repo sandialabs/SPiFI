@@ -66,12 +66,12 @@ properties([
     ]),
 ])
 
+
 String param_spifi_version = "SPiFI@master"
 if( params.containsKey("SPiFI_VERSION") )
 {
     param_spifi_version = params.SPiFI_VERSION
 }
-
 
 
 // Print timestamps to console log
@@ -128,27 +128,24 @@ node(params.NODE_RESTRICTION)
             //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (E)"] = {
+            def rval = null
             String job_name = "SPiFI_test_helper_pass_every_third"
-            def rval1 = run_simple_job(job_name, job_params)
-            sub_stage_results[job_name+"::01"] = rval1
 
-            def rval2 = run_simple_job(job_name, job_params)
-            sub_stage_results[job_name+"::02"] = rval2
-            // Retry the third attempt up to 4 times to find the SUCCESS if it's out of sync.
-            def rval3 = null
+            // Attempt this job up to 6 times to find the SUCCESS if it's out of sync.
+            // it should normally pass every third run (FAILURE, UNSTABLE, SUCCESS)
             Boolean attempt_failed = true
             Integer attempt_number = 0
-            while(attempt_failed && attempt_number < 4)
+            while(attempt_failed && attempt_number < 6)
             {
                 attempt_number += 1
-                rval3 = run_simple_job(job_name, job_params)
-                if(rval3.status == "SUCCESS")
+                rval = run_simple_job(job_name, job_params)
+                if(rval.status == "SUCCESS")
                 {
                     attempt_failed = false
                 }
-                //assert rval3.status == "SUCCESS" : "Expected SUCCESS but got ${rval3.status}"
             }
-            sub_stage_results[job_name+"::03"] = rval3
+            // Save the final attempt
+            sub_stage_results[job_name] = rval
         }
         parallel(sub_stages)
         println(sub_stage_results)
@@ -158,10 +155,6 @@ node(params.NODE_RESTRICTION)
             println("---[ ${key} ]---")
             print_result_summary(value)
         }
-
-
-
-
     }   // End Stage
 
 
