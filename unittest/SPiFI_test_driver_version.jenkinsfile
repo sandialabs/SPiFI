@@ -196,15 +196,38 @@ node(params.NODE_RESTRICTION)
     {
         print_banner("Stage: Test JobLauncher Min")
         def rval = null
+        def rval_list = [:]
 
-        rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
-        println("rval: ${rval}\n")
-        print_result_summary(rval)
+        rval_list["Load_SPiFI"] = run_simple_job("SPiFI_test_core_load_spifi", job_params)
+        //println("rval: ${rval}\n")
+        //print_result_summary(rval)
 
-        rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
-        println("rval: ${rval}\n")
-        print_result_summary(rval)
+        rval_list["JobLauncher_Min"] = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
+        //println("rval: ${rval}\n")
+        //print_result_summary(rval)
 
+        Boolean stage_failed = false
+        String summary_email_details = "<UL>\n"
+
+        sub_stage_results.each { key,value ->
+            println("---[ ${key} ]---")
+            print_result_summary(value)
+            summary_email_details += "<LI><B>${value.job}</B>: <SPAN>${value.status}</SPAN></LI>\n"
+            if( value.status != "SUCCESS" )
+            {
+                stage_failed = true
+            }
+        }
+
+        summary_email_details = "</UL>\n"
+
+        summary_email_body += "Stage: Test JobLauncher Min</H3>\n"
+        summary_email_body += "<DIV>\n"
+        summary_email_body += "<DETAILS>\n"
+        summary_email_body += "<SUMMARY>Details</SUMMARY>\n"
+        summary_email_body += "${summary_email_details}\n"
+        summary_email_body += "</DETAILS>\n"
+        summary_email_body += "</DIV>\n"
     }
 
 
