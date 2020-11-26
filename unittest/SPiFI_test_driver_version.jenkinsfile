@@ -159,11 +159,13 @@ node(params.NODE_RESTRICTION)
         sub_stage_results.each { key,value ->
             println("---[ ${key} ]---")
             print_result_summary(value)
-            summary_email_details += "<LI><B>${value.job}</B>: <SPAN>${value.status}</SPAN></LI>\n"
+            String span_class = "green"
             if( value.status != "SUCCESS" )
             {
                 stage_failed = true
+                span_class = "red"
             }
+            summary_email_details += "<LI>${value.job}: <SPAN class='${span_class}'><B>${value.status}</B></SPAN></LI>\n"
         }
         summary_email_details += "</UL>\n"
 
@@ -178,7 +180,7 @@ node(params.NODE_RESTRICTION)
             summary_email_body += "&#9989; "
         }
         summary_email_body += "Stage: Test Helpers</H3>\n"
-        summary_email_body += "<DIV>\n"
+        summary_email_body += "<DIV class='Indent1'>\n"
         summary_email_body += "<DETAILS>\n"
         summary_email_body += "<SUMMARY>Details</SUMMARY>\n"
         summary_email_body += "${summary_email_details}\n"
@@ -207,22 +209,33 @@ node(params.NODE_RESTRICTION)
         //print_result_summary(rval)
 
         Boolean stage_failed = false
-        String summary_email_details = "<UL>\n"
 
-        sub_stage_results.each { key,value ->
+        // generate details
+        String summary_email_details = "<UL>\n"
+        rval_list.each { key,value ->
             println("---[ ${key} ]---")
             print_result_summary(value)
-            summary_email_details += "<LI><B>${value.job}</B>: <SPAN>${value.status}</SPAN></LI>\n"
+            String span_class = "green"
             if( value.status != "SUCCESS" )
             {
                 stage_failed = true
+                span_class = "red"
             }
+            summary_email_details += "<LI>${value.job}: <SPAN class='${span_class}'><B>${value.status}</B></SPAN></LI>\n"
         }
+        summary_email_details += "</UL>\n"
 
-        summary_email_details = "</UL>\n"
-
+        summary_email_body += "<H3>"
+        if(stage_failed)
+        {
+            summary_email_body += "&#10060; "
+        }
+        else
+        {
+            summary_email_body += "&#9989; "
+        }
         summary_email_body += "Stage: Test JobLauncher Min</H3>\n"
-        summary_email_body += "<DIV>\n"
+        summary_email_body += "<DIV class='Indent1'>\n"
         summary_email_body += "<DETAILS>\n"
         summary_email_body += "<SUMMARY>Details</SUMMARY>\n"
         summary_email_body += "${summary_email_details}\n"
@@ -281,6 +294,7 @@ node(params.NODE_RESTRICTION)
                 span.green  { color: #009900; }
                 span.blue   { color: #000099; }
                 span.yellow { color: #999900; }
+                div.Indent1 { text-indent: 1.0em; }
                 </STYLE>
                 </HEAD>
 
