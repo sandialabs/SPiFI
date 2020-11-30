@@ -341,7 +341,7 @@ def print_banner(String text)
 
 
 /**
- *
+ * TODO: Set up an 'expected' value to add to the returned data structure?
  */
 Map run_simple_job(String job_name, Map job_params)
 {
