@@ -1,14 +1,14 @@
 #!/usr/bin/env groovy
 
 properties(
-    [ 
-        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '90', numToKeepStr: '120')), 
-        disableConcurrentBuilds(), 
-        gitLabConnection('None'), 
+    [
+        buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '90', numToKeepStr: '120')),
+        disableConcurrentBuilds(),
+        gitLabConnection('None'),
         [ $class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false ],
         parameters(
             [
-                string(name: "DESTINATION_SERVER", defaultValue: 'software-srn.sandia.gov', description: '', trim: true), 
+                string(name: "DESTINATION_SERVER", defaultValue: 'software-srn.sandia.gov', description: '', trim: true),
                 string(name: "DESTINATION_PATH",   defaultValue: '/sems-data-store/dakota/testing/sshPublisherTest', description: '', trim: true)
             ]
         )
@@ -29,7 +29,7 @@ if( !params.containsKey("DESTINATION_PATH") )
 }
 
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     cleanWs()
 
@@ -39,14 +39,14 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
         // do something and create a text file output.txt
         sh "ls -ltr > test-output.txt 2>&1"
         sh "echo 'this is a test' > test-output.md 2>&1"
-    }  // End Stage 
+    }  // End Stage
 
 
     stage("Archive Artifacts")
     {
         // archive the file as an artifact
-        archiveArtifacts(allowEmptyArchive: true, 
-                         artifacts: '*.txt, *.md', 
+        archiveArtifacts(allowEmptyArchive: true,
+                         artifacts: '*.txt, *.md',
                          fingerprint: true)
     }  // End Stage
 

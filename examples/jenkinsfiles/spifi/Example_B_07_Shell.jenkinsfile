@@ -53,8 +53,8 @@ def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
 // Configure properties
 properties([
     parameters([
-        booleanParam(name: "DRY_RUN", 
-                     defaultValue: false, 
+        booleanParam(name: "DRY_RUN",
+                     defaultValue: false,
                      description: 'Enables dry-run mode.')
     ])
 ])
@@ -74,7 +74,7 @@ timestamps()
 
 
 // Launch pipeline on a rhel6 or rhel7 jenkins node
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
 
     // Clean the workspace
@@ -92,7 +92,7 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
                                           dry_run_output: "dry run output",
                                           dry_run_status: 0,
                                           verbose: false
-                                         ) 
+                                         )
         println results
 
     }  // End Stage 1

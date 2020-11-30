@@ -45,7 +45,7 @@
  * Launch a set of jobs in parallel using SPiFI
  *
  */
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     // Load the SPiFI library
     def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi

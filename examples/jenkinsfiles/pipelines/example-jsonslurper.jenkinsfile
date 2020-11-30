@@ -6,7 +6,7 @@
 
 import groovy.json.*   // Needed for JsonSlurper
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     cleanWs()
 
@@ -17,22 +17,22 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
                       "]"
         writeFile(file: "test.txt", text: text)
     }
-    
+
     stage("B")
     {
         catchError(buildResult: "SUCCESS", stageResult: "FAILURE")
         {
             def jS  = new JsonSlurper()
-            
+
             def jsonFromText = jS.parseText('{"list": [1,2,3,4]}')
             println "\u2756 " + jsonFromText
             println "\u2756 " + jsonFromText.list[2]
-            
-            
+
+
             String textFile     = readFile("test.txt")
             println "\u2756 TextFile:\n" + textFile
 
-            def jS2 = new JsonSlurper()  // I get tracebacks if I don't make a new JsonSlurper for the 2nd read 
+            def jS2 = new JsonSlurper()  // I get tracebacks if I don't make a new JsonSlurper for the 2nd read
             def jsonFromFile = jS2.parseText( textFile )
             println "\u2756 " + jsonFromFile
             println "\u2756 " + "${jsonFromFile[0].A}"
