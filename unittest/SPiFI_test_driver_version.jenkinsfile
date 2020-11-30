@@ -282,7 +282,7 @@ node(params.NODE_RESTRICTION)
         {
             mail to: "wcmclen@sandia.gov",
                  replyTo: "wcmclen@sandia.gov",
-                 subject: "SPiFI Test Summary (${pipeline_status_slug})",
+                 subject: "SPiFI Test Summary",
                  body: summary_email_body,
                  mimeType: "text/html"
         }
