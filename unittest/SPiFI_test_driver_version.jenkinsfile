@@ -261,16 +261,18 @@ node(params.NODE_RESTRICTION)
                 <BODY>
                 """.stripIndent()
 
+        String pipeline_status_slug = ""
         if(pipeline_passed)
         {
-            summary_email_header += "<H1>&#9989; SUCCESS</H1>"
+            pipeline_status_slug = "&#9989; SUCCESS"
         }
         else
         {
-            summary_email_header += "<H1>&#10060; FAILURE</H1>"
+            pipeline_status_slug = "&#10060; FAILURE"
         }
 
         summary_email_body = summary_email_header +
+                            "<H1>${pipeline_status_slug}</H1>\n" +
                              summary_email_body   +
                              "\n</BODY>\n"
 
@@ -280,7 +282,7 @@ node(params.NODE_RESTRICTION)
         {
             mail to: "wcmclen@sandia.gov",
                  replyTo: "wcmclen@sandia.gov",
-                 subject: "SPiFI Test Summary",
+                 subject: "SPiFI Test Summary (${pipeline_status_slug})",
                  body: summary_email_body,
                  mimeType: "text/html"
         }
