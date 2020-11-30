@@ -49,7 +49,7 @@ def libspifi = library("SPiFI-DEV@master").gov.sandia.sems.spifi
  * Launch a set of jobs in parallel using SPiFI
  * Note: the sub-jobs are the jobs located in the `tests/` directory within SPiFI.
  */
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     // Pipeline Stage
     stage("MyStage")
@@ -73,7 +73,7 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
                            retry_conditions: [ libspifi.DelayedRetryOnRegex.new("env": this,
                                                                                 "retry_delay": 1,
                                                                                 "retry_delay_units": "MINUTES",
-                                                                                "retry_regex": "TestingError_UNSTABLE"),                                                         
+                                                                                "retry_regex": "TestingError_UNSTABLE"),
                                                libspifi.DelayedRetryOnRegex.new("env": this,
                                                                                 "retry_delay": 10,
                                                                                 "retry_delay_units": "SECONDS",

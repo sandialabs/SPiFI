@@ -11,7 +11,7 @@ println "text: ${text}"
 
 timestamps
 {
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     stage("A")
     {
@@ -19,14 +19,14 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
         List match_list = get_matches(pattern, text)
         println match_list
     } // Stage A
-    
+
     stage("B")
     {
         def pattern = ~/this won't match my string/
         List match_list = get_matches(pattern, text)
         println match_list
     } // Stage B
-    
+
 }  // node
 }  // timestamps
 
@@ -35,19 +35,19 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
 /**
  * Takes a regular expression pattern and a text string
  * and returns the match instances as a list.
- * 
+ *
  * @param regex java.util.regex.Pattern [REQUIRED] This is a pattern object
  *                    and can be created via def pattern = ~/<regex>/
  * @param text  String [REQUIRED] Text to be searched.
- * 
+ *
  * @returns List containing the matched results inside the '()' regions
  */
 def get_matches(def regex, String text)
 {
     assert regex instanceof java.util.regex.Pattern
-    
+
     List output = []
-    
+
     def matcher = (text =~ regex)
     if(matcher)
     {

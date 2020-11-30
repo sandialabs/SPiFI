@@ -67,7 +67,7 @@ assert params.containsKey("SPiFI_VERSION"), "Missing required parameter: SPiFI_V
 def libspifi = library(params.SPiFI_VERSION).gov.sandia.sems.spifi
 
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     stage("Get Version")
     {

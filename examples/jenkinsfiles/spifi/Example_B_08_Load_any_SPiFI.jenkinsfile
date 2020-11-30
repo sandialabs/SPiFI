@@ -45,7 +45,7 @@
  * Load ANY SPiFI library
  *
  * This is a more complicated example based on Example B-01 which
- * demonstrates how to load SPiFI from ANY git repository using 
+ * demonstrates how to load SPiFI from ANY git repository using
  * dynamic library loading.
  *
  * This pipeline demonstrates a parameterized way to load any branch
@@ -58,7 +58,7 @@
 properties([
     parameters([
         string(name: "NODE_RESTRICTION",
-               defaultValue: "master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7",
+               defaultValue: "RHEL7 || OS_RHEL7 || master",
                description: "Set the node-restriction expression here. (i.e., 'OS_RHEL7 || OS_RHEL8')",
                trim: true),
         string(name: "SPiFI_URL",
@@ -126,7 +126,7 @@ catch(ex)
             "credential: ${params.SPiFI_GIT_CREDENTIAL}"
     throw ex
 }
-// 
+//
 // SPiFI Library Load Complete
 ///////////////////////////////
 

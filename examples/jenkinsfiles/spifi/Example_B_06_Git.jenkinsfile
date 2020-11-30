@@ -89,7 +89,7 @@ timestamps()
 {
 
 // Launch pipeline on a rhel6 or rhel7 jenkins node
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
 
     cleanWs()

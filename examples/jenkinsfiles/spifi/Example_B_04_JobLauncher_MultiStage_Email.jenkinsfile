@@ -51,38 +51,38 @@ properties([
         logRotator(daysToKeepStr: '90', numToKeepStr: '30', artifactDaysToKeepStr: '', artifactNumToKeepStr: '')
     ),
     disableConcurrentBuilds(),
-    parameters([ booleanParam(name: 'PARAM_DRY_RUN', 
+    parameters([ booleanParam(name: 'PARAM_DRY_RUN',
                              defaultValue: false,
                              description: '''dry-run mode: echo commands but don't run anything'''),
-                 booleanParam(name: 'PARAM_CLEAN_WORKSPACE', 
+                 booleanParam(name: 'PARAM_CLEAN_WORKSPACE',
                              defaultValue: false,
                              description: '''Optionally clean the workspace before entering the pipeline.'''),
-                 stringParam(name: 'PARAM_EMAIL_REPLYTO', 
+                 stringParam(name: 'PARAM_EMAIL_REPLYTO',
                              defaultValue: "wcmclen@sandia.gov",
                              description: '''Reply-To email address for generated status messages.'''),
-                 stringParam(name: 'PARAM_EMAIL_DEVOPS',  
+                 stringParam(name: 'PARAM_EMAIL_DEVOPS',
                              defaultValue: "wcmclen@sandia.gov",
                              description: '''Email list for dev-ops team.  Separate multiple email addresses using spaces.''')
                ])
 ])
 
 
-Boolean param_dry_run         = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                  params: params, 
+Boolean param_dry_run         = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this,
+                                                                                  params: params,
                                                                                   key: "PARAM_DRY_RUN",
-                                                                                  default: false, 
+                                                                                  default: false,
                                                                                   required: true)
-Boolean param_clean_workspace = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                  params: params, 
+Boolean param_clean_workspace = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this,
+                                                                                  params: params,
                                                                                   key: "PARAM_CLEAN_WORKSPACE",
-                                                                                  default: false, 
+                                                                                  default: false,
                                                                                   required: true)
-String param_email_replyto   = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                 params: params, 
+String param_email_replyto   = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this,
+                                                                                 params: params,
                                                                                  key: "PARAM_EMAIL_REPLYTO",
                                                                                  default: "wcmclen@sandia.gov")
-String param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this, 
-                                                                                 params: params, 
+String param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter(env: this,
+                                                                                 params: params,
                                                                                  key: "PARAM_EMAIL_DEVOPS",
                                                                                  default: "wcmclen@sandia.gov")
 
@@ -90,13 +90,13 @@ String param_email_devops    = libspifi.JenkinsTools.spifi_checked_get_parameter
 String email_body = "<H1>Summary</H1>"
 
 
-node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
+node("RHEL7 || OS_RHEL7 || master")
 {
     // Set this to TRUE to halt the pipeline after a stage.
     Boolean EXIT_PIPELINE = false
 
     // Clean the workspace if requested.
-    // - Does not need to be in a stage() { ... } but should be 
+    // - Does not need to be in a stage() { ... } but should be
     //   inside the node() { ... } block you wish to clean.
     if(param_clean_workspace)
     {
@@ -110,16 +110,16 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
         def spifi_jl = libspifi.JobLauncher.new(env: this)
 
         // Add some jobs to run
-        spifi_jl.appendJob(label: "Job-1", 
-                           job_name: "JENKINS_JOB_TO_RUN",  
+        spifi_jl.appendJob(label: "Job-1",
+                           job_name: "JENKINS_JOB_TO_RUN",
                            dry_run: param_dry_run,
                            dry_run_delay: 5)
-        spifi_jl.appendJob(label: "Job-2", 
-                           job_name: "ANOTHER_JENKINS_JOB", 
+        spifi_jl.appendJob(label: "Job-2",
+                           job_name: "ANOTHER_JENKINS_JOB",
                            dry_run: param_dry_run,
                            dry_run_delay: 5)
-        spifi_jl.appendJob(label: "Job-3", 
-                           job_name: "YET_ANOTHER_JENKINS_JOB", 
+        spifi_jl.appendJob(label: "Job-3",
+                           job_name: "YET_ANOTHER_JENKINS_JOB",
                            dry_run: param_dry_run,
                            dry_run_delay: 5,
                            dry_run_status: "FAILURE")
@@ -163,7 +163,7 @@ node("master || RHEL6 || RHEL7 || OS_RHEL6 || OS_RHEL7")
         }
     }  // end stage: Run Tests
 
-    // Post-stage check 
+    // Post-stage check
     if( EXIT_PIPELINE)
     {
         // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
