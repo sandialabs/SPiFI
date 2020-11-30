@@ -74,7 +74,7 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
     parameters([
-        string(defaultValue: '10',
+        string(defaultValue: '2',
                description: 'Sleep time (seconds)',
                name: 'SLEEP_TIME'),
         string(defaultValue: node_restriction,
