@@ -87,6 +87,7 @@ node(params.NODE_RESTRICTION)
     job_params.SPiFI_VERSION    = param_spifi_version
     job_params.NODE_RESTRICTION = params.NODE_RESTRICTION
 
+    Boolean pipeline_passed = true
     String summary_email_body = ""
 
 
@@ -152,7 +153,10 @@ node(params.NODE_RESTRICTION)
         // generate details
         summary_email_body += generate_output_details_html("Helpers", sub_stage_results)
 
-
+        if( !sequence_was_successful(sub_stage_results) )
+        {
+            pipeline_passed = false
+        }
     }   // End Stage
 
 
@@ -177,6 +181,11 @@ node(params.NODE_RESTRICTION)
 
         // generate details
         summary_email_body += generate_output_details_html("SPiFI Min", rval_list)
+
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }
 
 
@@ -201,6 +210,10 @@ node(params.NODE_RESTRICTION)
         // generate details
         summary_email_body += generate_output_details_html("SPiFI Core", rval_list)
 
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }   // End Stage
 
 
@@ -248,7 +261,18 @@ node(params.NODE_RESTRICTION)
                 <BODY>
                 """.stripIndent()
 
+        String pipeline_status_slug = ""
+        if(pipeline_passed)
+        {
+            pipeline_status_slug = "&#9989; SUCCESS"
+        }
+        else
+        {
+            pipeline_status_slug = "&#10060; FAILURE"
+        }
+
         summary_email_body = summary_email_header +
+                            "<H1>${pipeline_status_slug}</H1>\n" +
                              summary_email_body   +
                              "\n</BODY>\n"
 
