@@ -272,7 +272,7 @@ node(params.NODE_RESTRICTION)
                                              )
             pretty_print_map(results)
 
-            if(results.console.contains("ls: cannot access") && output.console.contains("total"))
+            if(results.console.contains("ls: cannot access") && results.console.contains("total"))
             {
                 println "SUCCESS!"
             }
