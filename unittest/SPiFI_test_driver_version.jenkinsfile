@@ -126,25 +126,30 @@ node(params.NODE_RESTRICTION)
             sub_stage_results[job_name] = rval
         }
         sub_stages["Test Helpers (E)"] = {
-            def rval = null
-            String job_name = "SPiFI_test_helper_pass_every_third"
-
-            // Attempt this job up to 6 times to find the SUCCESS if it's out of sync.
-            // it should normally pass every third run (FAILURE, UNSTABLE, SUCCESS)
-            Boolean attempt_failed = true
-            Integer attempt_number = 0
-            while(attempt_failed && attempt_number < 6)
+            // Lock the pass_every_third call job it must be executed multiple times
+            // in sequence to work properly.
+            lock("SPiFI_pass_every_third")
             {
-                attempt_number += 1
-                rval = run_simple_job(job_name, expected_status, job_params)
-                if(rval.status == "SUCCESS")
+                def rval = null
+                String job_name = "SPiFI_test_helper_pass_every_third"
+
+                // Attempt this job up to 6 times to find the SUCCESS if it's out of sync.
+                // it should normally pass every third run (FAILURE, UNSTABLE, SUCCESS)
+                Boolean attempt_failed = true
+                Integer attempt_number = 0
+                while(attempt_failed && attempt_number < 6)
                 {
-                    attempt_failed = false
+                    attempt_number += 1
+                    rval = run_simple_job(job_name, expected_status, job_params)
+                    if(rval.status == "SUCCESS")
+                    {
+                        attempt_failed = false
+                    }
                 }
-            }
-            // Save the final attempt
-            sub_stage_results[job_name] = rval
-        }
+                // Save the final attempt
+                sub_stage_results[job_name] = rval
+            } // end lock()
+        } // end sub_stage
         parallel(sub_stages)
         println(sub_stage_results)
 
@@ -204,6 +209,9 @@ node(params.NODE_RESTRICTION)
 
         rval_list["Shell"] = run_simple_job("SPiFI_test_core_Shell", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
+
+        rval_list["Git"] = run_simple_job("SPiFI_test_core_Git", expected_status, job_params)
+        //print_result_summary(rval_list.Git)
 
         Boolean stage_failed = false
 
