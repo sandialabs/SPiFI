@@ -116,6 +116,25 @@ node(params.NODE_RESTRICTION)
     }   // End Stage
 
 
+    // Validate the tests
+    stage("Validate (Min)")
+    {
+        print_banner("Validate Results")
+        println "num_tests   : ${num_tests}\n" +
+                "num_failures: ${num_failures}"
+
+        sh label: 'LS-Top',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}'
+
+        sh label: 'LS-SPiFI',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}/SPiFI-min'
+
+        assert num_failures == 0 : "There were test failures."
+    } // End Stage
+
+
     // Test a shallow clone w/ more options
     stage("Stage 2: Clone SPiFI (shallow)")
     {
@@ -129,7 +148,7 @@ node(params.NODE_RESTRICTION)
             def spifi_git = libspifi.Git.new()
 
             def clone_ok = spifi_git.clone(env: this,
-                                           dir: "SPiFI-S",
+                                           dir: "SPiFI-shallow",
                                            url: clone_url,
                                            branch: "master",
                                            recurse_submodules: true,
@@ -155,7 +174,7 @@ node(params.NODE_RESTRICTION)
 
 
     // Validate the tests
-    stage("Validate")
+    stage("Validate (shallow)")
     {
         print_banner("Validate Results")
         println "num_tests   : ${num_tests}\n" +
@@ -167,7 +186,7 @@ node(params.NODE_RESTRICTION)
 
         sh label: 'LS-SPiFI',
            encoding: 'UTF-8',
-           script: 'ls -ltr ${WORKSPACE}/SPiFI'
+           script: 'ls -ltr ${WORKSPACE}/SPiFI-shallow'
 
         assert num_failures == 0 : "There were test failures."
     } // End Stage
