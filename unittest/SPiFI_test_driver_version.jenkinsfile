@@ -216,6 +216,9 @@ node(params.NODE_RESTRICTION)
         rval_list["Info"] = run_simple_job("SPiFI_test_core_Info", expected_status, job_params)
         //print_result_summary(rval_list.Info)
 
+        rval_list["JenkinsTools"] = run_simple_job("SPiFI_test_core_JenkinsTools", expected_status, job_params)
+        //print_result_summary(rval_list.JenkinsTools)
+
         Boolean stage_failed = false
 
         // generate details

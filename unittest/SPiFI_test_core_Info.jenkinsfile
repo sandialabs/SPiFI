@@ -121,7 +121,7 @@ node(params.NODE_RESTRICTION)
         catch(e)
         {
             println "FAILURE!"
-            println "ERROR occurred in Info.():\n${e}"
+            println "ERROR occurred in Info:\n${e}"
             num_failures++
         }
     }   // End Stage
