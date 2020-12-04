@@ -79,6 +79,8 @@ timestamps()
  */
 node(params.NODE_RESTRICTION)
 {
+    cleanWs()
+
     Integer num_tests = 0
     Integer num_failures = 0
 
