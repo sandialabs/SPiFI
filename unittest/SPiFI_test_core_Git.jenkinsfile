@@ -98,9 +98,11 @@ node(params.NODE_RESTRICTION)
             num_tests++
             def spifi_git = libspifi.Git.new()
 
+            Boolean clone_ok = true
+
             dir("SPiFI-min")
             {
-                def clone_ok = spifi_git.clone(env: this, url: clone_url)
+                clone_ok = spifi_git.clone(env: this, url: clone_url)
             }
 
             assert clone_ok : "Git clone failed"
