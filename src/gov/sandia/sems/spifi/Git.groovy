@@ -88,7 +88,7 @@ package gov.sandia.sems.spifi;
  *                                              Default: false
  * @param recurse_submodules [OPTIONAL] Boolean Enable recursive submodule checkout.
  *                                              Default: false
- * @param shallow            [OPTIONAL] Boolean Enable a shallow clone (limits depth by default to 50) 
+ * @param shallow            [OPTIONAL] Boolean Enable a shallow clone (limits depth by default to 50)
  *                                              to reduce the size of the checkout.
  *                                              Default: false
  *
@@ -178,38 +178,59 @@ def clone(Map params)
                     "[SPiFI]> -  shallow           : ${shallow}\n" +
                     "[SPiFI]> Environment:\n" +
                     "[SPiFI]> -  workspace: ${env.WORKSPACE}\n" +
-                    "[SPiFI]> Raw Params:\n${params}" 
+                    "[SPiFI]> Raw Params:\n${params}"
     }
 
     // Initialize output variables
     Boolean output = true
     Integer attempts = 1
 
+    // Configure the Remote Configs
+    // - This can cause an error if credentialsId is 'null'
+    Map userRemoteConfigsRepo = [:]
+    userRemoteConfigsRepo['url'] = url
+    if (credentialsId != null)
+    {
+        userRemoteConfigsRepo['credentialsId'] = credentialsId
+    }
+    List userRemoteConfigs = [ userRemoteConfigsRepo ]
+
     try
     {
         env.retry(retries)
         {
+            // If we're doing a shallow-clone, Jenkins' git can have problems if it's trying to clone to
+            // a nonempty directory in the workspace. :(
+            // - you'll see a git error message something like `fatal: git fetch-pack: expected shallow list`
+            if(shallow)
+            {
+                env.dir(dir)
+                {
+                    env.deleteDir()
+                }
+            }
+
             try
             {
-                // Offical Docs to `checkout`: https://jenkins.io/doc/pipeline/steps/workflow-scm-step 
-                checkout([$class: 'GitSCM', 
-                          branches: [[name: branch]], 
-                          doGenerateSubmoduleConfigurations: false, 
-                          extensions: [ [$class: 'RelativeTargetDirectory', 
+                // Offical Docs to `checkout`: https://jenkins.io/doc/pipeline/steps/workflow-scm-step
+                checkout([$class: 'GitSCM',
+                          branches: [[name: branch]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [ [$class: 'RelativeTargetDirectory',
                                                  relativeTargetDir: dir
                                         ],
-                                        [$class: 'CheckoutOption', 
-                                                 timeout: timeout
-                                        ], 
-                                        [$class: 'CloneOption', 
-                                                 depth: shallow_depth, 
-                                                 noTags: false, 
-                                                 reference: '', 
-                                                 shallow: shallow, 
+                                        [$class: 'CheckoutOption',
                                                  timeout: timeout
                                         ],
-                                        [$class: 'SubmoduleOption', 
-                                                 depth: shallow_depth, 
+                                        [$class: 'CloneOption',
+                                                 depth: shallow_depth,
+                                                 noTags: false,
+                                                 reference: '',
+                                                 shallow: shallow,
+                                                 timeout: timeout
+                                        ],
+                                        [$class: 'SubmoduleOption',
+                                                 depth: shallow_depth,
                                                  disableSubmodules: !recurse_submodules,
                                                  parentCredentials: true,
                                                  recursiveSubmodules: recurse_submodules /**/,
@@ -219,9 +240,9 @@ def clone(Map params)
                                                  timeout: timeout,
                                                  trackingSubmodules: false
                                         ]
-                                      ], 
-                          submoduleCfg: [], 
-                          userRemoteConfigs: [ [credentialsId: credentialsId, url: url] ]
+                                      ],
+                          submoduleCfg: [],
+                          userRemoteConfigs: userRemoteConfigs
                         ])
             }
             catch(ex)
@@ -237,8 +258,46 @@ def clone(Map params)
     }
     catch(ex)
     {
+        String jenkins_command = """\
+                checkout([\$class: 'GitSCM',
+                          branches: [[name: ${branch}]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [ [\$class: 'RelativeTargetDirectory',
+                                                 relativeTargetDir: ${dir}
+                                        ],
+                                        [\$class: 'CheckoutOption',
+                                                 timeout: ${timeout}
+                                        ],
+                                        [\$class: 'CloneOption',
+                                                 depth: ${shallow_depth},
+                                                 noTags: false,
+                                                 reference: '',
+                                                 shallow: ${shallow},
+                                                 timeout: ${timeout}
+                                        ],
+                                        [\$class: 'SubmoduleOption',
+                                                 depth: ${shallow_depth},
+                                                 disableSubmodules: !${recurse_submodules},
+                                                 parentCredentials: true,
+                                                 recursiveSubmodules: ${recurse_submodules} /**/,
+                                                 reference: '',
+                                                 shallow: ${shallow},
+                                                 threads: 2,
+                                                 timeout: ${timeout},
+                                                 trackingSubmodules: false
+                                        ]
+                                      ],
+                          submoduleCfg: [],
+                          userRemoteConfigs: ${userRemoteConfigs}
+                        ])
+                        """
         env.println "[SPiFI]> git failed to clone: ${url}\n" +
-                    "[SPiFI]> -  Attempts made: ${attempts}"
+                    "[SPiFI]> -  Attempts made: ${attempts}\n" +
+                    "[SPiFI]> Jenkins Groovy Command:\n" +
+                    "-----[BEGIN Groovy]-------------------------------------------------------------\n" +
+                    "${jenkins_command}\n" +
+                    "-----[END Groovy]---------------------------------------------------------------\n" +
+                    "The error message is:\n${ex}\n"
         output = false
     }
     return output
