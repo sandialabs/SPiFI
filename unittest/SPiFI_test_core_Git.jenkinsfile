@@ -85,8 +85,39 @@ node(params.NODE_RESTRICTION)
     // Load in the base SPiFI library.
     def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
 
-    // Test a basic Shell command
-    stage("Stage 1: Clone SPiFI")
+
+    // Test the minimal git command
+    stage("Stage 1: Clone SPiFI (Min)")
+    {
+        print_banner("Test Git.clone()")
+
+        String clone_url = "https://github.com/sandialabs/SPiFI.git"
+
+        try
+        {
+            num_tests++
+            def spifi_git = libspifi.Git.new()
+
+            dir("SPiFI-min")
+            {
+                def clone_ok = spifi_git.clone(env: this, url: clone_url)
+            }
+
+            assert clone_ok : "Git clone failed"
+
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in Git.clone():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    // Test a shallow clone w/ more options
+    stage("Stage 2: Clone SPiFI (shallow)")
     {
         print_banner("Test Git.clone()")
 
@@ -98,7 +129,7 @@ node(params.NODE_RESTRICTION)
             def spifi_git = libspifi.Git.new()
 
             def clone_ok = spifi_git.clone(env: this,
-                                           dir: "SPiFI",
+                                           dir: "SPiFI-S",
                                            url: clone_url,
                                            branch: "master",
                                            recurse_submodules: true,
