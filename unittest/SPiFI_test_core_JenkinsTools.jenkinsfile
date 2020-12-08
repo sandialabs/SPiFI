@@ -42,9 +42,9 @@
  */
 
 /**
- * Unittest: SPiFI_test_core_Info
+ * Unittest: SPiFI_test_core_JenkinsTools
  *
- * This test is designed to test the SPiFI Info module.
+ * This test is designed to test the SPiFI JenkinsTools module.
  */
 String node_restriction = "RHEL7 || OS_RHEL7 || master"
 properties([
