@@ -256,7 +256,7 @@ node(params.NODE_RESTRICTION)
         rval_list["Example-A-04"] = run_simple_job("SPiFI_Example_A_04_JobLauncher_MultiStage_Email", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
-        rval_list["Example-A-05"] = run_simple_job("SPiFI_Example_A_05_RetryOnRegex", expected_status, job_params)
+        rval_list["Example-A-05"] = run_simple_job("SPiFI_Example_A_05_JobLauncher_RetryOnRegex", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
         rval_list["Example-A-06"] = run_simple_job("SPiFI_Example_A_06_Git_clone", expected_status, job_params)
