@@ -291,7 +291,7 @@ node(params.NODE_RESTRICTION)
         Boolean stage_failed = false
 
         // generate details
-        summary_email_body += generate_output_details_html("SPiFI Core", rval_list)
+        summary_email_body += generate_output_details_html("SPiFI Examples", rval_list)
 
         if( !sequence_was_successful(rval_list) )
         {
