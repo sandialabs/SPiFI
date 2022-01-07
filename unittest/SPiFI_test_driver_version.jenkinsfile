@@ -259,7 +259,8 @@ node(params.NODE_RESTRICTION)
         rval_list["Example-A-05"] = run_simple_job("SPiFI_Example_A_05_JobLauncher_RetryOnRegex", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
-        rval_list["Example-A-06"] = run_simple_job("SPiFI_Example_A_06_Git_clone", expected_status, job_params)
+        // Note: currently broken - this test needs updated credentials, etc. on Jenkins.
+        //rval_list["Example-A-06"] = run_simple_job("SPiFI_Example_A_06_Git_clone", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
         rval_list["Example-B-01"] = run_simple_job("SPiFI_Example_B_01_Load_SPiFI", expected_status, job_params)
@@ -277,7 +278,8 @@ node(params.NODE_RESTRICTION)
         rval_list["Example-B-05"] = run_simple_job("SPiFI_Example_B_05_JobLauncher_RetryOnRegex", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
-        rval_list["Example-B-06"] = run_simple_job("SPiFI_Example_B_06_Git_clone", expected_status, job_params)
+        // Note: currently broken - this test needs updated credentials, etc. on Jenkins.
+        //rval_list["Example-B-06"] = run_simple_job("SPiFI_Example_B_06_Git_clone", expected_status, job_params)
         //print_result_summary(rval_list.Shell)
 
         rval_list["Example-B-07"] = run_simple_job("SPiFI_Example_B_07_Shell", expected_status, job_params)
