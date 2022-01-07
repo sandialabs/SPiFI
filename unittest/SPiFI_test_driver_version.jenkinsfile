@@ -240,6 +240,61 @@ node(params.NODE_RESTRICTION)
     stage("Test Examples")
     {
         print_banner("Stage: Test Examples")
+
+        def rval_list = [:]
+        String expected_status = "SUCCESS"
+
+        rval_list["Example-A-01"] = run_simple_job("SPiFI_Example_A_01_Load_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-02"] = run_simple_job("SPiFI_Example_A_02_JobLauncher", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-03"] = run_simple_job("SPiFI_Example_A_03_JobLauncher_ResultTable", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-04"] = run_simple_job("SPiFI_Example_A_04_JobLauncher_MultiStage_Email", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-05"] = run_simple_job("SPiFI_Example_A_05_RetryOnRegex", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-06"] = run_simple_job("SPiFI_Example_A_06_Git_clone", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-01"] = run_simple_job("SPiFI_Example_B_01_Load_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-02"] = run_simple_job("SPiFI_Example_B_02_JobLauncher", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-03"] = run_simple_job("SPiFI_Example_B_03_JobLauncher_ResultTable", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-04"] = run_simple_job("SPiFI_Example_B_04_JobLauncher_MultiStage_Email", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-05"] = run_simple_job("SPiFI_Example_B_05_JobLauncher_RetryOnRegex", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-06"] = run_simple_job("SPiFI_Example_B_06_Git_clone", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-07"] = run_simple_job("SPiFI_Example_B_07_Shell", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-08"] = run_simple_job("SPiFI_Example_B_08_Load_any_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        Boolean stage_failed = false
+
+        // generate details
+        summary_email_body += generate_output_details_html("SPiFI Core", rval_list)
+
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }   // End Stage
 
 
@@ -249,6 +304,7 @@ node(params.NODE_RESTRICTION)
     stage("Test Experimental")
     {
         print_banner("Stage: Test Experimental")
+        println(">>> This Section is Empty <<<")
     }   // End Stage
 
 
@@ -336,7 +392,7 @@ def print_banner(String text)
 
 
 /**
- * TODO: Set up an 'expected' value to add to the returned data structure?
+ *
  */
 Map run_simple_job(String job_name, String expected_status, Map job_params)
 {
