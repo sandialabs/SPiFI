@@ -171,17 +171,17 @@ node(params.NODE_RESTRICTION)
 
             // Create ASCII output
             println(">>> Generate ASCII output")
-            def output = result_util.genResultDetails(results: launcher_results, format: "ASCII")
+            output = result_util.genResultDetails(results: launcher_results, format: "ASCII")
             println(output)
 
             // Create Markdown output
             println(">>> Generate Markdown output")
-            def output = result_util.genResultDetails(results: launcher_results, format: "MARKDOWN")
+            output = result_util.genResultDetails(results: launcher_results, format: "MARKDOWN")
             println(output)
 
             // Create HTML output
             println(">>> Generate HTML output")
-            def output = result_util.genResultDetails(results: launcher_results, format: "HTML")
+            output = result_util.genResultDetails(results: launcher_results, format: "HTML")
             println(output)
 
             println "SUCCESS!"
@@ -205,12 +205,12 @@ node(params.NODE_RESTRICTION)
 
             // Create Markdown output
             println(">>> Generate Markdown output")
-            def output = result_util.genResultDetails(results: launcher_results, format: "MARKDOWN", link_to_console: false)
+            output = result_util.genResultDetails(results: launcher_results, format: "MARKDOWN", link_to_console: false)
             println(output)
 
             // Create HTML output
             println(">>> Generate HTML output")
-            def output = result_util.genResultDetails(results: launcher_results, format: "HTML", link_to_console: false)
+            output = result_util.genResultDetails(results: launcher_results, format: "HTML", link_to_console: false)
             println(output)
 
             println "SUCCESS!"
