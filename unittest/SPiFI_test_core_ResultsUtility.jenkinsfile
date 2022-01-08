@@ -155,7 +155,7 @@ node(params.NODE_RESTRICTION)
         catch(e)
         {
             println "FAILURE!"
-            println "ERROR occurred in ResultUtility():\n${e}"
+            println "ERROR occurred in ResultUtilitygenResultSummaryTable():\n${e}"
         }
     }   // End Stage
 
@@ -189,14 +189,14 @@ node(params.NODE_RESTRICTION)
         catch(e)
         {
             println "FAILURE!"
-            println "ERROR occurred in ResultUtility():\n${e}"
+            println "ERROR occurred in ResultUtility.genResultDetails():\n${e}"
         }
     }   // End Stage
 
 
     stage("Stage 4: genResultDetails NoLink")
     {
-        print_banner("Test ResultsUtility : Declare ResultsUtility")
+        print_banner("Test ResultsUtility : Declare ResultsUtility NoLink")
 
         try
         {
@@ -218,7 +218,7 @@ node(params.NODE_RESTRICTION)
         catch(e)
         {
             println "FAILURE!"
-            println "ERROR occurred in ResultUtility():\n${e}"
+            println "ERROR occurred in ResultUtility.genResultDetails():\n${e}"
         }
     }   // End Stage
 
