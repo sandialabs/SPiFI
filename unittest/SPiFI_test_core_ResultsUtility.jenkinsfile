@@ -128,7 +128,7 @@ node(params.NODE_RESTRICTION)
 
     stage("Stage 2: genResultSummaryTable")
     {
-        print_banner("Test ResultsUtility : Declare ResultsUtility")
+        print_banner("Test ResultsUtility.genResultSummaryTable()")
 
         try
         {
@@ -160,9 +160,9 @@ node(params.NODE_RESTRICTION)
     }   // End Stage
 
 
-    stage("Stage 3: genResultDetails")
+    stage("Stage 3: genResultDetails (default)")
     {
-        print_banner("Test ResultsUtility : Declare ResultsUtility")
+        print_banner("Test ResultsUtility.genResultDetails() (default)")
 
         try
         {
@@ -196,7 +196,7 @@ node(params.NODE_RESTRICTION)
 
     stage("Stage 4: genResultDetails NoLink")
     {
-        print_banner("Test ResultsUtility : Declare ResultsUtility NoLink")
+        print_banner("Test ResultsUtility.genResultDetails() (NoLink)")
 
         try
         {
