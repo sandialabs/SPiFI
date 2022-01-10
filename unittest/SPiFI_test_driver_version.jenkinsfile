@@ -66,6 +66,7 @@ properties([
     ]),
 ])
 
+
 String param_spifi_version = "SPiFI@master"
 if( params.containsKey("SPiFI_VERSION") )
 {
@@ -73,18 +74,20 @@ if( params.containsKey("SPiFI_VERSION") )
 }
 
 
-
 // Print timestamps to console log
 timestamps()
 {
+
 
 node(params.NODE_RESTRICTION)
 {
     // Global vars for node() { ... }
     Map job_params = [:]
-    job_params.UNIQUEIFY     = "Testing Version ${param_spifi_version}"
-    job_params.SPiFI_VERSION = param_spifi_version
+    job_params.UNIQUEIFY        = "Testing Version ${param_spifi_version}"
+    job_params.SPiFI_VERSION    = param_spifi_version
+    job_params.NODE_RESTRICTION = params.NODE_RESTRICTION
 
+    Boolean pipeline_passed = true
     String summary_email_body = ""
 
 
@@ -99,83 +102,95 @@ node(params.NODE_RESTRICTION)
         //       is here: https://javadoc.jenkins.io/plugin/workflow-support/org/jenkinsci/plugins/workflow/support/steps/build/RunWrapper.html
 
         // Test the selectable_status helper.
-
+        String expected_status = "SUCCESS"
         Map sub_stage_results = [:]
         Map sub_stages = [:]
         sub_stages["Test Helpers (A)"] = {
             String job_name = "SPiFI_test_helper_selectable_status"
-            def rval = run_simple_job(job_name, job_params)
+            def rval = run_simple_job(job_name, expected_status, job_params)
             sub_stage_results[job_name] = rval
-            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (B)"] = {
             String job_name = "SPiFI_test_helper_sample_job_01"
-            def rval = run_simple_job(job_name, job_params)
+            def rval = run_simple_job(job_name, expected_status, job_params)
             sub_stage_results[job_name] = rval
-            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (C)"] = {
             String job_name = "SPiFI_test_helper_sample_job_02"
-            def rval = run_simple_job(job_name, job_params)
+            def rval = run_simple_job(job_name, expected_status, job_params)
             sub_stage_results[job_name] = rval
-            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (D)"] = {
             String job_name = "SPiFI_test_helper_sample_job_03"
-            def rval = run_simple_job(job_name, job_params)
+            def rval = run_simple_job(job_name, expected_status, job_params)
             sub_stage_results[job_name] = rval
-            //println("rval: ${rval}\n")
         }
         sub_stages["Test Helpers (E)"] = {
-            String job_name = "SPiFI_test_helper_pass_every_third"
-            def rval1 = run_simple_job(job_name, job_params)
-            sub_stage_results[job_name+"::01"] = rval1
-
-            def rval2 = run_simple_job(job_name, job_params)
-            sub_stage_results[job_name+"::02"] = rval2
-            // Retry the third attempt up to 4 times to find the SUCCESS if it's out of sync.
-            def rval3 = null
-            Boolean attempt_failed = true
-            Integer attempt_number = 0
-            while(attempt_failed && attempt_number < 4)
+            // Lock the pass_every_third call job it must be executed multiple times
+            // in sequence to work properly.
+            lock("SPiFI_pass_every_third")
             {
-                attempt_number += 1
-                rval3 = run_simple_job(job_name, job_params)
-                if(rval3.status == "SUCCESS")
+                def rval = null
+                String job_name = "SPiFI_test_helper_pass_every_third"
+
+                // Attempt this job up to 6 times to find the SUCCESS if it's out of sync.
+                // it should normally pass every third run (FAILURE, UNSTABLE, SUCCESS)
+                Boolean attempt_failed = true
+                Integer attempt_number = 0
+                while(attempt_failed && attempt_number < 6)
                 {
-                    attempt_failed = false
+                    attempt_number += 1
+                    rval = run_simple_job(job_name, expected_status, job_params)
+                    if(rval.status == "SUCCESS")
+                    {
+                        attempt_failed = false
+                    }
                 }
-                //assert rval3.status == "SUCCESS" : "Expected SUCCESS but got ${rval3.status}"
-            }
-            sub_stage_results[job_name+"::03"] = rval3
-        }
+                // Save the final attempt
+                sub_stage_results[job_name] = rval
+            } // end lock()
+        } // end sub_stage
         parallel(sub_stages)
         println(sub_stage_results)
 
-        String html_snip = ""
-        sub_stage_results.each { key,value ->
-            println("---[ ${key} ]---")
-            print_result_summary(value)
+        Boolean stage_failed = false
+
+        // generate details
+        summary_email_body += generate_output_details_html("Helpers", sub_stage_results)
+
+        if( !sequence_was_successful(sub_stage_results) )
+        {
+            pipeline_passed = false
         }
-
-
-
-
     }   // End Stage
 
 
     /**
      *
      */
-    stage("Test JobLauncher Min")
+    stage("Test SPiFI Min")
     {
         print_banner("Stage: Test JobLauncher Min")
 
-        rval = run_simple_job("SPiFI_test_core_load_spifi", job_params)
-        println("rval: ${rval}\n")
+        def rval_list = [:]
 
-        rval = run_simple_job("SPiFI_test_core_JobLauncher_Min", job_params)
-        println("rval: ${rval}\n")
+        String expected_status = "SUCCESS"
+
+        rval_list["Load_SPiFI"] = run_simple_job("SPiFI_test_core_load_spifi", expected_status, job_params)
+        //print_result_summary(rval_list.Load_SPiFI)
+
+        rval_list["JobLauncher_Min"] = run_simple_job("SPiFI_test_core_JobLauncher_Min", expected_status, job_params)
+        //print_result_summary(rval_list.JobLauncher_Min)
+
+        Boolean stage_failed = false
+
+        // generate details
+        summary_email_body += generate_output_details_html("SPiFI Min", rval_list)
+
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }
 
 
@@ -187,8 +202,38 @@ node(params.NODE_RESTRICTION)
         print_banner("Stage: Test SPiFI Core")
 
         // Load the base SPiFI library
-        def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+        // def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
 
+        def rval_list = [:]
+        String expected_status = "SUCCESS"
+
+        rval_list["Shell"] = run_simple_job("SPiFI_test_core_Shell", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Git"] = run_simple_job("SPiFI_test_core_Git", expected_status, job_params)
+        //print_result_summary(rval_list.Git)
+
+        rval_list["Info"] = run_simple_job("SPiFI_test_core_Info", expected_status, job_params)
+        //print_result_summary(rval_list.Info)
+
+        rval_list["JenkinsTools"] = run_simple_job("SPiFI_test_core_JenkinsTools", expected_status, job_params)
+        //print_result_summary(rval_list.JenkinsTools)
+
+        rval_list["HTMLUtility"] = run_simple_job("SPiFI_test_core_HTMLUtility", expected_status, job_params)
+        //print_result_summary(rval_list.JenkinsTools)
+
+        rval_list["ResultsUtility"] = run_simple_job("SPiFI_test_core_ResultsUtility", expected_status, job_params)
+        //print_result_summary(rval_list.JenkinsTools)
+
+        Boolean stage_failed = false
+
+        // generate details
+        summary_email_body += generate_output_details_html("SPiFI Core", rval_list)
+
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }   // End Stage
 
 
@@ -198,6 +243,63 @@ node(params.NODE_RESTRICTION)
     stage("Test Examples")
     {
         print_banner("Stage: Test Examples")
+
+        def rval_list = [:]
+        String expected_status = "SUCCESS"
+
+        rval_list["Example-A-01"] = run_simple_job("SPiFI_Example_A_01_Load_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-02"] = run_simple_job("SPiFI_Example_A_02_JobLauncher", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-03"] = run_simple_job("SPiFI_Example_A_03_JobLauncher_ResultTable", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-04"] = run_simple_job("SPiFI_Example_A_04_JobLauncher_MultiStage_Email", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-A-05"] = run_simple_job("SPiFI_Example_A_05_JobLauncher_RetryOnRegex", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        // Note: currently broken - this test needs updated credentials, etc. on Jenkins.
+        //rval_list["Example-A-06"] = run_simple_job("SPiFI_Example_A_06_Git_clone", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-01"] = run_simple_job("SPiFI_Example_B_01_Load_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-02"] = run_simple_job("SPiFI_Example_B_02_JobLauncher", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-03"] = run_simple_job("SPiFI_Example_B_03_JobLauncher_ResultTable", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-04"] = run_simple_job("SPiFI_Example_B_04_JobLauncher_MultiStage_Email", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-05"] = run_simple_job("SPiFI_Example_B_05_JobLauncher_RetryOnRegex", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        // Note: currently broken - this test needs updated credentials, etc. on Jenkins.
+        //rval_list["Example-B-06"] = run_simple_job("SPiFI_Example_B_06_Git_clone", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-07"] = run_simple_job("SPiFI_Example_B_07_Shell", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        rval_list["Example-B-08"] = run_simple_job("SPiFI_Example_B_08_Load_any_SPiFI", expected_status, job_params)
+        //print_result_summary(rval_list.Shell)
+
+        Boolean stage_failed = false
+
+        // generate details
+        summary_email_body += generate_output_details_html("SPiFI Examples", rval_list)
+
+        if( !sequence_was_successful(rval_list) )
+        {
+            pipeline_passed = false
+        }
     }   // End Stage
 
 
@@ -207,6 +309,7 @@ node(params.NODE_RESTRICTION)
     stage("Test Experimental")
     {
         print_banner("Stage: Test Experimental")
+        println(">>> This Section is Empty <<<")
     }   // End Stage
 
 
@@ -216,6 +319,56 @@ node(params.NODE_RESTRICTION)
     stage("Reporting")
     {
         print_banner("Stage: Reporting")
+
+        // Assemble HTML body
+        String summary_email_header = """<!DOCTYPE html>
+                <HTML>
+                <HEAD>
+                <STYLE>
+                /* Defined <span/> blocks to allow in-line coloring/formatting of text */
+                span.bold   { font-weight: bolder; }
+                span.gray   { color: gray;    }
+                span.red    { color: #990000; }
+                span.green  { color: #009900; }
+                span.blue   { color: #000099; }
+                span.yellow { color: #999900; }
+                div.Indent1 { text-indent: 1.0em; }
+                </STYLE>
+                </HEAD>
+
+                <BODY>
+                """.stripIndent()
+
+        String pipeline_status_slug = ""
+        if(pipeline_passed)
+        {
+            pipeline_status_slug = "&#9989; SUCCESS"
+        }
+        else
+        {
+            pipeline_status_slug = "&#10060; FAILURE"
+        }
+
+        summary_email_body = summary_email_header +
+                            "<H1>${pipeline_status_slug}</H1>\n" +
+                             summary_email_body   +
+                             "\n</BODY>\n"
+
+        println(summary_email_body)
+
+        try
+        {
+            mail to: "wcmclen@sandia.gov",
+                 replyTo: "wcmclen@sandia.gov",
+                 subject: "SPiFI Test Summary",
+                 body: summary_email_body,
+                 mimeType: "text/html"
+        }
+        catch(ex)
+        {
+            println "\u2757 WARNING: Email connection failed"
+        }
+
     }   // End Stage
 
 }   // End Node
@@ -235,26 +388,27 @@ node(params.NODE_RESTRICTION)
  */
 def print_banner(String text)
 {
-    println("+==============================================================================+\n" +
-            "|\n" +
-            "| ${text}\n" +
-            "|\n" +
-            "+==============================================================================+")
+    println("\u27A4 +==============================================================================+\n" +
+            "\u27A4 |\n" +
+            "\u27A4 | ${text}\n" +
+            "\u27A4 |\n" +
+            "\u27A4 +==============================================================================+")
 }
 
 
 /**
  *
  */
-Map run_simple_job(String job_name, Map params)
+Map run_simple_job(String job_name, String expected_status, Map job_params)
 {
     Map output = [:]
     output.raw = build(job: job_name,
                        propagate: false,
                        wait: true,
                        parameters: [
-                            string(name: "UNIQUEIFY", value: params.UNIQUEIFY),
-                            string(name: "SPiFI_VERSION", value: params.SPiFI_VERSION)
+                            string(name: "NODE_RESTRICTION", value: job_params.NODE_RESTRICTION),
+                            string(name: "SPiFI_VERSION", value: job_params.SPiFI_VERSION),
+                            string(name: "UNIQUEIFY", value: job_params.UNIQUEIFY)
                             ]
                        )
 
@@ -264,19 +418,88 @@ Map run_simple_job(String job_name, Map params)
     output.status    = output.raw.getResult()
     output.duration  = output.raw.getDuration()/1000.0
     output.buildid   = output.raw.getId()
+
+    // Set default results as successful
+    output.expected = expected_status
+    output.matched_expected = true
+    output.body = "Job `${job_name}` was successful (${output.raw.getResult()})"
+
+    // Get the tail of the console log (might not be possible without admin approval)
     //output.getLog100 = output.raw.getRawBuild().getLog(100)
 
-    if( "SUCCESS" == output.raw.getResult() )
+    if( expected_status != output.raw.getResult() )
     {
-        // TODO: handle job success
-        output.body = "Job `${job_name}` was successful (${output.raw.getResult()})"
-    }
-    else
-    {
-        // TODO: handle job failure
+        output.matched_expected = false
         output.body = "Job `${job_name}` did not succeed (${output.raw.getResult()})"
     }
     return output
+}
+
+
+/**
+ * sequence_was_successful
+ *
+ * Determines if the set of jobs launched had a failure.
+ */
+Boolean sequence_was_successful(Map results)
+{
+    Boolean output = true
+    results.each
+    { key,value ->
+        if( !value.matched_expected )
+        {
+            output = false
+        }
+    }
+    return output
+}
+
+
+/**
+ * generate_output_details_html
+ *
+ * Generate a section of the HTML report
+ */
+String generate_output_details_html(String stage_name, Map results)
+{
+    Boolean section_failed = false
+    String summary_details_section = ""
+    String summary_details_line = "<UL>\n"
+
+    results.each
+    { key,value ->
+        println("---[ ${key} ]---")
+        print_result_summary(value)
+        String span_class = "green"
+        String result_code = "PASS"
+        if( !value.matched_expected )
+        {
+            section_failed = true
+            span_class = "red"
+            result_code = "FAIL -- ${value.status} (actual) != ${value.expected} (expected)"
+        }
+        summary_details_line += "<LI>${value.job}: <SPAN class='${span_class}'><B>${result_code}</B></SPAN></LI>\n"
+    }
+    summary_details_line += "</UL>\n"
+
+    summary_details_section += "<H3>"
+    if(section_failed)
+    {
+        summary_details_section += "&#10060; "
+    }
+    else
+    {
+        summary_details_section += "&#9989; "
+    }
+    summary_details_section += "Stage: ${stage_name}</H3>\n"
+    summary_details_section += "<DIV class='Indent1'>\n"
+    summary_details_section += "<DETAILS>\n"
+    summary_details_section += "<SUMMARY>Details</SUMMARY>\n"
+    summary_details_section += "${summary_details_line}\n"
+    summary_details_section += "</DETAILS>\n"
+    summary_details_section += "</DIV>\n"
+
+    return summary_details_section
 }
 
 

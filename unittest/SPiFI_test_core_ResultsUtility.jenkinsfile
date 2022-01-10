@@ -1,0 +1,255 @@
+/*
+ *  SEMS Pipeline Framework Infrastructure (SPiFI)
+ *
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * LICENSE (3-Clause BSD)
+ * ----------------------
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Contact
+ * -------
+ * William C. McLendon III (wcmclen@sandia.gov)
+ */
+
+/**
+ * Unittest: SPiFI_test_core_ResultsUtility
+ *
+ * This test is designed to test the SPiFI ResultsUtility module.
+ */
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
+properties([
+    parameters([
+        string(name: 'SPiFI_VERSION',
+               defaultValue: 'SPiFI@master',
+               trim: true,
+               description: 'The SPiFI version to load'),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
+    ]),
+])
+
+
+String param_spifi_version = "SPiFI@master"
+if( params.containsKey("SPiFI_VERSION") )
+{
+    param_spifi_version = params.SPiFI_VERSION
+}
+
+
+// Print timestamps to console log
+timestamps()
+{
+
+
+/**
+ * Launch a set of jobs in parallel using SPiFI
+ *
+ */
+node(params.NODE_RESTRICTION)
+{
+    cleanWs()
+
+    Integer num_tests = 0
+    Integer num_failures = 0
+
+    // Load in the base SPiFI library.
+    def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+
+    // Common data
+    def launcher_summary = [
+        NUMJOBS:8,
+        NUMSUCCESS:1,
+        NUMFAILURE:1,
+        NUMUNSTABLE:3,
+        NUMABORTED:1,
+        NUMNOT_BUILT:1,
+        NUMTIMEOUT:1
+        ]
+
+    def launcher_results = [
+        "T-SUCCESS-RUN"       : [job: "SPiFI_test", status:"SUCCESS",   id:1, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/1/", duration:  2.462, dry_run:false],
+        "T-FAILURE-RUN"       : [job: "SPiFI_test", status:"FAILURE",   id:2, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/2/", duration:  2.866, dry_run:false],
+        "T-UNSTABLE-RUN"      : [job: "SPiFI_test", status:"UNSTABLE",  id:3, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/3/", duration:  1.702, dry_run:false],
+        "T-ABORTED-RUN"       : [job: "SPiFI_test", status:"ABORTED",   id:4, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/4/", duration:  2.060, dry_run:false],
+        "T-NOT_BUILT-RUN"     : [job: "SPiFI_test", status:"NOT_BUILT", id:5, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/5/", duration:  3.261, dry_run:false],
+        "T-EXPECT-DUR-MIN-RUN": [job: "SPiFI_test", status:"UNSTABLE",  id:6, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/6/", duration: 14.619, dry_run:false],
+        "T-EXPECT-DUR-MAX-RUN": [job: "SPiFI_test", status:"UNSTABLE",  id:7, url:"https://myjenkins.com/job/SPiFI_test_selectable_status/7/", duration: 15.412, dry_run:false],
+        "T-TIMEOUT-TEST"      : [job: "SPiFI_test", status:"TIMEOUT",   id:0, url:"", duration:10.0, dry_run:false]
+        ]
+
+    stage("Stage 1: Instantiation")
+    {
+        print_banner("Test ResultsUtility : Instantiation")
+
+        try
+        {
+            def spifi_result_util = libspifi.ResultsUtility.new(env: this)
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in ResultUtility():\n${e}"
+        }
+    }   // End Stage
+
+
+    stage("Stage 2: genResultSummaryTable")
+    {
+        print_banner("Test ResultsUtility.genResultSummaryTable()")
+
+        try
+        {
+            String output = ""
+            def spifi_result_util = libspifi.ResultsUtility.new(env: this)
+
+            // Create ASCII output
+            println(">>> Generate ASCII output")
+            output = spifi_result_util.genResultSummaryTable(summary: launcher_summary, format: "ASCII")
+            println(output)
+
+            // Create Markdown output
+            println(">>> Generate Markdown output")
+            output = spifi_result_util.genResultSummaryTable(summary: launcher_summary, format: "MARKDOWN")
+            println(output)
+
+            // Create HTML output
+            println(">>> Generate HTML output")
+            output = spifi_result_util.genResultSummaryTable(summary: launcher_summary, format: "HTML")
+            println(output)
+
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in ResultUtilitygenResultSummaryTable():\n${e}"
+        }
+    }   // End Stage
+
+
+    stage("Stage 3: genResultDetails (default)")
+    {
+        print_banner("Test ResultsUtility.genResultDetails() (default)")
+
+        try
+        {
+            String output = ""
+            def spifi_result_util = libspifi.ResultsUtility.new(env: this)
+
+            // Create ASCII output
+            println(">>> Generate ASCII output")
+            output = spifi_result_util.genResultDetails(results: launcher_results, format: "ASCII")
+            println(output)
+
+            // Create Markdown output
+            println(">>> Generate Markdown output")
+            output = spifi_result_util.genResultDetails(results: launcher_results, format: "MARKDOWN")
+            println(output)
+
+            // Create HTML output
+            println(">>> Generate HTML output")
+            output = spifi_result_util.genResultDetails(results: launcher_results, format: "HTML")
+            println(output)
+
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in ResultUtility.genResultDetails():\n${e}"
+        }
+    }   // End Stage
+
+
+    stage("Stage 4: genResultDetails NoLink")
+    {
+        print_banner("Test ResultsUtility.genResultDetails() (NoLink)")
+
+        try
+        {
+            String output = ""
+            def spifi_result_util = libspifi.ResultsUtility.new(env: this)
+
+            // Create Markdown output
+            println(">>> Generate Markdown output")
+            output = spifi_result_util.genResultDetails(results: launcher_results, format: "MARKDOWN", link_to_console: false)
+            println(output)
+
+            // Create HTML output
+            println(">>> Generate HTML output")
+            output = spifi_result_util.genResultDetails(results: launcher_results, format: "HTML", link_to_console: false)
+            println(output)
+
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in ResultUtility.genResultDetails():\n${e}"
+        }
+    }   // End Stage
+
+}  // End Node()
+
+}  // End Timestamps()
+
+
+
+/**
+ *
+ */
+def print_banner(String text)
+{
+    println("\u27A4 +==============================================================================+\n" +
+            "\u27A4 |\n" +
+            "\u27A4 | ${text}\n" +
+            "\u27A4 |\n" +
+            "\u27A4 +==============================================================================+")
+}
+
+
+/**
+ *
+ */
+def pretty_print_map(Map result)
+{
+    String output = ""
+    result.each { key,value ->
+        output += "- ${key}: ${value}\n"
+    }
+    println(output)
+}
+

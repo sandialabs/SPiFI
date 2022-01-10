@@ -604,17 +604,7 @@ node(node_restriction)
                     email_body += "<li>FAILED: NUMABORTED != 1 (got ${launcher_summary.NUMABORTED})</li>\n"
                     stage_passed = false
                 }
-/*
-                if(launcher_summary.NUMTIMEOUT == 1)
-                {
-                    email_body += "<li>PASSED: NUMTIMEOUT == 1</li>\n"
-                }
-                else
-                {
-                    email_body += "<li>FAILED: NUMTIMEOUT != 1 (got ${launcher_summary.NUMTIMEOUT})</li>\n"
-                    stage_passed = false
-                }
-*/
+
 
                 if(launcher_summary.NUMNOT_BUILT == 1)
                 {
@@ -1088,14 +1078,6 @@ node(node_restriction)
             email_body += "</ol>\n"
 
         }   // End Stage
-
-        //}   // end if version restriction(s)
-        //else
-        //{
-        //    println "\u2757\n" +
-        //            "\u2757 WARNING: JobLauncher stages skipped due to version restriction.\n" +
-        //            "\u2757"
-        //}
 
 
         // Stage: Test org.sandia.sems.spifi.Shell

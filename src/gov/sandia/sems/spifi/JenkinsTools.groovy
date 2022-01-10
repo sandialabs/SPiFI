@@ -65,7 +65,7 @@ package gov.sandia.sems.spifi
  * @param env       [REQUIRED] Object - Jenkins environment (use 'this' from the Jenkins pipeline).
  * @param exception [REQUIRED] Exception - Groovy exception object.
  *
- * @return
+ * @return String containing beautified stacktrace.
  */
 static def spifi_get_exception_stacktrace_pretty(Map args)
 {
@@ -95,7 +95,10 @@ static def spifi_get_exception_stacktrace_pretty(Map args)
 
 
 /**
- * Load a Jenkins parameter if it exists.
+ * Extracts a value from a Map if it exists
+ *
+ * If a value exists in a Groovy map (params) then we return it. Otherwise, we can optionally
+ * throw an error if its missing or set it with a default value
  *
  * @param env      [REQUIRED] Object  - Jenkins environment (use 'this' from the Jenkins pipeline).
  * @param params   [REQUIRED] Object  - Jenkins job params object (params in a jenkins job).
