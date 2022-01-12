@@ -69,7 +69,7 @@
  *
  */
 
-String node_restriction = "RHEL7 || OS_RHEL7 || master"
+String node_restriction = "OS_RHEL8 || OS_RHEL7 || master"
 properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '',
                               daysToKeepStr: '90',       numToKeepStr: '90')),
