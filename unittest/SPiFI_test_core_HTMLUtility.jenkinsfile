@@ -1,0 +1,297 @@
+/*
+ *  SEMS Pipeline Framework Infrastructure (SPiFI)
+ *
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * LICENSE (3-Clause BSD)
+ * ----------------------
+ * Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+ * Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
+ * certain rights in this software.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Contact
+ * -------
+ * William C. McLendon III (wcmclen@sandia.gov)
+ */
+
+/**
+ * Unittest: SPiFI_test_core_HTMLUtility
+ *
+ * This test is designed to test the SPiFI HTMLUtility module.
+ */
+String node_restriction = "RHEL7 || OS_RHEL7 || master"
+properties([
+    parameters([
+        string(name: 'SPiFI_VERSION',
+               defaultValue: 'SPiFI@master',
+               trim: true,
+               description: 'The SPiFI version to load'),
+        string(name: 'NODE_RESTRICTION',
+               defaultValue: node_restriction,
+               trim: true,
+               description: "Node restriction, default: '${node_restriction}'")
+    ]),
+])
+
+
+String param_spifi_version = "SPiFI@master"
+if( params.containsKey("SPiFI_VERSION") )
+{
+    param_spifi_version = params.SPiFI_VERSION
+}
+
+
+// Print timestamps to console log
+timestamps()
+{
+
+
+/**
+ * Launch a set of jobs in parallel using SPiFI
+ *
+ */
+node(params.NODE_RESTRICTION)
+{
+    cleanWs()
+
+    Integer num_tests = 0
+    Integer num_failures = 0
+
+    // Load in the base SPiFI library.
+    def libspifi = library(param_spifi_version).gov.sandia.sems.spifi
+
+    // Common data
+    List data = []
+    data.add("ENTRY 1")
+    data.add("ENTRY 2")
+
+    String body   = "Body Text"
+    String footer = "Footer Text"
+    String output = null
+
+
+    stage("Stage 1: HTMLUtility.generateList (data)")
+    {
+        print_banner("Test HTMLUtility : generateList (data)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generateList(data: data)
+            println("output:\n${output}")
+            assert output.contains("<OL>")
+            assert output.contains("<LI>ENTRY 1</LI>")
+            assert output.contains("<LI>ENTRY 2</LI>")
+            assert output.contains("</OL>")
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 2: HTMLUtility.generateList (data+verbose)")
+    {
+        print_banner("Test HTMLUtility : generateList (data+verbose)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generateList(data: data, verbose: true)
+            println("output:\n${output}")
+            assert output.contains("<OL>")
+            assert output.contains("<LI>ENTRY 1</LI>")
+            assert output.contains("<LI>ENTRY 2</LI>")
+            assert output.contains("</OL>")
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 3: HTMLUtility.generateList (data+unordered_list)")
+    {
+        print_banner("Test HTMLUtility : generateList (data+unordered_list)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generateList(data: data, unordered_list: true)
+            println("output:\n${output}")
+            assert output.contains("<UL>")
+            assert output.contains("<LI>ENTRY 1</LI>")
+            assert output.contains("<LI>ENTRY 2</LI>")
+            assert output.contains("</UL>")
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 4: HTMLUtility.generateList (data+unordered_list+verbose)")
+    {
+        print_banner("Test HTMLUtility : generateList (data+unordered_list+verbose)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generateList(data: data, unordered_list: true, verbose: true)
+            println("output:\n${output}")
+            assert output.contains("<UL>")
+            assert output.contains("<LI>ENTRY 1</LI>")
+            assert output.contains("<LI>ENTRY 2</LI>")
+            assert output.contains("</UL>")
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 5: HTMLUtility.generate (body)")
+    {
+        print_banner("Test HTMLUtility : generateList (body)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generate(body: body)
+            println("output:\n${output}")
+            assert output.contains(body)
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 6: HTMLUtility.generate (body+footer)")
+    {
+        print_banner("Test HTMLUtility : generateList (body+footer)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generate(body: body, footer: footer)
+            println("output:\n${output}")
+            assert output.contains(body)
+            assert output.contains(footer)
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    stage("Stage 7: HTMLUtility.generate (body+footer+verbose)")
+    {
+        print_banner("Test HTMLUtility : generateList (body+footer+verbose)")
+
+        try
+        {
+            num_tests++
+            def spifi_html = libspifi.HTMLUtility.new(env: this)
+            output = spifi_html.generate(body: body, footer: footer, verbose: true)
+            println("output:\n${output}")
+            assert output.contains(body)
+            assert output.contains(footer)
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in HTMLUtility.generateList():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+}  // End Node()
+
+}  // End Timestamps()
+
+
+/**
+ *
+ */
+def print_banner(String text)
+{
+    println("\u27A4 +==============================================================================+\n" +
+            "\u27A4 |\n" +
+            "\u27A4 | ${text}\n" +
+            "\u27A4 |\n" +
+            "\u27A4 +==============================================================================+")
+}
+
+
+/**
+ *
+ */
+def pretty_print_map(Map result)
+{
+    String output = ""
+    result.each { key,value ->
+        output += "- ${key}: ${value}\n"
+    }
+    println(output)
+}
+

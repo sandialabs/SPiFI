@@ -42,9 +42,9 @@
  */
 
 /**
- * Unittest: SPiFI_test_core_Info
+ * Unittest: SPiFI_test_core_Git
  *
- * This test is designed to test the SPiFI Info module.
+ * This test is designed to test the SPiFI Git module.
  */
 String node_restriction = "RHEL7 || OS_RHEL7 || master"
 properties([
@@ -89,42 +89,123 @@ node(params.NODE_RESTRICTION)
 
 
     // Test the minimal git command
-    stage("Stage 1: Info")
+    stage("Stage 1: Clone SPiFI (Min)")
     {
-        print_banner("Test Info")
+        print_banner("Test Git.clone()")
 
         String clone_url = "https://github.com/sandialabs/SPiFI.git"
 
         try
         {
             num_tests++
-            def spifi_info = libspifi.Info.new()
+            def spifi_git = libspifi.Git.new()
 
-            print_banner("Info.version()")
-            String version = spifi_info.version()
-            println "Info.version() = ${version}"
+            Boolean clone_ok = true
 
-            print_banner("Info.version_major()")
-            Integer version_major = spifi_info.version_major()
-            println "Info.version_major() = ${version_major}"
+            dir("SPiFI-min")
+            {
+                clone_ok = spifi_git.clone(env: this, url: clone_url)
+            }
 
-            print_banner("Info.version_minor()")
-            Integer version_minor = spifi_info.version_minor()
-            println "Info.version_minor() = ${version_minor}"
-
-            print_banner("Info.version_patch()")
-            Integer version_patch = spifi_info.version_patch()
-            println "Info.version_patch() = ${version_patch}"
+            assert clone_ok : "Git clone failed"
 
             println "SUCCESS!"
         }
         catch(e)
         {
             println "FAILURE!"
-            println "ERROR occurred in Info:\n${e}"
+            println "ERROR occurred in Git.clone():\n${e}"
             num_failures++
         }
     }   // End Stage
+
+
+    // Validate the tests
+    stage("Validate (Min)")
+    {
+        print_banner("Validate Results")
+        println "num_tests   : ${num_tests}\n" +
+                "num_failures: ${num_failures}"
+
+        sh label: 'LS-Top',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}'
+
+        sh label: 'LS-SPiFI',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}/SPiFI-min'
+
+        assert num_failures == 0 : "There were test failures."
+    } // End Stage
+
+
+    // Test a shallow clone w/ more options
+    stage("Stage 2: Clone SPiFI (shallow)")
+    {
+        print_banner("Test Git.clone()")
+
+        String clone_url = "https://github.com/sandialabs/SPiFI.git"
+
+        try
+        {
+            num_tests++
+            def spifi_git = libspifi.Git.new()
+
+            def clone_ok = spifi_git.clone(env: this,
+                                           dir: "SPiFI-shallow",
+                                           url: clone_url,
+                                           branch: "master",
+                                           recurse_submodules: true,
+                                           retries: 1,
+                                           retry_delay: 10,
+                                           shallow: true,
+                                           timeout: 10,
+                                           timeout_units: "MINUTES",
+                                           verbose: true
+                                           )
+
+            assert clone_ok : "Git clone failed"
+
+            println "SUCCESS!"
+        }
+        catch(e)
+        {
+            println "FAILURE!"
+            println "ERROR occurred in Git.clone():\n${e}"
+            num_failures++
+        }
+    }   // End Stage
+
+
+    // Validate the tests
+    stage("Validate (shallow)")
+    {
+        print_banner("Validate Results")
+        println "num_tests   : ${num_tests}\n" +
+                "num_failures: ${num_failures}"
+
+        sh label: 'LS-Top',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}'
+
+        sh label: 'LS-SPiFI',
+           encoding: 'UTF-8',
+           script: 'ls -ltr ${WORKSPACE}/SPiFI-shallow'
+
+        assert num_failures == 0 : "There were test failures."
+    } // End Stage
+
+
+    // Delete the cloned directory.
+    stage("Cleanup")
+    {
+        print_banner("Cleanup")
+        dir("SPiFI")
+        {
+            // deleteDir()    // Disabled for now.
+        }
+    }  // End Stage
+
 
 }  // End Node()
 
