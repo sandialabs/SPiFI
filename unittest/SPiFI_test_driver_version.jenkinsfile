@@ -54,6 +54,7 @@
  */
 String node_restriction = "OS_RHEL8 || OS_RHEL7 || master"
 properties([
+    disableConcurrentBuilds(),
     parameters([
         string(name: 'SPiFI_VERSION',
                defaultValue: 'SPiFI@master',
