@@ -128,7 +128,7 @@ node(params.NODE_RESTRICTION)
         sub_stages["Test Helpers (E)"] = {
             // Lock the pass_every_third call job it must be executed multiple times
             // in sequence to work properly.
-            lock("SPiFI_pass_every_third")
+            lock("SPiFI_test_helper_pass_every_third")
             {
                 def rval = null
                 String job_name = "SPiFI_test_helper_pass_every_third"
