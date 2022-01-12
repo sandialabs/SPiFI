@@ -15,9 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -->
 
 
-## 2022-01-12
-- Next version will be v2.1.0
-
+## [2.2.0] - 2022-01-12
 ### Added
 - Add `format_duration_hms` to `ResultsUtility.genResultDetails()` which causes the
   duration value to be reported as `DD:HH:MM:SS.SS`
