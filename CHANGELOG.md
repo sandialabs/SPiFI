@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -->
 
 
-## [Unreleased]
+## 2022-01-12
 - Next version will be v2.1.0
 
 ### Added
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in-place setting of Aparameters.
 
 ### Changed
+- Completed testing overhaul.
 ### Deprecated
 ### Removed
 
