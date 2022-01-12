@@ -46,7 +46,7 @@
  *
  * This test is designed to test the SPiFI Git module.
  */
-String node_restriction = "RHEL7 || OS_RHEL7 || master"
+String node_restriction = "OS_RHEL8 || OS_RHEL7 || master"
 properties([
     parameters([
         string(name: 'SPiFI_VERSION',
