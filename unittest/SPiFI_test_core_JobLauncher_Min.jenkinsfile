@@ -116,15 +116,10 @@ node(params.NODE_RESTRICTION)
                 "+--------------------------------------+\n" +
                 summary)
 
-        println("NUMJOBS    =", summary.NUMJOBS)
-        println("NUMSUCCESS =", summary.NUMSUCCESS)
-
         // Check the summary
         // If all jobs didn't pass, then exit the pipeline with a FAILURE status.
         if(summary.NUMJOBS != summary.NUMSUCCESS)
         {
-            println("Job failed because NUMJOBS != NUMSUCCESS")
-
             // Set the build result, allowable values are: SUCCESS, FAILURE, UNSTABLE, ABORTED, NOT_BUILT
             currentBuild.result = 'FAILURE'
             return
