@@ -66,7 +66,7 @@ package gov.sandia.sems.spifi;
 static def version()
 {
     // Note: for releases, this should be formatted X.X.X
-    //       leave the 'v' out.  i.e., "2.1.0"
+    //       leave the 'v' out.  i.e., "2.2.0"
     String spifi_version = "master"
     return spifi_version
 }
@@ -93,7 +93,7 @@ static def version_major()
  */
 static def version_minor()
 {
-    Integer spifi_minor = 1
+    Integer spifi_minor = 2
     return  spifi_minor
 }
 
