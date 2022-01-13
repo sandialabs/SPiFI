@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 -->
 
+## [2.2.1] - 2022-01-13
+### Added
+### Changed
+- Added a footer link to the new test driver that provides a link to the
+  build on Jenkins for convenience in the email.
+### Deprecated
+### Removed
+### Fixed
+### Security
+
 
 ## [2.2.0] - 2022-01-12
 ### Added

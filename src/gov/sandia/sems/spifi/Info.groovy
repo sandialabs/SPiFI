@@ -48,7 +48,7 @@
  * Information function to get current version number, etc.
  *
  * @author  William McLendon
- * @version 1.2.0
+ * @version 2.2.1
  * @since   2018-06-06
  *
  */
@@ -106,7 +106,7 @@ static def version_minor()
  */
 static def version_patch()
 {
-    Integer spifi_patch = 0
+    Integer spifi_patch = 1
     return  spifi_patch
 }
 
