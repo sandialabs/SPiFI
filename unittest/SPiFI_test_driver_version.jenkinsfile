@@ -336,8 +336,13 @@ node(params.NODE_RESTRICTION)
                 div.Indent1 { text-indent: 1.0em; }
                 </STYLE>
                 </HEAD>
-
                 <BODY>
+                <H1>SPiFI Version ${job_params.SPiFI_VERSION}</H1>
+                """.stripIndent()
+
+        String summary_email_footer = """
+                </BODY>
+                <P><span class="gray">--<BR/>{{FOOTER}}View output on <A HREF="${env.BUILD_URL}">Jenkins</A>.</span></P>
                 """.stripIndent()
 
         String pipeline_status_slug = ""
@@ -351,9 +356,9 @@ node(params.NODE_RESTRICTION)
         }
 
         summary_email_body = summary_email_header +
-                            "<H1>${pipeline_status_slug}</H1>\n" +
+                            "<H2>${pipeline_status_slug}</H2>\n" +
                              summary_email_body   +
-                             "\n</BODY>\n"
+                             summary_email_footer
 
         println(summary_email_body)
 
