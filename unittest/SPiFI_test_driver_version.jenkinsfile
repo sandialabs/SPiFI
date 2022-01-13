@@ -342,7 +342,7 @@ node(params.NODE_RESTRICTION)
 
         String summary_email_footer = """
                 </BODY>
-                <P><span class="gray">--<BR/>{{FOOTER}}View output on <A HREF="${env.BUILD_URL}">Jenkins</A>.</span></P>
+                <P><span class="gray">--<BR/><I>View output on <A HREF="${env.BUILD_URL}">Jenkins</A>.</I></span></P>
                 """.stripIndent()
 
         String pipeline_status_slug = ""
