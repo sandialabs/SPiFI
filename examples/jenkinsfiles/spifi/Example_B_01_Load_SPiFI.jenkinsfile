@@ -53,12 +53,21 @@
 // to choose version of SPiFI to load from available versions
 // on your server.
 properties([
+    [$class: 'JiraProjectProperty'],
+    gitLabConnection(gitLabConnection: 'None', jobCredentialId: ''),
+    [$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false],
     parameters([
-        choice(name: "SPiFI_VERSION",
-               choices: ['SPiFI-1.3.0', 'SPiFI-1.2.2', 'SPiFI','SPiFI@master'],
-               description: 'SPiFI Version')
-        ])
-    ])
+        string(defaultValue: 'SPiFI@master', name: 'SPiFI_VERSION')
+    ]),
+    [$class: 'JobLocalConfiguration', changeReasonComment: '']
+])
+//properties([
+//    parameters([
+//        choice(name: "SPiFI_VERSION",
+//               choices: ['SPiFI-1.3.0', 'SPiFI-1.2.2', 'SPiFI','SPiFI@master'],
+//              description: 'SPiFI Version')
+//        ])
+//    ])
 
 // Fail if required parameters are missing.
 assert params.containsKey("SPiFI_VERSION"), "Missing required parameter: SPiFI_VERSION"
