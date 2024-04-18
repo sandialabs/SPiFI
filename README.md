@@ -28,10 +28,6 @@ The scripted format is implemented using a [sandboxed][4] version of the
 [Apache Groovy][3] language.
 
 
-### User Guide
-The full user guide can be found at
-[https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home][1]
-
 
 
 
