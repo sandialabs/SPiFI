@@ -33,10 +33,6 @@ The full user guide can be found at
 [https://gitlab-ex.sandia.gov/SEMS/sems-pipeline-framework-infrastructure/-/wikis/home][1]
 
 
-### Contact Information
-Please contact the SEMS helpdesk for questions and assistance with using SPiFI
-in your Jenkins jobs.
-
 
 
 
